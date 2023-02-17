@@ -1,0 +1,7 @@
+export const OUCH_EMOJI = "<:ouch:1072282001396211882>";
+export const BOOYAH_EMOJI = "<:booyah:1072277912100806698>";
+export const THISWAY_EMOJI = "<:thisway:1072283277093785721>";
+export const SQUIDSHUFFLE_EMOJI = "<a:squidShuffle:1072590626798960680>";
+export const BULLET_EMOJI = "<:b_:1075810956833210428>";
+export const EMPTY_EMOJI = "<:e_:1075811408010289172>";
+export const SUB_EMOJI = "<:s_:1075811094372814849>";

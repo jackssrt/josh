@@ -93,8 +93,13 @@ export function formatTime(totalSeconds: number | bigint): string {
 	}
 	return parts.join(" ");
 }
-export function relativeTimestamp(seconds: number) {
-	return `<t:${Math.floor(Date.now() / 1000 + seconds)}:${TimestampStyles.RelativeTime}>` as const;
+export function relativeTimestamp(inXSeconds: number) {
+	return `<t:${Math.floor(Date.now() / 1000 + inXSeconds)}:${TimestampStyles.RelativeTime}>` as const;
+}
+export function getRandomValues<T extends unknown[]>(arr: T, count: number): T[number][] {
+	const shuffled = arr.sort(() => 0.5 - Math.random());
+
+	return shuffled.slice(0, count);
 }
 
 const WEBHOOK_NAME = "splatsquad-bot impersonation webhook";

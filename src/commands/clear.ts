@@ -16,8 +16,11 @@ export default {
 			)
 			.setDMPermission(false),
 	async execute({ interaction }) {
-		if (!interaction.channel || interaction.channel.isDMBased())
-			return await interaction.reply({ content: "This command can't be used in a dm", ephemeral: true });
+		if (!interaction.channel || interaction.channel.isDMBased() || interaction.channel.isVoiceBased())
+			return await interaction.reply({
+				content: "This command can't be used in a dm or voice channel",
+				ephemeral: true,
+			});
 		const num = interaction.options.getInteger("x", true);
 		if (!num) return await interaction.reply({ content: "You need to pass in a number!", ephemeral: true });
 		if (num > 1) {
