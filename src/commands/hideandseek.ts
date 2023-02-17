@@ -230,7 +230,7 @@ class Game {
 		});
 	}
 	public async updateMainMessage() {
-		const parts: string[] = [];
+		const parts: string[] = ["**Rules**", RULES, ""];
 		if (this.state === GameState.WaitingForPlayers)
 			parts.push(
 				`Expires <t:${Math.floor(this.createdTime.getTime() / 1000) + SECONDS_TO_JOIN}:${
@@ -253,7 +253,6 @@ class Game {
 					Math.floor(this.startedTime.getTime() / 1000) + (this.mode === "turfwar" ? 3 * 60 : 5 * 60)
 				}:${TimestampStyles.RelativeTime}>`,
 			);
-		parts.push("", "**Rules**", RULES);
 		await this.msg.edit({
 			...embeds((b) =>
 				b.setTitle("Hide and seek!").setDescription(parts.join("\n")).addFields(this.playerListField()),
