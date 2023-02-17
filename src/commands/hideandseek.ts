@@ -34,14 +34,13 @@ ${BULLET_EMOJI}First the hiders will pick their hiding spots
 ${BULLET_EMOJI}After 1 minute in turf war or 2 minutes in ranked,
 ${EMPTY_EMOJI}the seekers will go look for the hiders.
 
-
-${BULLET_EMOJI}**Seekers**
+${BULLET_EMOJI}**Seekers ${ROLE_ICON_MAP[PlayerRole.Seeker]}**
 ${EMPTY_EMOJI}${SUB_EMOJI}${BULLET_EMOJI}aren't allowed to use the map during hiding time
 ${EMPTY_EMOJI}${EMPTY_EMOJI}${BULLET_EMOJI}aren't allowed to use sub weapons while seeking for hiders
 ${EMPTY_EMOJI}${EMPTY_EMOJI}${BULLET_EMOJI}are allowed to super jump to squid beacons and big bubblers
 ${EMPTY_EMOJI}${EMPTY_EMOJI}${BULLET_EMOJI}win if they splat all hiders once
 
-${BULLET_EMOJI}**Hiders**
+${BULLET_EMOJI}**Hiders ${ROLE_ICON_MAP[PlayerRole.Hider]}**
 ${EMPTY_EMOJI}${SUB_EMOJI}${BULLET_EMOJI}aren't allowed to use the map
 ${EMPTY_EMOJI}${EMPTY_EMOJI}${BULLET_EMOJI}are allowed to fight back with their main weapons, sub weapons, special weapons if they get found
 ${EMPTY_EMOJI}${EMPTY_EMOJI}${BULLET_EMOJI}win if they survive until 5 seconds before the match ends`;
