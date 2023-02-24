@@ -5,5 +5,6 @@ declare namespace NodeJS {
 		CLIENT_ID: string;
 		GUILD_ID: string;
 		MAPS_CHANNEL_ID: string;
+		SPLATFEST_TEAM_CATEGORY_ROLE_ID: string;
 	}
 }

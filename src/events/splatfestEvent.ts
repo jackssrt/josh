@@ -148,10 +148,10 @@ export default {
 				await database.setSplatfestEventCreated(fest.id);
 			})(),
 			(async () => {
-				const categoryRolePosition = (await guild.roles.fetch("1072199262475132989"))?.position;
-				if (!categoryRolePosition) return consola.error("Splatfest role category role not found");
+				const categoryRolePosition = (await guild.roles.fetch(process.env["SPLATFEST_TEAM_CATEGORY_ROLE_ID"]!))
+					?.position;
+				if (!categoryRolePosition) return consola.error("Splatfest team role category role not found");
 				for (const [i, team] of Object.entries(fest.teams)) {
-					consola.log(team.color);
 					await guild.roles.create({
 						name: `⚽・${team.teamName}`,
 						color: [team.color.r * 255, team.color.g * 255, team.color.b * 255],
