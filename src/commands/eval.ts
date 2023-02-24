@@ -1,3 +1,4 @@
+import { PermissionFlagsBits } from "discord.js";
 import { inspect } from "node:util";
 import type Client from "../client.js";
 import type Command from "../command.js";
@@ -28,7 +29,10 @@ async function clean(client: Client<true>, text: unknown): Promise<string> {
 
 export default {
 	data: (b) =>
-		b.setDescription("eval").addStringOption((b) => b.setDescription("code").setName("code").setRequired(true)),
+		b
+			.setDescription("eval")
+			.addStringOption((b) => b.setDescription("code").setName("code").setRequired(true))
+			.setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
 	async execute({ client, interaction }) {
 		if (interaction.user.id !== process.env["OWNER_ID"]!)
 			return await interaction.reply("Only the developer can run this command!");

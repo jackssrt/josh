@@ -4,7 +4,7 @@ import type Command from "../command";
 export default {
 	data: (b) =>
 		b
-			.setDescription("Clears X recent messages in this channel.")
+			.setDescription("Delete the X latest message(s) in this channel.")
 			.setDefaultMemberPermissions(PermissionFlagsBits.ManageMessages)
 			.addIntegerOption((b) =>
 				b
@@ -22,14 +22,16 @@ export default {
 				ephemeral: true,
 			});
 		const num = interaction.options.getInteger("x", true);
-		if (!num) return await interaction.reply({ content: "You need to pass in a number!", ephemeral: true });
 		if (num > 1) {
+			// delete multiple messages
 			await interaction.channel.bulkDelete(num);
-			return await interaction.reply({ content: "✅", ephemeral: true });
+			await interaction.reply({ content: "✅", ephemeral: true });
+		} else {
+			// delete latest message
+			const msg = (await interaction.channel.messages.fetch({ limit: 1 })).first();
+			if (!msg) return await interaction.reply({ content: "No messages in channel.", ephemeral: true });
+			await interaction.channel.messages.delete(msg);
+			await interaction.reply({ content: "✅", ephemeral: true });
 		}
-		const msg = (await interaction.channel.messages.fetch({ limit: 1 })).first();
-		if (!msg) return await interaction.reply({ content: "No messages in channel.", ephemeral: true });
-		await interaction.channel.messages.delete(msg);
-		await interaction.reply({ content: "✅", ephemeral: true });
 	},
 } as Command;
