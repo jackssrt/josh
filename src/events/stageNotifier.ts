@@ -1,7 +1,6 @@
 import axios from "axios";
-import consola from "consola";
-import type { TextChannel } from "discord.js";
-import { AttachmentBuilder, EmbedBuilder, TimestampStyles } from "discord.js";
+import type { EmbedBuilder, TextChannel } from "discord.js";
+import { AttachmentBuilder, TimestampStyles } from "discord.js";
 import sharp from "sharp";
 import type { ScheduleClass, Schedules, Stage, VsRule } from "../apiTypes/schedules.js";
 import { Mode, Rule } from "../apiTypes/schedules.js";
@@ -157,12 +156,6 @@ async function sendMatchRotation(
 		await stagesImage(anarchyOpenSetting!.vsStages),
 		await stagesImage(xBattlesSetting!.vsStages),
 	];
-	consola.log(
-		[turfWarImage, anarchySeriesImage, anarchyOpenImage, xBattlesImage].map((v, i) =>
-			new AttachmentBuilder(v).setName(i.toString() + ".png").toJSON(),
-		),
-	);
-	consola.log(modeEmbed(new EmbedBuilder(), "Anarchy Series", "1", anarchySeriesSetting!.vsRule));
 	const previousMessage = (await channel.messages.fetch({ limit: 1 })).first();
 	if (previousMessage) await channel.messages.delete(previousMessage);
 	await channel.send({
