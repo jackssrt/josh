@@ -1,5 +1,5 @@
 import type { Awaitable, ClientEvents } from "discord.js";
-import type { Client } from "./client.js";
+import type Client from "./client.js";
 
 export default interface Event<K extends keyof ClientEvents> {
 	isOnetime?: boolean | undefined;

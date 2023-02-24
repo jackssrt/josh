@@ -1,7 +1,7 @@
 import consola from "consola";
 import { ApplicationCommandType, ContextMenuCommandBuilder, REST, Routes, SlashCommandBuilder } from "discord.js";
 import * as dotenv from "dotenv";
-import { Client } from "./client.js";
+import Client from "./client.js";
 dotenv.config();
 export async function deploy(guildId: string) {
 	const client = new Client();

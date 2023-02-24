@@ -5,7 +5,8 @@ import { AttachmentBuilder, EmbedBuilder, TimestampStyles } from "discord.js";
 import sharp from "sharp";
 import type { ScheduleClass, Schedules, Stage, VsRule } from "../apiTypes/schedules.js";
 import { Mode, Rule } from "../apiTypes/schedules.js";
-import type { Client } from "../client.js";
+import type Client from "../client.js";
+import { USER_AGENT } from "../client.js";
 import database from "../database.js";
 import type Event from "../event.js";
 import { embeds } from "../utils.js";
@@ -54,7 +55,16 @@ async function stagesImage(vsStages: Stage[]): Promise<Buffer> {
 				[
 					v,
 					sharp(
-						Buffer.from((await axios.get<ArrayBuffer>(v.image.url, { responseType: "arraybuffer" })).data),
+						Buffer.from(
+							(
+								await axios.get<ArrayBuffer>(v.image.url, {
+									responseType: "arraybuffer",
+									headers: {
+										"User-Agent": USER_AGENT,
+									},
+								})
+							).data,
+						),
 					),
 				] as const,
 		),
@@ -178,7 +188,13 @@ async function sendMatchRotation(
 }
 
 async function getAndSendMatchRotation(client: Client<true>) {
-	const data = (await axios.get<Schedules>("https://splatoon3.ink/data/schedules.json")).data;
+	const data = (
+		await axios.get<Schedules>("https://splatoon3.ink/data/schedules.json", {
+			headers: {
+				"User-Agent": USER_AGENT,
+			},
+		})
+	).data;
 
 	const currentNodeIndex = data.data.regularSchedules.nodes.findIndex(
 		(v) => new Date(Date.parse(v.endTime)) > new Date() && new Date(Date.parse(v.startTime)) < new Date(),

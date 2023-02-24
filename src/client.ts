@@ -9,7 +9,9 @@ import type { ContextMenuItem } from "./contextMenuItem.js";
 import type Event from "./event.js";
 import Registry from "./registry.js";
 consola.wrapAll();
-export class Client<Ready extends boolean = false> extends DiscordClient<Ready> {
+export const USER_AGENT =
+	"Splat Squad Bot (source code: https://github.com/jackssrt/splatsquad-bot , make an issue if it's misbehaving)";
+export default class Client<Ready extends boolean = false> extends DiscordClient<Ready> {
 	public commandRegistry = new Registry<Command>();
 	public eventRegistry = new Registry<Event<keyof ClientEvents>>();
 	public contextMenuItemsRegistry = new Registry<ContextMenuItem<"User" | "Message">>();

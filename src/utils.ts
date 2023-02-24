@@ -2,7 +2,7 @@ import type { InteractionReplyOptions, TextChannel, User, WebhookCreateMessageOp
 import { EmbedBuilder, GuildMember, TimestampStyles } from "discord.js";
 import { existsSync } from "node:fs";
 import { readFile } from "node:fs/promises";
-import type { Client } from "./client.js";
+import type Client from "./client.js";
 export interface Config {
 	token: string;
 	guildId: string;

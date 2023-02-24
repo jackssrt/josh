@@ -1,5 +1,5 @@
 import type { Awaitable, ChatInputCommandInteraction, SharedNameAndDescription, SlashCommandBuilder } from "discord.js";
-import type { Client } from "./client.js";
+import type Client from "./client.js";
 
 export default interface Command {
 	data(builder: SlashCommandBuilder): SharedNameAndDescription & { toJSON(): object };

@@ -4,7 +4,7 @@ import type {
 	MessageContextMenuCommandInteraction,
 	UserContextMenuCommandInteraction,
 } from "discord.js";
-import type { Client } from "./client.js";
+import type Client from "./client.js";
 
 export interface ContextMenuItem<K extends "User" | "Message"> {
 	data(builder: ContextMenuCommandBuilder): ContextMenuCommandBuilder;

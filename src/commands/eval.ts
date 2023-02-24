@@ -1,5 +1,5 @@
 import { inspect } from "node:util";
-import type { Client } from "../client.js";
+import type Client from "../client.js";
 import type Command from "../command.js";
 import { errorEmbeds } from "../utils.js";
 

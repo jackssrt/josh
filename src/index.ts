@@ -1,5 +1,5 @@
 import * as dotenv from "dotenv";
-import { Client } from "./client.js";
+import Client from "./client.js";
 import installDependencies from "./dependencies.js";
 import { IS_REPLIT } from "./env.js";
 dotenv.config();
