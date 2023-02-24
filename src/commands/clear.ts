@@ -24,8 +24,10 @@ export default {
 		const num = interaction.options.getInteger("x", true);
 		if (num > 1) {
 			// delete multiple messages
-			await interaction.channel.bulkDelete(num);
+			// the reply is first here to prevent an unknown interaction error
+			// idk why
 			await interaction.reply({ content: "✅", ephemeral: true });
+			await interaction.channel.bulkDelete(num);
 		} else {
 			// delete latest message
 			const msg = (await interaction.channel.messages.fetch({ limit: 1 })).first();
