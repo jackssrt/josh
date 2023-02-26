@@ -156,7 +156,7 @@ function extractSetting<T extends RotationType>(
 	mode: T,
 	data: RotationTypeToNodeType<T>,
 ): RegularSetting | BankaraSetting | XSetting {
-	// typescript stupid moment (implied type is RegularSetting | XSetting AND (data as NodeType[]))
+	// typescript stupid moment (implied type is RegularSetting | XSetting AND (data as NodeType))
 	return mode === "Turf War"
 		? (data as RegularNode).regularMatchSetting
 		: mode === "Anarchy Open" || mode === "Anarchy Series"
