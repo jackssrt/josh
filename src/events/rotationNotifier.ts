@@ -280,7 +280,7 @@ async function loopSend(client: Client<true>) {
 		if (!times) return;
 		const [startTime, endTime] = times;
 		await database.setLastSendMapRotation(startTime);
-		await wait(endTime.getTime() - new Date().getTime() / 1000);
+		await wait((endTime.getTime() - new Date().getTime()) / 1000);
 	}
 }
 
