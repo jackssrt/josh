@@ -23,9 +23,10 @@ export class Database {
 		await this.keyv.set("lastSentMapRotation", date.getTime());
 	}
 	async timeTillNextMapRotationSend() {
+		const TWO_HOURS = 2 * 60 * 60 * 1000;
 		return (
 			((await this.keyv.get("lastSentMapRotation")) as DatabaseData["lastSentMapRotation"]) +
-			2 * 60 * 60 * 1000 -
+			TWO_HOURS -
 			new Date().getTime()
 		);
 	}

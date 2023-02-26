@@ -47,7 +47,7 @@ export default {
 		} catch (e) {
 			!interaction.replied &&
 				(await interaction.reply({
-					...errorEmbeds({ title: "eval error", description: inspect(e, { depth: 1 }) }),
+					...(await errorEmbeds({ title: "eval error", description: inspect(e, { depth: 1 }) })),
 				}));
 		}
 	},

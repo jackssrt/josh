@@ -1,4 +1,4 @@
-import type { InteractionReplyOptions, TextChannel, User, WebhookCreateMessageOptions } from "discord.js";
+import type { Awaitable, InteractionReplyOptions, TextChannel, User, WebhookCreateMessageOptions } from "discord.js";
 import { EmbedBuilder, GuildMember, TimestampStyles } from "discord.js";
 import { existsSync } from "node:fs";
 import { readFile } from "node:fs/promises";
@@ -51,11 +51,11 @@ export async function generatorToArray<T>(gen: AsyncGenerator<T>): Promise<T[]> 
 	}
 	return out;
 }
-export type EmbedFactory = (b: EmbedBuilder) => EmbedBuilder;
+export type EmbedFactory = (b: EmbedBuilder) => Awaitable<EmbedBuilder>;
 
-export function embeds(...funcs: EmbedFactory[]) {
+export async function embeds(...funcs: EmbedFactory[]) {
 	return {
-		embeds: funcs.map((func) => func(new EmbedBuilder().setColor("#2f3136"))),
+		embeds: await Promise.all(funcs.map(async (func) => await func(new EmbedBuilder().setColor("#2b2d31")))),
 	} satisfies InteractionReplyOptions;
 }
 export function errorEmbeds(...data: { title: string; description: string }[]) {
@@ -93,9 +93,21 @@ export function formatTime(totalSeconds: number | bigint): string {
 	}
 	return parts.join(" ");
 }
-export function relativeTimestamp(inXSeconds: number) {
-	return `<t:${Math.floor(Date.now() / 1000 + inXSeconds)}:${TimestampStyles.RelativeTime}>` as const;
+export function futureTimestamp(inXSeconds: number) {
+	return relativeTimestamp(new Date(Date.now() + inXSeconds * 1000));
 }
+export function relativeTimestamp(date: Date) {
+	return `<t:${Math.floor(date.getTime() / 1000)}:${TimestampStyles.RelativeTime}>` as const;
+}
+export function dateTimestamp(date: Date) {
+	return `<t:${Math.floor(date.getTime() / 1000)}:${TimestampStyles.ShortDate}>` as const;
+}
+export function timeTimestamp(date: Date, includeSeconds: boolean) {
+	return `<t:${Math.floor(date.getTime() / 1000)}:${
+		includeSeconds ? TimestampStyles.LongTime : TimestampStyles.ShortTime
+	}>` as const;
+}
+
 export function getRandomValues<T extends unknown[]>(arr: T, count: number): T[number][] {
 	const shuffled = arr.sort(() => 0.5 - Math.random());
 

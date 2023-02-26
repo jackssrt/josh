@@ -22,7 +22,7 @@
 			"",
 			"export default {",
 			"\tevent: \"${1:event}\",",
-			"\ton(client) {",
+			"\ton({client}) {",
 			"\t\t${0}",
 			"\t},",
 			"} as Event<\"${1:event}\">;",

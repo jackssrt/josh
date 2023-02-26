@@ -103,13 +103,13 @@ class Game {
 		await this.updateMainMessage();
 		const maxSeekers = Math.min(4, this.players.size - 1);
 		const pickTeams = await hostConfigInteraction.editReply({
-			...embeds((b) =>
+			...(await embeds((b) =>
 				b
 					.setTitle("Decide teams")
 					.setDescription(
 						`Do you want me to pick the seekers for you or do you want to pick them manually?\nMake a ${this.mode} private battle room with the code \`${this.code}\` while you're waiting for everyone to join.`,
 					),
-			),
+			)),
 			content: "",
 			components: [
 				new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(
@@ -164,7 +164,7 @@ class Game {
 		await Promise.all(
 			this.players.map(async (v) => {
 				await v.interaction.followUp({
-					...embeds((b) =>
+					...(await embeds((b) =>
 						b
 							.setTitle(
 								`Your role: ${ROLE_ICON_MAP[v.role!]} ${
@@ -173,7 +173,7 @@ class Game {
 							)
 							.setDescription(v.role === PlayerRole.Seeker ? SEEKER_EXPLANATION : HIDER_EXPLANATION)
 							.setFooter({ text: `Room code: ${this.code} ・ Host: ${this.host.user.username}` }),
-					),
+					)),
 					ephemeral: true,
 				});
 			}),
@@ -213,18 +213,18 @@ class Game {
 	}
 	public async gameFinished() {
 		await this.msg.edit({
-			...embeds((b) => b.setTitle("Hide and seek game finished").addFields(this.playerListField())),
+			...(await embeds((b) => b.setTitle("Hide and seek game finished").addFields(this.playerListField()))),
 		});
 	}
 
 	public async abort() {
 		await this.msg.edit({
-			...embeds((b) =>
+			...(await embeds((b) =>
 				b
 					.setTitle(`Hide and seek game was aborted ${OUCH_EMOJI}`)
 					.setDescription("The game was aborted...")
 					.setColor("Red"),
-			),
+			)),
 			components: [],
 		});
 	}
@@ -253,9 +253,9 @@ class Game {
 				}:${TimestampStyles.RelativeTime}>`,
 			);
 		await this.msg.edit({
-			...embeds((b) =>
+			...(await embeds((b) =>
 				b.setTitle("Hide and seek!").setDescription(parts.join("\n")).addFields(this.playerListField()),
-			),
+			)),
 			...(this.state !== GameState.WaitingForPlayers ? { components: [] } : {}),
 		});
 	}
@@ -290,7 +290,7 @@ export default {
 		const mode = interaction.options.getString("mode", true) as "ranked" | "turfwar";
 		const code = `${randomInt(0, 9)}${randomInt(0, 9)}${randomInt(0, 9)}${randomInt(0, 9)}`;
 		const msg = await interaction.reply({
-			...embeds((b) => b.setTitle(`Hide and seek!`).setDescription(`Loading... ${SQUIDSHUFFLE_EMOJI}`)),
+			...(await embeds((b) => b.setTitle(`Hide and seek!`).setDescription(`Loading... ${SQUIDSHUFFLE_EMOJI}`))),
 			components: [
 				new ActionRowBuilder<ButtonBuilder>().addComponents(
 					new ButtonBuilder()

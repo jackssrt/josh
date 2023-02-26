@@ -6,7 +6,11 @@
 			"script": "deploy",
 			"problemMatcher": ["$tsc"],
 			"label": "npm: deploy",
-			"detail": "ts-node-esm src/deploy.ts"
+			"detail": "ts-node-esm src/deploy.ts",
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			}
 		}
 	]
 }
