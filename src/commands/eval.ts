@@ -48,6 +48,7 @@ export default {
 			!interaction.replied &&
 				(await interaction.reply({
 					...(await errorEmbeds({ title: "eval error", description: inspect(e, { depth: 1 }) })),
+					ephemeral: true,
 				}));
 		}
 	},
