@@ -58,6 +58,9 @@ export async function embeds(...funcs: EmbedFactory[]) {
 		embeds: await Promise.all(funcs.map(async (func) => await func(new EmbedBuilder().setColor("#2b2d31")))),
 	} satisfies InteractionReplyOptions;
 }
+export function constructEmbedsWrapper(baseFactory: EmbedFactory): typeof embeds {
+	return async (...funcs) => await embeds(...funcs.map<EmbedFactory>((v) => async (b) => v(await baseFactory(b))));
+}
 export function errorEmbeds(...data: { title: string; description: string }[]) {
 	// I guess it got a little too much for ts to imply the types
 	return embeds(
@@ -93,8 +96,8 @@ export function formatTime(totalSeconds: number | bigint): string {
 	}
 	return parts.join(" ");
 }
-export function futureTimestamp(inXSeconds: number) {
-	return relativeTimestamp(new Date(Date.now() + inXSeconds * 1000));
+export function futureTimestamp(inXSeconds: number, from = new Date()) {
+	return relativeTimestamp(new Date(from.getTime() + inXSeconds * 1000));
 }
 export function relativeTimestamp(date: Date) {
 	return `<t:${Math.floor(date.getTime() / 1000)}:${TimestampStyles.RelativeTime}>` as const;
@@ -107,11 +110,16 @@ export function timeTimestamp(date: Date, includeSeconds: boolean) {
 		includeSeconds ? TimestampStyles.LongTime : TimestampStyles.ShortTime
 	}>` as const;
 }
-
+/**
+ * @link https://stackoverflow.com/a/12646864
+ */
 export function getRandomValues<T extends unknown[]>(arr: T, count: number): T[number][] {
-	const shuffled = arr.sort(() => 0.5 - Math.random());
+	for (let i = arr.length - 1; i > 0; i--) {
+		const j = Math.floor(Math.random() * (i + 1));
+		[arr[i], arr[j]] = [arr[j], arr[i]];
+	}
 
-	return shuffled.slice(0, count);
+	return arr.slice(0, count);
 }
 
 const WEBHOOK_NAME = "splatsquad-bot impersonation webhook";
@@ -134,9 +142,9 @@ export async function impersonate(
 		avatarURL: user.displayAvatarURL({ size: 128 }),
 	} satisfies WebhookCreateMessageOptions);
 }
-export function hiddenLinkEmbed(link: string) {
+export function messageHiddenText(text: string) {
 	// eslint-disable-next-line no-irregular-whitespace
-	return ` ||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​|| ${link}` as const;
+	return ` ||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​|| ${text}` as const;
 }
 
 export function randomIndex<T>(x: ArrayLike<T>): T {

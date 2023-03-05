@@ -1,5 +1,4 @@
 import axios from "axios";
-import consola from "consola";
 import type { EmbedBuilder, NewsChannel } from "discord.js";
 import { AttachmentBuilder } from "discord.js";
 import sharp from "sharp";
@@ -223,7 +222,6 @@ export async function sendRotations(client: Client<true>) {
 		if (v.length === 0) return;
 		while (new Date(Date.parse(v[0]!.endTime)).getTime() < new Date().getTime()) {
 			// first node has ended, remove it from the array
-			consola.log(Date.parse(v[0]!.endTime), v[0]!);
 			v.shift();
 			if (v.length === 0) return;
 		}

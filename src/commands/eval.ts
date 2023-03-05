@@ -2,7 +2,7 @@ import { PermissionFlagsBits } from "discord.js";
 import { inspect } from "node:util";
 import type Client from "../client.js";
 import type Command from "../command.js";
-import { errorEmbeds } from "../utils.js";
+import { embeds, errorEmbeds, impersonate } from "../utils.js";
 
 // This function cleans up and prepares the
 // result of our eval command input for sending
@@ -37,9 +37,13 @@ export default {
 		if (interaction.user.id !== process.env["OWNER_ID"]!)
 			return await interaction.reply("Only the developer can run this command!");
 		client;
+		embeds;
+		impersonate;
 		try {
 			const evaled = eval(
-				interaction.options.getString("code", true).replace("client.token", '"[haha no you don\'t]"'),
+				`(async function() {\n${interaction.options
+					.getString("code", true)
+					.replace("client.token", '"[haha no you don\'t]"')}\n})()`,
 			) as unknown;
 			const cleaned = await clean(client, evaled);
 			!interaction.replied &&
