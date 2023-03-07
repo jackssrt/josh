@@ -151,3 +151,8 @@ export function randomIndex<T>(x: ArrayLike<T>): T {
 	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 	return x[Math.floor(Math.random() * x.length)]!;
 }
+export function shortenStageName(stage: string): string {
+	return ["Wahoo World", "Scorch Gorge", "Flounder Heights", "Um'ami Ruins", "Manta Maria"].includes(stage)
+		? stage
+		: stage.split(" ")[0]!;
+}

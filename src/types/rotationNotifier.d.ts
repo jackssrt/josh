@@ -18,7 +18,7 @@ export interface RegularNode extends BaseNode {
 	regularMatchSetting: RegularSetting;
 }
 export interface BankaraNode extends BaseNode {
-	bankaraMatchSettings: [BankaraSetting, BankaraSetting];
+	bankaraMatchSettings: [BankaraSetting<"CHALLENGE">, BankaraSetting<"OPEN">];
 }
 export interface XNode extends BaseNode {
 	xMatchSetting: XSetting;
@@ -94,9 +94,9 @@ export interface RainmakerVsRule {
 
 type RankedVsRule = TowerControlVsRule | ClamBlitzVsRule | SplatZonesVsRule | RainmakerVsRule;
 
-export interface BankaraSetting extends BaseMatchSetting {
+export interface BankaraSetting<Mode extends "OPEN" | "CHALLENGE" = "OPEN" | "CHALLENGE"> extends BaseMatchSetting {
 	vsRule: RankedVsRule;
-	mode: "OPEN" | "CHALLENGE";
+	mode: Mode;
 }
 
 export interface XSetting extends BaseMatchSetting {

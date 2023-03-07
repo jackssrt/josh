@@ -1,10 +1,10 @@
 import axios from "axios";
-import type { EmbedBuilder, NewsChannel } from "discord.js";
+import type { Client, EmbedBuilder, NewsChannel, TextChannel } from "discord.js";
 import { AttachmentBuilder } from "discord.js";
 import sharp from "sharp";
-import type Client from "../client.js";
 import { USER_AGENT } from "../client.js";
 import database from "../database.js";
+import { ANARCHY_BATTLE_EMOJI, REGULAR_BATTLE_EMOJI, X_BATTLE_EMOJI } from "../emojis.js";
 import type Event from "../event.js";
 import type APIResponse from "../types/rotationNotifier.js";
 import type {
@@ -17,8 +17,7 @@ import type {
 	XNode,
 	XSetting,
 } from "../types/rotationNotifier.js";
-import { embeds, relativeTimestamp, timeTimestamp, wait } from "../utils.js";
-
+import { embeds, relativeTimestamp, shortenStageName, timeTimestamp, wait } from "../utils.js";
 type RotationType = "Turf War" | "Anarchy Open" | "Anarchy Series" | "X Battle";
 
 const EMBED_DATA_MAP = {
@@ -151,18 +150,27 @@ type RotationTypeToNodeType<T extends RotationType> = T extends "Turf War"
 	: T extends "Anarchy Open" | "Anarchy Series"
 	? BankaraNode
 	: XNode;
+type RotationTypeToSettingType<T extends RotationType> = T extends "Turf War"
+	? RegularSetting
+	: T extends "Anarchy Open"
+	? BankaraSetting<"OPEN">
+	: T extends "Anarchy Series"
+	? BankaraSetting<"CHALLENGE">
+	: XSetting;
 function extractSetting<T extends RotationType>(
 	mode: T,
 	data: RotationTypeToNodeType<T>,
-): RegularSetting | BankaraSetting | XSetting {
+): RotationTypeToSettingType<T> {
 	// typescript stupid moment (implied type is RegularSetting | XSetting AND (data as NodeType))
-	return mode === "Turf War"
-		? (data as RegularNode).regularMatchSetting
-		: mode === "Anarchy Open" || mode === "Anarchy Series"
-		? (data as BankaraNode).bankaraMatchSettings.find(
-				(v) => v.mode === (mode === "Anarchy Series" ? "CHALLENGE" : "OPEN"),
-		  )!
-		: (data as XNode).xMatchSetting;
+	return (
+		mode === "Turf War"
+			? (data as RegularNode).regularMatchSetting
+			: mode === "Anarchy Open" || mode === "Anarchy Series"
+			? (data as BankaraNode).bankaraMatchSettings.find(
+					(v) => v.mode === (mode === "Anarchy Series" ? "CHALLENGE" : "OPEN"),
+			  )!
+			: (data as XNode).xMatchSetting
+	) as RotationTypeToSettingType<T>;
 }
 
 async function makeEmbed<T extends RotationType>(
@@ -195,12 +203,32 @@ async function makeEmbed<T extends RotationType>(
 	];
 }
 
+function generateChannelTopic(endTime: Date, turfWar: RegularNode[], ranked: BankaraNode[], xBattles: XNode[]): string {
+	const turfWarSetting = extractSetting("Turf War", turfWar[0]!);
+	const openSetting = extractSetting("Anarchy Open", ranked[0]!);
+	const seriesSetting = extractSetting("Anarchy Series", ranked[0]!);
+	const xSetting = extractSetting("X Battle", xBattles[0]!);
+	const parts = [
+		`Next ${relativeTimestamp(endTime)}`,
+		`${REGULAR_BATTLE_EMOJI} ${turfWarSetting.vsStages.map((v) => `[${shortenStageName(v.name)}]`).join(" & ")}`,
+		`${ANARCHY_BATTLE_EMOJI} **Open** [${RANKED_MODE_DATA_MAP[openSetting.vsRule.rule].emoji} ${
+			openSetting.vsRule.name
+		}]`,
+		`${ANARCHY_BATTLE_EMOJI} **Series** [${RANKED_MODE_DATA_MAP[seriesSetting.vsRule.rule].emoji} ${
+			seriesSetting.vsRule.name
+		}]`,
+		`${X_BATTLE_EMOJI} [${RANKED_MODE_DATA_MAP[xSetting.vsRule.rule].emoji} ${xSetting.vsRule.name}]`,
+	];
+	return parts.join(`\n・\n`);
+}
+
 export async function sendRotations(client: Client<true>) {
 	// get channel
-	const channel = (await client.channels.fetch(process.env["MAPS_CHANNEL_ID"]!)) as NewsChannel;
+	const mapsChannel = (await client.channels.fetch(process.env["MAPS_CHANNEL_ID"]!)) as NewsChannel;
+	const generalChannel = (await client.channels.fetch(process.env["GENERAL_CHANNEL_ID"]!)) as TextChannel;
 
 	//delete previous message
-	await (await channel.messages.fetch({ limit: 1 })).first()?.delete();
+	await (await mapsChannel.messages.fetch({ limit: 1 })).first()?.delete();
 
 	// send api request
 	const {
@@ -233,9 +261,13 @@ export async function sendRotations(client: Client<true>) {
 	const startTime = new Date(Date.parse(turfWar[0]!.startTime));
 	const endTime = new Date(Date.parse(turfWar[0]!.endTime));
 
+	// set channel topic
+	const topic = generateChannelTopic(endTime, turfWar, ranked, xBattles);
+	await generalChannel.setTopic(topic);
+
 	// send message
 	const attachments: AttachmentBuilder[] = [];
-	const message = await channel.send({
+	const message = await mapsChannel.send({
 		...(await embeds(
 			(b) =>
 				b
