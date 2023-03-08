@@ -205,17 +205,17 @@ async function makeEmbed<T extends RotationType>(
 
 function generateChannelTopic(endTime: Date, turfWar: RegularNode[], ranked: BankaraNode[], xBattles: XNode[]): string {
 	const turfWarSetting = extractSetting("Turf War", turfWar[0]!);
-	const openSetting = extractSetting("Anarchy Open", ranked[0]!);
 	const seriesSetting = extractSetting("Anarchy Series", ranked[0]!);
+	const openSetting = extractSetting("Anarchy Open", ranked[0]!);
 	const xSetting = extractSetting("X Battle", xBattles[0]!);
 	const parts = [
 		`Next ${relativeTimestamp(endTime)}`,
 		`${REGULAR_BATTLE_EMOJI} ${turfWarSetting.vsStages.map((v) => `[${shortenStageName(v.name)}]`).join(" & ")}`,
-		`${ANARCHY_BATTLE_EMOJI} **Open** [${RANKED_MODE_DATA_MAP[openSetting.vsRule.rule].emoji} ${
-			openSetting.vsRule.name
-		}]`,
 		`${ANARCHY_BATTLE_EMOJI} **Series** [${RANKED_MODE_DATA_MAP[seriesSetting.vsRule.rule].emoji} ${
 			seriesSetting.vsRule.name
+		}]`,
+		`${ANARCHY_BATTLE_EMOJI} **Open** [${RANKED_MODE_DATA_MAP[openSetting.vsRule.rule].emoji} ${
+			openSetting.vsRule.name
 		}]`,
 		`${X_BATTLE_EMOJI} [${RANKED_MODE_DATA_MAP[xSetting.vsRule.rule].emoji} ${xSetting.vsRule.name}]`,
 	];
