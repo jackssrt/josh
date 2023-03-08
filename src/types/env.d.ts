@@ -7,5 +7,6 @@ declare namespace NodeJS {
 		MAPS_CHANNEL_ID: string;
 		SPLATFEST_TEAM_CATEGORY_ROLE_ID: string;
 		GENERAL_CHANNEL_ID: string;
+		VOICE_CATEGORY_ID: string;
 	}
 }
