@@ -514,13 +514,13 @@ async function loopSend(client: Client<true>) {
 	while (true) {
 		const output = await fetchRotations();
 		if (!output) return;
-		const { startTime, endTime, turfWar, ranked, xBattle, salmonStartTime, salmonEndTime, salmon } = output;
+		const { endTime, turfWar, ranked, xBattle, salmonStartTime, salmonEndTime, salmon } = output;
 		await sendRegularRotations(client, endTime, turfWar, ranked, xBattle);
 		if (await database.shouldSendSalmonRunRotation()) {
 			await sendSalmonRunRotation(client, salmonStartTime, salmonEndTime, salmon);
-			await database.setLastSendSalmonRunRotation(salmonStartTime);
+			await database.setNextSalmonRunRotation(salmonEndTime);
 		}
-		await database.setLastSendMapRotation(startTime);
+		await database.setNextMapRotation(endTime);
 		await wait((endTime.getTime() - new Date().getTime()) / 1000);
 	}
 }

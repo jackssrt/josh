@@ -6,8 +6,8 @@ import type { SalmonRunAPIResponse } from "./types/rotationNotifier.js";
 
 interface DatabaseData {
 	createdSplatfestEvent: string;
-	lastSentMapRotation: number;
-	lastSentSalmonRunRotation: number;
+	nextMapRotation: number;
+	nextSalmonRunRotation: number;
 	monthlySalmonRunGearMonth: number;
 	monthlySalmonRunGear: { name: string; image: string };
 }
@@ -25,11 +25,11 @@ export class Database {
 		return ((await this.keyv.get("createdSplatfestEvent")) as DatabaseData["createdSplatfestEvent"]) === id;
 	}
 
-	async setLastSendMapRotation(startedTime: Date) {
-		await this.keyv.set("lastSentMapRotation", startedTime.getTime());
+	async setNextMapRotation(endTime: Date) {
+		await this.keyv.set("nextMapRotation", endTime.getTime());
 	}
-	async setLastSendSalmonRunRotation(startedTime: Date) {
-		await this.keyv.set("lastSentSalmonRunRotation", startedTime.getTime());
+	async setNextSalmonRunRotation(endTime: Date) {
+		await this.keyv.set("nextSalmonRunRotation", endTime.getTime());
 	}
 	async activeMonthlySalmonRunGear(): Promise<DatabaseData["monthlySalmonRunGear"]> {
 		const lastMonth = (await this.keyv.get("monthlySalmonRunGearMonth")) as
@@ -50,24 +50,13 @@ export class Database {
 		return data;
 	}
 	async shouldSendSalmonRunRotation() {
-		const FOURTY_HOURS = 40 * 60 * 60 * 1000;
-		const TEN_MINUTES = 10 * 60 * 1000;
 		return (
-			(((await this.keyv.get("lastSentSalmonRunRotation")) as DatabaseData["lastSentMapRotation"] | undefined) ??
-				new Date().getTime()) +
-				FOURTY_HOURS -
-				TEN_MINUTES -
-				new Date().getTime() >
-			0
+			(((await this.keyv.get("nextSalmonRunRotation")) as DatabaseData["nextSalmonRunRotation"] | undefined) ??
+				0) < new Date().getTime()
 		);
 	}
 	async timeTillNextMapRotationSend() {
-		const TWO_HOURS = 2 * 60 * 60 * 1000;
-		return (
-			((await this.keyv.get("lastSentMapRotation")) as DatabaseData["lastSentMapRotation"]) +
-			TWO_HOURS -
-			new Date().getTime()
-		);
+		return ((await this.keyv.get("nextMapRotation")) as DatabaseData["nextMapRotation"]) - new Date().getTime();
 	}
 }
 
