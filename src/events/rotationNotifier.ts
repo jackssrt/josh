@@ -412,8 +412,7 @@ export async function sendSalmonRunRotation(
 	});
 
 	// crosspost message
-	message;
-	// await message.crosspost();
+	await message.crosspost();
 }
 export async function sendRegularRotations(
 	client: Client<true>,
