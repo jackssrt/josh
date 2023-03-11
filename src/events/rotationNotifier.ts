@@ -1,4 +1,5 @@
 import axios from "axios";
+import dedent from "dedent";
 import type { Client, EmbedBuilder, NewsChannel, TextChannel } from "discord.js";
 import { AttachmentBuilder } from "discord.js";
 import sharp from "sharp";
@@ -6,10 +7,11 @@ import { USER_AGENT } from "../client.js";
 import database from "../database.js";
 import { ANARCHY_BATTLE_EMOJI, REGULAR_BATTLE_EMOJI, X_BATTLE_EMOJI } from "../emojis.js";
 import type Event from "../event.js";
-import type APIResponse from "../types/rotationNotifier.js";
+import type SchedulesApiResponse from "../types/rotationNotifier.js";
 import type {
 	BankaraNode,
 	BankaraSetting,
+	CoopGroupingRegularNode,
 	RankedVsRule,
 	RegularNode,
 	RegularSetting,
@@ -17,7 +19,7 @@ import type {
 	XNode,
 	XSetting,
 } from "../types/rotationNotifier.js";
-import { embeds, relativeTimestamp, shortenStageName, timeTimestamp, wait } from "../utils.js";
+import { dateTimestamp, embeds, relativeTimestamp, shortenStageName, timeTimestamp, wait } from "../utils.js";
 type RotationType = "Turf War" | "Anarchy Open" | "Anarchy Series" | "X Battle";
 
 const EMBED_DATA_MAP = {
@@ -203,11 +205,11 @@ async function makeEmbed<T extends RotationType>(
 	];
 }
 
-function generateChannelTopic(endTime: Date, turfWar: RegularNode[], ranked: BankaraNode[], xBattles: XNode[]): string {
+function generateChannelTopic(endTime: Date, turfWar: RegularNode[], ranked: BankaraNode[], xBattle: XNode[]): string {
 	const turfWarSetting = extractSetting("Turf War", turfWar[0]!);
 	const seriesSetting = extractSetting("Anarchy Series", ranked[0]!);
 	const openSetting = extractSetting("Anarchy Open", ranked[0]!);
-	const xSetting = extractSetting("X Battle", xBattles[0]!);
+	const xSetting = extractSetting("X Battle", xBattle[0]!);
 	const parts = [
 		`Next ${relativeTimestamp(endTime)}`,
 		`${REGULAR_BATTLE_EMOJI} ${turfWarSetting.vsStages.map((v) => `[${shortenStageName(v.name)}]`).join(" & ")}`,
@@ -221,48 +223,214 @@ function generateChannelTopic(endTime: Date, turfWar: RegularNode[], ranked: Ban
 	];
 	return parts.join(`\n・\n`);
 }
+const TEXT_BLUR_SIGMA = 1.00005;
+async function makeSalmonRunImage(salmon: CoopGroupingRegularNode) {
+	const WIDTH = 800;
+	const HEIGHT = 600;
+	const ICON_SIZE = HEIGHT - 450 - 16;
+	return await sharp({ create: { width: WIDTH, height: HEIGHT, background: "#00000000", channels: 4 } })
+		.composite([
+			...(
+				await Promise.all(
+					salmon.setting.weapons.map<Promise<sharp.OverlayOptions[]>>(async (v, i) => {
+						// adding "Dg" forces the text image to be as tall as possible,
+						// thus making all weapon names align.
+						const nameImage = sharp({
+							text: {
+								text: `<span foreground="white">Dg ${v.name} Dg</span>`,
+								font: "Splatoon2",
+								dpi: 72 * 2,
+								rgba: true,
+							},
+						});
+						const nameImageWidth = ((await nameImage.metadata()).width ?? 28 * 2) - 28 * 2;
 
-export async function sendRotations(client: Client<true>) {
+						const nameImageHeight = (await nameImage.metadata()).height ?? 0;
+						// cuts off the "Dg" text while keeping the height
+						// and extra horizontal space for the blur to look good
+						nameImage.resize(nameImageWidth, nameImageHeight);
+
+						return [
+							{
+								input: await sharp(
+									Buffer.from(
+										(
+											await axios.get<ArrayBuffer>(v.image.url, {
+												responseType: "arraybuffer",
+												headers: { "User-Agent": USER_AGENT },
+											})
+										).data,
+									),
+								)
+									.resize(ICON_SIZE, ICON_SIZE)
+									.toBuffer(),
+								left: (WIDTH / 4) * i + WIDTH / 4 / 2 - ICON_SIZE / 2,
+								top: (HEIGHT - 450) / 2 + 450 - 10 - ICON_SIZE / 2,
+							},
+							{
+								input: await nameImage.blur(TEXT_BLUR_SIGMA).png().toBuffer(),
+
+								top: Math.round(HEIGHT - nameImageHeight),
+								left: Math.round((WIDTH / 4) * i + WIDTH / 4 / 2 - nameImageWidth / 2),
+							},
+						];
+					}),
+				)
+			).flat(),
+			...(await Promise.all(
+				new Array(salmon.setting.weapons.length - 1)
+					.fill(false)
+					.map<Promise<sharp.OverlayOptions>>(async (_, i) => ({
+						input: await sharp({
+							create: {
+								background: "#ffffff80",
+								channels: 4,
+								height: HEIGHT - 450 - 16 - 32 - 16,
+								width: 2,
+							},
+						})
+							.png()
+							.toBuffer(),
+						top: 450 + 16 + 16 + 8,
+						left: (WIDTH / 4) * (i + 1) - 1,
+					})),
+			)),
+			{
+				input: await sharp(
+					Buffer.from(
+						(
+							await axios.get<ArrayBuffer>(salmon.setting.coopStage.image.url, {
+								responseType: "arraybuffer",
+							})
+						).data,
+					),
+				)
+					.composite([
+						{
+							input: Buffer.from(`<svg><rect x="0" y="0" width="800" height="450" rx="8" ry="8"/></svg>`),
+							blend: "dest-in",
+						},
+					])
+					.png()
+					.toBuffer(),
+				left: 0,
+				top: 0,
+			},
+		])
+		.png()
+		.toBuffer();
+}
+export async function makeSalmonRunGearImage() {
+	const gear = await database.activeMonthlySalmonRunGear();
+	// adding "Dg" forces the text image to be as tall as possible,
+	// thus making the text have a constant height
+	const nameImage = sharp({
+		text: {
+			text: `<span foreground="white">Dg ${gear.name} Dg</span>`,
+			font: "Splatoon2",
+			dpi: 72 * 3.5,
+			rgba: true,
+		},
+	});
+	const nameImageWidth = ((await nameImage.metadata()).width ?? 28 * 2 * 1.75) - 28 * 2 * 1.75;
+
+	const nameImageHeight = (await nameImage.metadata()).height ?? 0;
+	// cuts off the "Dg" text while keeping the height
+	// and extra horizontal space for the blur to look good
+	nameImage.resize(nameImageWidth, nameImageHeight);
+	return await sharp({ create: { width: 256, height: 256, background: "#00000000", channels: 4 } })
+		.composite([
+			{
+				input: Buffer.from(
+					(
+						await axios.get<ArrayBuffer>(gear.image, {
+							headers: { "User-Agent": USER_AGENT },
+							responseType: "arraybuffer",
+						})
+					).data,
+				),
+				left: 0,
+				top: 0,
+			},
+			{
+				input: await nameImage.blur(TEXT_BLUR_SIGMA).png().toBuffer(),
+				left: Math.round(256 / 2 - nameImageWidth / 2),
+				top: Math.round(256 - nameImageHeight),
+			},
+		])
+		.png()
+		.toBuffer();
+}
+
+export async function sendSalmonRunRotation(
+	client: Client<true>,
+	salmonStartTime: Date,
+	salmonEndTime: Date,
+	salmonNodes: CoopGroupingRegularNode[],
+) {
 	// get channel
+	const salmonRunChannel = (await client.channels.fetch(process.env["SALMON_RUN_CHANNEL_ID"]!)) as NewsChannel;
+
+	// delete previous message
+	await (await salmonRunChannel.messages.fetch({ limit: 1 })).first()?.delete();
+
+	const currentNode = salmonNodes[0]!;
+
+	// limit next rotations to 3
+	salmonNodes = salmonNodes.slice(1, 4);
+
+	// send message
+	const message = await salmonRunChannel.send({
+		...(await embeds((b) =>
+			b
+				.setAuthor({ name: "Data provided by splatoon3.ink", url: "https://splatoon3.ink/" })
+				.setTitle("Splatoon 3 Salmon Run rotation")
+				.setDescription(
+					dedent`Started ${relativeTimestamp(salmonStartTime)}\nEnds ${relativeTimestamp(
+						salmonEndTime,
+					)} @ ${dateTimestamp(salmonEndTime)} ${timeTimestamp(salmonEndTime, false)}`,
+				)
+				.addFields({
+					name: "Next rotations",
+					value: salmonNodes
+						.reduce(
+							(acc, v) =>
+								`${acc}➔ ${v.setting.weapons.map((v) => v.name).join(" & ")} @ ${
+									v.setting.coopStage.name
+								}\n`,
+							"",
+						)
+						.trimEnd(),
+				})
+				.setThumbnail("attachment://gear.png")
+				.setImage("attachment://salmonrun.png"),
+		)),
+		files: [
+			new AttachmentBuilder(await makeSalmonRunImage(currentNode)).setName("salmonrun.png"),
+			new AttachmentBuilder(await makeSalmonRunGearImage()).setName("gear.png"),
+		],
+	});
+
+	// crosspost message
+	message;
+	// await message.crosspost();
+}
+export async function sendRegularRotations(
+	client: Client<true>,
+	endTime: Date,
+	turfWar: RegularNode[],
+	ranked: BankaraNode[],
+	xBattle: XNode[],
+) {
+	// get channels
 	const mapsChannel = (await client.channels.fetch(process.env["MAPS_CHANNEL_ID"]!)) as NewsChannel;
 	const generalChannel = (await client.channels.fetch(process.env["GENERAL_CHANNEL_ID"]!)) as TextChannel;
 
-	//delete previous message
+	// delete previous message
 	await (await mapsChannel.messages.fetch({ limit: 1 })).first()?.delete();
 
-	// send api request
-	const {
-		data: {
-			data: {
-				regularSchedules: { nodes: turfWar },
-				bankaraSchedules: { nodes: ranked },
-				xSchedules: { nodes: xBattles },
-			},
-		},
-	} = await axios.get<APIResponse>("https://splatoon3.ink/data/schedules.json", {
-		headers: {
-			"User-Agent": USER_AGENT,
-		},
-	});
-
-	// fastforward to active nodes
-	[turfWar, ranked, xBattles].forEach((v) => {
-		if (v.length === 0) return;
-		while (new Date(Date.parse(v[0]!.endTime)).getTime() < new Date().getTime()) {
-			// first node has ended, remove it from the array
-			v.shift();
-			if (v.length === 0) return;
-		}
-	});
-	// if any(isEmptyArray, turfWar, ranked, xBattles)
-	if ([turfWar, ranked, xBattles].find((v) => v.length === 0) !== undefined) return;
-
-	// get start time and end time
-	const startTime = new Date(Date.parse(turfWar[0]!.startTime));
-	const endTime = new Date(Date.parse(turfWar[0]!.endTime));
-
 	// set channel topic
-	const topic = generateChannelTopic(endTime, turfWar, ranked, xBattles);
+	const topic = generateChannelTopic(endTime, turfWar, ranked, xBattle);
 	await generalChannel.setTopic(topic);
 
 	// send message
@@ -290,7 +458,7 @@ export async function sendRotations(client: Client<true>) {
 				return embed;
 			},
 			async (b) => {
-				const [embed, attachment] = await makeEmbed(b, "X Battle", xBattles);
+				const [embed, attachment] = await makeEmbed(b, "X Battle", xBattle);
 				attachments.push(attachment);
 				return embed;
 			},
@@ -300,15 +468,59 @@ export async function sendRotations(client: Client<true>) {
 
 	// crosspost message
 	await message.crosspost();
-	return [startTime, endTime] as const;
+}
+
+export async function fetchRotations() {
+	// send api request
+	const {
+		data: {
+			data: {
+				regularSchedules: { nodes: turfWar },
+				bankaraSchedules: { nodes: ranked },
+				xSchedules: { nodes: xBattle },
+				coopGroupingSchedule: {
+					regularSchedules: { nodes: salmon },
+				},
+			},
+		},
+	} = await axios.get<SchedulesApiResponse>("https://splatoon3.ink/data/schedules.json", {
+		headers: {
+			"User-Agent": USER_AGENT,
+		},
+	});
+
+	// fastforward to active nodes
+	[turfWar, ranked, xBattle, salmon].forEach((v) => {
+		if (v.length === 0) return;
+		while (new Date(Date.parse(v[0]!.endTime)).getTime() < new Date().getTime()) {
+			// first node has ended, remove it from the array
+			v.shift();
+			if (v.length === 0) return;
+		}
+	});
+	// if any(isEmptyArray, turfWar, ranked, xBattles)
+	if ([turfWar, ranked, xBattle, salmon].find((v) => v.length === 0) !== undefined) return;
+
+	// get start time and end time
+	const startTime = new Date(Date.parse(turfWar[0]!.startTime));
+	const endTime = new Date(Date.parse(turfWar[0]!.endTime));
+	const salmonStartTime = new Date(Date.parse(salmon[0]!.startTime));
+	const salmonEndTime = new Date(Date.parse(salmon[0]!.endTime));
+
+	return { startTime, endTime, turfWar, ranked, xBattle, salmonStartTime, salmonEndTime, salmon } as const;
 }
 
 async function loopSend(client: Client<true>) {
 	// eslint-disable-next-line no-constant-condition
 	while (true) {
-		const times = await sendRotations(client);
-		if (!times) return;
-		const [startTime, endTime] = times;
+		const output = await fetchRotations();
+		if (!output) return;
+		const { startTime, endTime, turfWar, ranked, xBattle, salmonStartTime, salmonEndTime, salmon } = output;
+		await sendRegularRotations(client, endTime, turfWar, ranked, xBattle);
+		if (await database.shouldSendSalmonRunRotation()) {
+			await sendSalmonRunRotation(client, salmonStartTime, salmonEndTime, salmon);
+			await database.setLastSendSalmonRunRotation(salmonStartTime);
+		}
 		await database.setLastSendMapRotation(startTime);
 		await wait((endTime.getTime() - new Date().getTime()) / 1000);
 	}

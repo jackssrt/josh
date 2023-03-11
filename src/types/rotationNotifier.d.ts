@@ -1,4 +1,4 @@
-export default interface APIResponse {
+export default interface SchedulesApiResponse {
 	data: {
 		regularSchedules: { nodes: RegularNode[] };
 		bankaraSchedules: { nodes: BankaraNode[] };
@@ -113,4 +113,19 @@ export interface Stage {
 		url: string;
 	};
 	id: string;
+}
+
+export interface SalmonRunAPIResponse {
+	data: {
+		coopResult: {
+			monthlyGear: MonthlyGear;
+		};
+	};
+}
+
+export interface MonthlyGear {
+	__splatoon3ink_id: string;
+	__typename: string;
+	name: string;
+	image: { url: string };
 }
