@@ -15,7 +15,6 @@ specifiers:
   eslint: ^8.36.0
   eslint-config-prettier: ^8.7.0
   eslint-plugin-prettier: ^4.2.1
-  font-list: ^1.4.5
   keyv: ^4.5.2
   nodemon: ^2.0.21
   prettier: ^2.8.4
@@ -30,7 +29,6 @@ dependencies:
   dedent: 0.7.0
   discord.js: 14.8.0
   dotenv: 16.0.3
-  font-list: 1.4.5
   keyv: 4.5.2
   sharp: 0.31.3
 
@@ -1138,10 +1136,6 @@ packages:
     peerDependenciesMeta:
       debug:
         optional: true
-    dev: false
-
-  /font-list/1.4.5:
-    resolution: {integrity: sha512-mLi7Sb4iitgk3mJsTZZDbixssHLoJB4/onWGlQOvTSPW8YPBDQNaMTGOdZ92axQI4UNWwPxV5FmCBOEo1Us7lg==}
     dev: false
 
   /form-data/4.0.0:
