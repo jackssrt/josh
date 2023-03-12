@@ -1,4 +1,5 @@
 import axios from "axios";
+import consola from "consola";
 import dedent from "dedent";
 import type { Client, EmbedBuilder, NewsChannel, TextChannel } from "discord.js";
 import { AttachmentBuilder } from "discord.js";
@@ -19,7 +20,15 @@ import type {
 	XNode,
 	XSetting,
 } from "../types/rotationNotifier.js";
-import { dateTimestamp, embeds, relativeTimestamp, shortenStageName, timeTimestamp, wait } from "../utils.js";
+import {
+	dateTimestamp,
+	embeds,
+	formatTime,
+	relativeTimestamp,
+	shortenStageName,
+	timeTimestamp,
+	wait,
+} from "../utils.js";
 type RotationType = "Turf War" | "Anarchy Open" | "Anarchy Series" | "X Battle";
 
 const EMBED_DATA_MAP = {
@@ -432,7 +441,7 @@ export async function sendRegularRotations(
 
 		generalChannel.setTopic(generateChannelTopic(endTime, turfWar, ranked, xBattle)),
 
-		async () => {
+		(async () => {
 			// send message
 			const attachments: AttachmentBuilder[] = [];
 			const message = await mapsChannel.send({
@@ -467,7 +476,7 @@ export async function sendRegularRotations(
 			});
 			// crosspost message
 			await message.crosspost();
-		},
+		})(),
 	]);
 }
 
@@ -500,7 +509,8 @@ export async function fetchRotations() {
 		}
 	});
 	// if any(isEmptyArray, turfWar, ranked, xBattles)
-	if ([turfWar, ranked, xBattle, salmon].find((v) => v.length === 0) !== undefined) return;
+	if ([turfWar, ranked, xBattle, salmon].find((v) => v.length === 0) !== undefined)
+		return consola.warn("A schedule was empty!");
 
 	// get start time and end time
 	const startTime = new Date(Date.parse(turfWar[0]!.startTime));
@@ -518,15 +528,18 @@ async function loopSend(client: Client<true>) {
 		if (!output) return;
 		const { endTime, turfWar, ranked, xBattle, salmonStartTime, salmonEndTime, salmon } = output;
 		await Promise.all([
-			async () => {
+			(async () => {
+				consola.info("Sending regular rotations...");
 				await sendRegularRotations(client, endTime, turfWar, ranked, xBattle);
 				await database.setNextMapRotation(endTime);
-			},
+			})(),
 			(await database.shouldSendSalmonRunRotation())
-				? async () => {
+				? (async () => {
+						consola.info("Sending salmon run rotations...");
+
 						await sendSalmonRunRotation(client, salmonStartTime, salmonEndTime, salmon);
 						await database.setNextSalmonRunRotation(salmonEndTime);
-				  }
+				  })()
 				: Promise.resolve(),
 		]);
 
@@ -538,6 +551,7 @@ export default {
 	event: "ready",
 	async on({ client }) {
 		const timeTillSend = await database.timeTillNextMapRotationSend();
+		consola.info(`Time till next rotation send: ${formatTime(timeTillSend / 1000)}`);
 		if (timeTillSend > 0) await wait(timeTillSend / 1000);
 		await loopSend(client);
 	},
