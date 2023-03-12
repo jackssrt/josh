@@ -1,4 +1,4 @@
-import type { Awaitable, InteractionReplyOptions, TextChannel, User, WebhookCreateMessageOptions } from "discord.js";
+import type { Awaitable, InteractionReplyOptions, TextChannel, User, WebhookMessageCreateOptions } from "discord.js";
 import { EmbedBuilder, GuildMember, TimestampStyles } from "discord.js";
 import { existsSync } from "node:fs";
 import { readFile } from "node:fs/promises";
@@ -127,7 +127,7 @@ export async function impersonate(
 	client: Client<true>,
 	user: GuildMember | User,
 	channel: TextChannel,
-	message: string | WebhookCreateMessageOptions,
+	message: string | WebhookMessageCreateOptions,
 ) {
 	const webhook =
 		(await channel.fetchWebhooks()).find((v) => v.token !== undefined && v.name === WEBHOOK_NAME) ??
@@ -140,7 +140,7 @@ export async function impersonate(
 		...(typeof message === "string" ? { content: message } : message),
 		username: `${user instanceof GuildMember ? user.nickname ?? user.user.username : user.username}`,
 		avatarURL: user.displayAvatarURL({ size: 128 }),
-	} satisfies WebhookCreateMessageOptions);
+	} satisfies WebhookMessageCreateOptions);
 }
 export function messageHiddenText(text: string) {
 	// eslint-disable-next-line no-irregular-whitespace
