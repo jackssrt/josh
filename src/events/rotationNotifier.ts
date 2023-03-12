@@ -427,46 +427,48 @@ export async function sendRegularRotations(
 
 	// delete previous message
 	await (await mapsChannel.messages.fetch({ limit: 1 })).first()?.delete();
+	await Promise.all([
+		// set channel topic
 
-	// set channel topic
-	const topic = generateChannelTopic(endTime, turfWar, ranked, xBattle);
-	await generalChannel.setTopic(topic);
+		generalChannel.setTopic(generateChannelTopic(endTime, turfWar, ranked, xBattle)),
 
-	// send message
-	const attachments: AttachmentBuilder[] = [];
-	const message = await mapsChannel.send({
-		...(await embeds(
-			(b) =>
-				b
-					.setAuthor({ name: "Data provided by splatoon3.ink", url: "https://splatoon3.ink/" })
-					.setTitle(`Splatoon 3 maps and modes rotations`)
-					.setDescription(`Ends ${relativeTimestamp(endTime)} @ ${timeTimestamp(endTime, false)}`),
-			async (b) => {
-				const [embed, attachment] = await makeEmbed(b, "Turf War", turfWar);
-				attachments.push(attachment);
-				return embed;
-			},
-			async (b) => {
-				const [embed, attachment] = await makeEmbed(b, "Anarchy Series", ranked);
-				attachments.push(attachment);
-				return embed;
-			},
-			async (b) => {
-				const [embed, attachment] = await makeEmbed(b, "Anarchy Open", ranked);
-				attachments.push(attachment);
-				return embed;
-			},
-			async (b) => {
-				const [embed, attachment] = await makeEmbed(b, "X Battle", xBattle);
-				attachments.push(attachment);
-				return embed;
-			},
-		)),
-		files: attachments,
-	});
-
-	// crosspost message
-	await message.crosspost();
+		async () => {
+			// send message
+			const attachments: AttachmentBuilder[] = [];
+			const message = await mapsChannel.send({
+				...(await embeds(
+					(b) =>
+						b
+							.setAuthor({ name: "Data provided by splatoon3.ink", url: "https://splatoon3.ink/" })
+							.setTitle(`Splatoon 3 maps and modes rotations`)
+							.setDescription(`Ends ${relativeTimestamp(endTime)} @ ${timeTimestamp(endTime, false)}`),
+					async (b) => {
+						const [embed, attachment] = await makeEmbed(b, "Turf War", turfWar);
+						attachments.push(attachment);
+						return embed;
+					},
+					async (b) => {
+						const [embed, attachment] = await makeEmbed(b, "Anarchy Series", ranked);
+						attachments.push(attachment);
+						return embed;
+					},
+					async (b) => {
+						const [embed, attachment] = await makeEmbed(b, "Anarchy Open", ranked);
+						attachments.push(attachment);
+						return embed;
+					},
+					async (b) => {
+						const [embed, attachment] = await makeEmbed(b, "X Battle", xBattle);
+						attachments.push(attachment);
+						return embed;
+					},
+				)),
+				files: attachments,
+			});
+			// crosspost message
+			await message.crosspost();
+		},
+	]);
 }
 
 export async function fetchRotations() {
@@ -515,12 +517,19 @@ async function loopSend(client: Client<true>) {
 		const output = await fetchRotations();
 		if (!output) return;
 		const { endTime, turfWar, ranked, xBattle, salmonStartTime, salmonEndTime, salmon } = output;
-		await sendRegularRotations(client, endTime, turfWar, ranked, xBattle);
-		if (await database.shouldSendSalmonRunRotation()) {
-			await sendSalmonRunRotation(client, salmonStartTime, salmonEndTime, salmon);
-			await database.setNextSalmonRunRotation(salmonEndTime);
-		}
-		await database.setNextMapRotation(endTime);
+		await Promise.all([
+			async () => {
+				await sendRegularRotations(client, endTime, turfWar, ranked, xBattle);
+				await database.setNextMapRotation(endTime);
+			},
+			(await database.shouldSendSalmonRunRotation())
+				? async () => {
+						await sendSalmonRunRotation(client, salmonStartTime, salmonEndTime, salmon);
+						await database.setNextSalmonRunRotation(salmonEndTime);
+				  }
+				: Promise.resolve(),
+		]);
+
 		await wait((endTime.getTime() - new Date().getTime()) / 1000);
 	}
 }
