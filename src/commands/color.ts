@@ -127,7 +127,8 @@ export default {
 				interaction.editReply(`All done! Enjoy your new name color! ${BOOYAH_EMOJI}`),
 
 				colorRoles.map(async (v) => {
-					if (v.members.size === 0) await v.delete("Color role clean up");
+					if (v.members.size === 0 && v.id !== process.env["DEFAULT_COLOR_ROLE_ID"]!)
+						await v.delete("Color role clean up");
 				}),
 			]);
 		} finally {

@@ -10,5 +10,6 @@ declare namespace NodeJS {
 		GENERAL_CHANNEL_ID: string;
 		VOICE_CATEGORY_ID: string;
 		COLORS_ROLE_CATEGORY_ID: string;
+		DEFAULT_COLOR_ROLE_ID: string;
 	}
 }
