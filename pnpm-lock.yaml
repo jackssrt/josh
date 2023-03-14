@@ -3,6 +3,7 @@ lockfileVersion: 5.4
 specifiers:
   '@keyv/sqlite': ^3.6.4
   '@types/dedent': ^0.7.0
+  '@types/js-levenshtein': ^1.1.1
   '@types/node': ^18.15.0
   '@types/sharp': ^0.31.1
   '@typescript-eslint/eslint-plugin': ^5.54.1
@@ -15,6 +16,7 @@ specifiers:
   eslint: ^8.36.0
   eslint-config-prettier: ^8.7.0
   eslint-plugin-prettier: ^4.2.1
+  js-levenshtein: ^1.1.6
   keyv: ^4.5.2
   nodemon: ^2.0.21
   prettier: ^2.8.4
@@ -29,11 +31,13 @@ dependencies:
   dedent: 0.7.0
   discord.js: 14.8.0
   dotenv: 16.0.3
+  js-levenshtein: 1.1.6
   keyv: 4.5.2
   sharp: 0.31.3
 
 devDependencies:
   '@types/dedent': 0.7.0
+  '@types/js-levenshtein': 1.1.1
   '@types/node': 18.15.0
   '@types/sharp': 0.31.1
   '@typescript-eslint/eslint-plugin': 5.54.1_4rfaf6mlw2mmutqjcopwvbftpu
@@ -292,6 +296,10 @@ packages:
 
   /@types/dedent/0.7.0:
     resolution: {integrity: sha512-EGlKlgMhnLt/cM4DbUSafFdrkeJoC9Mvnj0PUCU7tFmTjMjNRT957kXCx0wYm3JuEq4o4ZsS5vG+NlkM2DMd2A==}
+    dev: true
+
+  /@types/js-levenshtein/1.1.1:
+    resolution: {integrity: sha512-qC4bCqYGy1y/NP7dDVr7KJarn+PbX1nSpwA7JXdu0HxT3QYjO8MJ+cntENtHFVy2dRAyBV23OZ6MxsW1AM1L8g==}
     dev: true
 
   /@types/json-schema/7.0.11:
@@ -1410,6 +1418,11 @@ packages:
 
   /isexe/2.0.0:
     resolution: {integrity: sha512-RHxMLp9lnKHGHRng9QFhRCMbYAcVpn69smSGcq3f36xjgVVWThj4qqLbTLlq7Ssj8B+fIQ1EuCEGI2lKsyQeIw==}
+
+  /js-levenshtein/1.1.6:
+    resolution: {integrity: sha512-X2BB11YZtrRqY4EnQcLX5Rh373zbK4alC1FW7D7MBhL2gtcC17cTnr6DmfHZeS0s2rTHjUTMMHfG7gO8SSdw+g==}
+    engines: {node: '>=0.10.0'}
+    dev: false
 
   /js-sdsl/4.3.0:
     resolution: {integrity: sha512-mifzlm2+5nZ+lEcLJMoBK0/IH/bDg8XnJfd/Wq6IP+xoCjLZsTOnV2QpxlVbX9bMnkl5PdEjNtBJ9Cj1NjifhQ==}

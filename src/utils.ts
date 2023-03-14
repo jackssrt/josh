@@ -1,7 +1,18 @@
-import type { Awaitable, InteractionReplyOptions, TextChannel, User, WebhookMessageCreateOptions } from "discord.js";
+import type {
+	Awaitable,
+	InteractionReplyOptions,
+	Role,
+	TextChannel,
+	User,
+	WebhookMessageCreateOptions,
+} from "discord.js";
 import { EmbedBuilder, GuildMember, TimestampStyles } from "discord.js";
+import levenshtein from "js-levenshtein";
+import type EventEmitter from "node:events";
 import { existsSync } from "node:fs";
 import { readFile } from "node:fs/promises";
+import type { Sharp } from "sharp";
+import sharp from "sharp";
 import type Client from "./client.js";
 export interface Config {
 	token: string;
@@ -151,4 +162,120 @@ export function shortenStageName(stage: string): string {
 	return ["Wahoo World", "Scorch Gorge", "Flounder Heights", "Um'ami Ruins", "Manta Maria"].includes(stage)
 		? stage
 		: stage.split(" ")[0]!;
+}
+
+export function roleIsCategory(role: Role): boolean {
+	return role.name.startsWith("⠀") && role.hexColor !== "#010101";
+}
+
+/**
+ * Gets all the roles that are under the anchor role in the same category.
+ * @param anchor The anchor role
+ * @returns Roles that are under the anchor role in the same category
+ */
+export async function getLowerRolesInSameCategory(anchor: Role) {
+	const roles: Role[] = [];
+	let collecting = false;
+	for (const v of (await anchor.guild.roles.fetch()).sort((a, b) => b.position - a.position).values()) {
+		if (v.name === "@everyone") continue;
+		if (collecting) {
+			if (roleIsCategory(v)) collecting = false;
+			else roles.push(v);
+		} else {
+			if (v.id === anchor.id) collecting = true;
+		}
+	}
+	return roles;
+}
+/**
+ * Get the parameters of events in an eventEmitter.
+ */
+export type EventParams<T extends EventEmitter> = Parameters<Parameters<T["on"]>[1]>;
+/**
+ * Get the names of events in an eventEmitter.
+ */
+export type EventNames<T extends EventEmitter> = Parameters<T["on"]>[0];
+
+/**
+ * Await for an eventemitter to emit specific events.
+ * Makes eventemitters able to be awaited.
+ * @param ee the eventemitter
+ * @param timeout longest time to wait for events
+ * @param event the event(s) to wait for
+ * @returns a Promise that resolves when the events are emitted or times out, with the arguments of the event or an empty array
+ */
+export async function awaitEvent<T extends EventEmitter, E extends EventNames<T>>(
+	ee: T,
+	event: E[] | E,
+	timeout?: number | undefined,
+): Promise<EventParams<T> | []> {
+	const events = Array.isArray(event) ? event : [event];
+	return new Promise((resolve) => {
+		function listener(...args: unknown[]) {
+			events.forEach((e) => ee.removeListener(e, listener));
+			resolve(args as EventParams<T>);
+		}
+		events.forEach((e) => ee.on(e, listener));
+
+		function onTimeout() {
+			events.forEach((e) => ee.removeListener(e, listener));
+			resolve([]);
+		}
+		if (timeout) wait(timeout).then(onTimeout).catch(onTimeout);
+	});
+}
+
+export function search<T extends string[]>(source: T, term: string): T[number][] {
+	return source.sort((a, b) => {
+		const bStartsWith = b.toLowerCase().trim().startsWith(term.toLowerCase().trim());
+		const aStartsWith = a.toLowerCase().trim().startsWith(term.toLowerCase().trim());
+		if (aStartsWith && bStartsWith) return 0;
+		else if (bStartsWith) return 1;
+		else if (aStartsWith) return -1;
+		const bContains = b.toLowerCase().trim().includes(term.toLowerCase().trim());
+		const aContains = a.toLowerCase().trim().includes(term.toLowerCase().trim());
+		if (bContains && aContains) return 0;
+		else if (bContains) return 1;
+		else if (aContains) return -1;
+
+		return (
+			levenshtein(a.toLowerCase().trim(), term.toLowerCase().trim()) -
+			levenshtein(b.toLowerCase().trim(), term.toLowerCase().trim())
+		);
+	});
+}
+export async function textImage(text: string, color: string, size: number): Promise<Sharp> {
+	// adding "Dg" forces the text image to be as tall as possible,
+	const img = sharp({
+		text: {
+			text: `<span foreground="${color}">Dg ${text.replace("&", "&amp;")} Dg</span>`,
+			dpi: 72 * size,
+			font: "Splatoon2",
+			rgba: true,
+		},
+	});
+	const width = ((await img.metadata()).width ?? 14 * 2 * size) - 14 * 2 * size;
+
+	const height = (await img.metadata()).height ?? 0;
+	// cuts off the "Dg" text while keeping the height
+	return img.resize(width, height).png();
+}
+/**
+ * @link https://stackoverflow.com/a/596243
+ */
+export function colorLuminance(r: number, g: number, b: number): number {
+	return 0.299 * r + 0.587 * g + 0.114 * b;
+}
+/**
+ * @link https://stackoverflow.com/a/39077686
+ */
+export function hexToRGB(hex: `#${string}`) {
+	return hex
+		.replace(
+			/^#?([a-f\d])([a-f\d])([a-f\d])$/i,
+			(_, r: string, g: string, b: string) => "#" + r + r + g + g + b + b,
+		)
+		?.substring(1)
+		?.match(/.{2}/g)
+		?.map((x) => parseInt(x, 16)) as [number, number, number];
 }

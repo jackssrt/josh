@@ -6,8 +6,10 @@ import type { ClientEvents, InteractionReplyOptions, MessageCreateOptions, Prese
 import { ActivityType, Client as DiscordClient, EmbedBuilder, GatewayIntentBits } from "discord.js";
 import type Command from "./command.js";
 import type { ContextMenuItem } from "./contextMenuItem.js";
+import { IS_DEV } from "./env.js";
 import type Event from "./event.js";
 import Registry from "./registry.js";
+import { pluralize } from "./utils.js";
 consola.wrapAll();
 export const USER_AGENT =
 	"Splat Squad Bot (source code: https://github.com/jackssrt/splatsquad-bot , make an issue if it's misbehaving)";
@@ -39,15 +41,17 @@ export default class Client<Ready extends boolean = false> extends DiscordClient
 	}
 	public async load() {
 		// TODO add if dev thing here
-		await this.commandRegistry.loadFromDirectory("./src/commands");
-		consola.success(`Loaded ${this.commandRegistry.size} command${this.commandRegistry.size === 1 ? "" : "s"}`);
-		await this.eventRegistry.loadFromDirectory("./src/events");
-		consola.success(`Loaded ${this.eventRegistry.size} event${this.eventRegistry.size === 1 ? "" : "s"}`);
-		await this.contextMenuItemsRegistry.loadFromDirectory("./src/contextMenuItems");
+		const dirName = IS_DEV ? "src" : "build";
+		await this.commandRegistry.loadFromDirectory(`./${dirName}/commands`);
+		consola.success(`Loaded ${this.commandRegistry.size} ${pluralize("command", this.commandRegistry.size)}`);
+		await this.eventRegistry.loadFromDirectory(`./${dirName}/events`);
+		consola.success(`Loaded ${this.eventRegistry.size} ${pluralize("event", this.eventRegistry.size)}`);
+		await this.contextMenuItemsRegistry.loadFromDirectory(`./${dirName}/contextMenuItems`);
 		consola.success(
-			`Loaded ${this.contextMenuItemsRegistry.size} context menu item${
-				this.contextMenuItemsRegistry.size === 1 ? "" : "s"
-			}`,
+			`Loaded ${this.contextMenuItemsRegistry.size} ${pluralize(
+				"context menu item",
+				this.contextMenuItemsRegistry.size,
+			)}`,
 		);
 	}
 	public async start() {
@@ -110,7 +114,13 @@ export default class Client<Ready extends boolean = false> extends DiscordClient
 			else if (item.type === "User" && interaction.isUserContextMenuCommand())
 				await item.execute({ client: this as Client<true>, interaction });
 		});
+		this.on("interactionCreate", async (interaction) => {
+			if (!interaction.isAutocomplete()) return;
+			const command = this.commandRegistry.get(interaction.commandName);
+
+			await command?.autocomplete?.({ client: this as Client<true>, interaction });
+		});
 		await this.login(process.env["TOKEN"]!);
-		await (await this.users.fetch(process.env["OWNER_ID"]!)).send("✅ Started");
+		if (IS_DEV) await (await this.users.fetch(process.env["OWNER_ID"]!)).send("✅ Started");
 	}
 }
