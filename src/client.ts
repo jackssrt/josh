@@ -6,7 +6,7 @@ import type { ClientEvents, InteractionReplyOptions, MessageCreateOptions, Prese
 import { ActivityType, Client as DiscordClient, EmbedBuilder, GatewayIntentBits } from "discord.js";
 import type Command from "./command.js";
 import type { ContextMenuItem } from "./contextMenuItem.js";
-import { IS_DEV } from "./env.js";
+import { IS_BUILT, IS_DEV } from "./env.js";
 import type Event from "./event.js";
 import Registry from "./registry.js";
 import { pluralize } from "./utils.js";
@@ -40,8 +40,7 @@ export default class Client<Ready extends boolean = false> extends DiscordClient
 		this.user?.setPresence(Client.defaultPresence);
 	}
 	public async load() {
-		// TODO add if dev thing here
-		const dirName = IS_DEV ? "src" : "build";
+		const dirName = IS_BUILT ? "build" : "src";
 		await this.commandRegistry.loadFromDirectory(`./${dirName}/commands`);
 		consola.success(`Loaded ${this.commandRegistry.size} ${pluralize("command", this.commandRegistry.size)}`);
 		await this.eventRegistry.loadFromDirectory(`./${dirName}/events`);
