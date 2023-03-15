@@ -19,9 +19,11 @@ import {
 	userMention,
 } from "discord.js";
 import { randomInt } from "node:crypto";
+import EventEmitter from "node:events";
 import { BOOYAH_EMOJI, DIVIDER_EMOJI, OUCH_EMOJI, SQUIDSHUFFLE_EMOJI, VEEMO_PEEK_EMOJI } from "../../emojis.js";
 import { IS_PROD } from "../../env.js";
 import {
+	awaitEvent,
 	constructEmbedsWrapper,
 	embeds,
 	futureTimestamp,
@@ -29,7 +31,13 @@ import {
 	messageHiddenText,
 	wait,
 } from "../../utils.js";
-import { RULES, SECONDS_TO_JOIN, SECONDS_TO_PICK_TEAMS, SECONDS_TO_PLAY_AGAIN } from "./consts.js";
+import {
+	RULES,
+	SECONDS_TO_CONFIRM_LEAVE,
+	SECONDS_TO_JOIN,
+	SECONDS_TO_PICK_TEAMS,
+	SECONDS_TO_PLAY_AGAIN,
+} from "./consts.js";
 import Player, { PlayerRole } from "./Player.js";
 
 export const enum GameState {
@@ -81,16 +89,16 @@ export default class Game<State extends GameState = GameState.WaitingForPlayers>
 		private readonly mode: "turfwar" | "ranked",
 		private readonly maxPlayers: number,
 	) {
-		const host = new Player(hostInteraction, true as const, undefined, this);
+		this.code = `${randomInt(0, 9)}${randomInt(0, 9)}${randomInt(0, 9)}${randomInt(0, 9)}`;
+		const host = new Player(hostInteraction, true as const, undefined, undefined, this.code);
 		this.players.set(hostInteraction.user, host);
 		this.host = host;
-		this.code = `${randomInt(0, 9)}${randomInt(0, 9)}${randomInt(0, 9)}${randomInt(0, 9)}`;
 		this.hideTimeSeconds = IS_PROD ? (this.mode === "turfwar" ? 1 : 2) * 60 : 5;
 		this.seekTimeSeconds = IS_PROD ? (this.mode === "turfwar" ? 2 : 3) * 60 : 10;
 	}
 
 	public addPlayer(interaction: ButtonInteraction) {
-		const p = new Player(interaction, false as const, undefined, this);
+		const p = new Player(interaction, false as const, undefined, this.host, this.code);
 		this.players.set(interaction.user, p);
 		return p;
 	}
@@ -119,7 +127,7 @@ export default class Game<State extends GameState = GameState.WaitingForPlayers>
 			};
 		}
 	}
-	private async awaitPlayers(this: Game<GameState.WaitingForPlayers>): Promise<boolean | void> {
+	private async awaitPlayers(this: Game<GameState.WaitingForPlayers>): Promise<Promise<boolean | void>> {
 		this.state = GameState.WaitingForPlayers;
 		const data = {
 			...(await embeds((b) => b.setDescription(`${SQUIDSHUFFLE_EMOJI} Setting everything up...`))),
@@ -143,28 +151,8 @@ export default class Game<State extends GameState = GameState.WaitingForPlayers>
 			v.role = undefined;
 		});
 		await this.updateMainMessage();
-		const collector = this.mainMessage.createMessageComponentCollector({
-			componentType: ComponentType.Button,
-			maxUsers: 7,
-			time: SECONDS_TO_JOIN * 1000,
-			filter: async (x) =>
-				x.user.id === this.host.user.id
-					? !!void (await x.reply({ content: "You're the host!", ephemeral: true }))
-					: this.players.find((y) => y.user.id === x.user.id)
-					? !!void (await x.reply({ content: "You've already joined!", ephemeral: true }))
-					: true,
-		});
-		collector.on("collect", async (collected) => {
-			const p = this.addPlayer(collected);
-			await collected.reply({
-				...(await p.roleEmbed()),
-				ephemeral: true,
-			});
-			await this.updateMainMessage();
-		});
-		collector.once("end", async (_, reason) => {
-			if (reason !== "started") await this.abort();
-		});
+		const startedEe = new EventEmitter();
+
 		const hostConfigMessage = await this.host.interaction.followUp({
 			embeds: [
 				...(await this.host.roleEmbed()).embeds,
@@ -188,7 +176,7 @@ export default class Game<State extends GameState = GameState.WaitingForPlayers>
 			],
 			ephemeral: true,
 		});
-		const interaction = await hostConfigMessage.awaitMessageComponent({
+		const hostConfigCollector = hostConfigMessage.createMessageComponentCollector({
 			componentType: ComponentType.Button,
 			filter: async (x) => {
 				if (x.customId === "start" && this.players.size < 2)
@@ -196,10 +184,83 @@ export default class Game<State extends GameState = GameState.WaitingForPlayers>
 				return true;
 			},
 		});
-		await interaction.deferUpdate();
-		this.hostConfigInteraction = interaction;
-		if (interaction.customId === "start") collector.stop("started");
-		else return !!void (await this.abort());
+		hostConfigCollector.on("collect", async (hostActionInteraction) => {
+			await hostActionInteraction.deferUpdate();
+			this.hostConfigInteraction = hostActionInteraction;
+			if (hostActionInteraction.customId === "start") {
+				joinCollector.stop("started");
+				startedEe.emit("started");
+			} else return void (await this.abort());
+		});
+		const joinCollector = this.mainMessage.createMessageComponentCollector({
+			componentType: ComponentType.Button,
+			time: SECONDS_TO_JOIN * 1000,
+			filter: async (x) =>
+				this.players.size >= this.maxPlayers && !this.players.has(x.user)
+					? !!void (await x.reply({ content: "Sorry, this game is full!", ephemeral: true }))
+					: x.user.id === this.host.user.id
+					? !!void (await x.reply({ content: "You're the host!", ephemeral: true }))
+					: true,
+		});
+		joinCollector.on("collect", async (interaction) => {
+			if (this.players.has(interaction.user)) {
+				// leave
+				const leaveConfirmation = await interaction.reply({
+					...(await embeds((b) =>
+						b
+							.setTitle("Do you want to leave?")
+							.setDescription(
+								`Do you want to leave this game?\nPicking \`Nah\` ${futureTimestamp(
+									SECONDS_TO_CONFIRM_LEAVE,
+								)}`,
+							),
+					)),
+					components: [
+						new ActionRowBuilder<ButtonBuilder>().addComponents(
+							new ButtonBuilder().setCustomId("yes").setLabel("Yeah").setStyle(ButtonStyle.Danger),
+							new ButtonBuilder().setCustomId("no").setLabel("Nah").setStyle(ButtonStyle.Secondary),
+						),
+					],
+					ephemeral: true,
+					fetchReply: true,
+				});
+				let leaveConfirmationInteraction: ButtonInteraction;
+				try {
+					leaveConfirmationInteraction = await leaveConfirmation.awaitMessageComponent({
+						componentType: ComponentType.Button,
+					});
+				} catch {
+					return;
+				}
+				const player = this.players.get(interaction.user) as Player<false>;
+				this.players.delete(interaction.user);
+				const leftEmbeds = await embeds((b) => b.setTitle("You have left the game").setColor("Red"));
+				await Promise.all([
+					leaveConfirmationInteraction.update({
+						...leftEmbeds,
+						components: [],
+					}),
+					!this.playedAgain && player ? player.interaction.editReply(leftEmbeds) : undefined,
+					this.updateMainMessage(),
+				]);
+				return;
+			}
+			const p = this.addPlayer(interaction);
+			await Promise.all([
+				interaction.reply({
+					...(await p.roleEmbed()),
+					ephemeral: true,
+					fetchReply: true,
+				}),
+				this.updateMainMessage(),
+			]);
+		});
+		joinCollector.once("end", async (_, reason) => {
+			if (reason !== "started") await this.abort();
+			hostConfigCollector.stop("started");
+			startedEe.emit("started");
+		});
+		await awaitEvent(startedEe, "started");
 	}
 
 	private async decideTeams(this: Game<GameState.DecidingTeams>): Promise<boolean | void> {

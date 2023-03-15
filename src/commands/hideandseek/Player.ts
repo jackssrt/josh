@@ -2,8 +2,6 @@ import type { ButtonInteraction, ChatInputCommandInteraction, User } from "disco
 import { SQUIDSHUFFLE_EMOJI } from "../../emojis.js";
 import { embeds } from "../../utils.js";
 import { HIDER_EXPLANATION, ROLE_ICON_MAP, SEEKER_EXPLANATION } from "./consts.js";
-import type Game from "./Game.js";
-import type { GameState } from "./Game.js";
 
 export const enum PlayerRole {
 	Seeker,
@@ -11,12 +9,15 @@ export const enum PlayerRole {
 }
 export default class Player<Host extends boolean = boolean> {
 	public user: User;
+	private gameHost: Player<true>;
 	constructor(
 		public interaction: Host extends true ? ChatInputCommandInteraction : ButtonInteraction,
 		public host: Host,
 		public role: PlayerRole | undefined,
-		private game: Game<GameState>,
+		gameHost: Host extends true ? undefined : Player<true>,
+		private gameCode: string,
 	) {
+		this.gameHost = gameHost ?? (this as Player<true>);
 		this.user = interaction.user;
 	}
 	/**
@@ -46,8 +47,8 @@ export default class Player<Host extends boolean = boolean> {
 			b.setAuthor(
 				!this.host
 					? {
-							name: `Host: ${this.game.host.user.username}・Room code: ${this.game.code}`,
-							iconURL: this.game.host.user.avatarURL() || "",
+							name: `Host: ${this.gameHost.user.username}・Room code: ${this.gameCode}`,
+							iconURL: this.gameHost.user.avatarURL() || "",
 					  }
 					: null,
 			)
@@ -63,6 +64,11 @@ export default class Player<Host extends boolean = boolean> {
 						? this.role === PlayerRole.Seeker
 							? SEEKER_EXPLANATION
 							: HIDER_EXPLANATION
+						: null,
+				)
+				.setFooter(
+					this.role === undefined && !this.host
+						? { text: `You can leave this game by pressing on the "I'm in!" button again` }
 						: null,
 				);
 

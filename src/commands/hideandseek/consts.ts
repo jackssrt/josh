@@ -4,6 +4,7 @@ import { PlayerRole } from "./Player.js";
 export const SECONDS_TO_JOIN = 60 * 10;
 export const SECONDS_TO_PICK_TEAMS = 60 * 10;
 export const SECONDS_TO_PLAY_AGAIN = 60 * 1;
+export const SECONDS_TO_CONFIRM_LEAVE = 30;
 
 export const ROLE_ICON_MAP = {
 	[PlayerRole.Seeker]: SEEKER_EMOJI,

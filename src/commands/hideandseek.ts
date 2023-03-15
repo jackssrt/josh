@@ -11,10 +11,19 @@ export default {
 					.setDescription("What mode will this game be in?")
 					.setName("mode")
 					.setRequired(true),
+			)
+			.addIntegerOption((b) =>
+				b
+					.setName("maxplayers")
+					.setMinValue(2)
+					.setMaxValue(8)
+					.setRequired(false)
+					.setDescription("The max number of players for this game"),
 			),
 	async execute({ interaction }) {
 		const mode = interaction.options.getString("mode", true) as "ranked" | "turfwar";
-		const game = new Game(interaction, mode, 8);
+		const maxPlayers = interaction.options.getInteger("maxplayers", false);
+		const game = new Game(interaction, mode, maxPlayers ?? 8);
 		await game.start();
 	},
 } as Command;
