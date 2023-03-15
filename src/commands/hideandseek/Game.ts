@@ -434,7 +434,7 @@ export default class Game<State extends GameState = GameState.WaitingForPlayers>
 			],
 			components: [],
 		});
-		this.startedMessage = await this.host.interaction.followUp(
+		this.startedMessage = await this.mainMessage.reply(
 			`**The game has started! ${BOOYAH_EMOJI} Good luck everyone!** Hiding time ends ${futureTimestamp(
 				this.hideTimeSeconds,
 				this.startedTime,
@@ -446,12 +446,11 @@ export default class Game<State extends GameState = GameState.WaitingForPlayers>
 		await this.updateMainMessage();
 		await wait(this.startedTime.getTime() / 1000 + this.hideTimeSeconds - new Date().getTime() / 1000);
 		if (this.startedMessage.deletable) await this.startedMessage.delete();
-		this.hidingTimeUpMsg = await this.host.interaction.followUp({
+		this.hidingTimeUpMsg = await this.mainMessage.reply({
 			content: `**⏰ Hiding time is up! The seekers will now go look for the hiders!** Match ends ${futureTimestamp(
 				this.hideTimeSeconds + this.seekTimeSeconds,
 				this.startedTime,
 			)} ${messageHiddenText(this.players.map((v) => `<@${v.user.id}>`).join(""))}`,
-			fetchReply: true,
 		});
 	}
 	private async seekTime(this: Game<GameState.SeekTime>): Promise<boolean | void> {
