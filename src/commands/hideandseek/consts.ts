@@ -10,12 +10,13 @@ export const ROLE_ICON_MAP = {
 	[PlayerRole.Hider]: VEEMO_PEEK_EMOJI,
 } as const;
 
-export const RULES = `${BULLET_EMOJI}No location revealing specials:
+export const RULES = `${BULLET_EMOJI}Banned specials:
 ${EMPTY_EMOJI}${SUB_EMOJI}${BULLET_EMOJI}Tenta missiles
 ${EMPTY_EMOJI}${EMPTY_EMOJI}${BULLET_EMOJI}Killer wail 5.1
 ${EMPTY_EMOJI}${EMPTY_EMOJI}${BULLET_EMOJI}Wave breaker
+${EMPTY_EMOJI}${EMPTY_EMOJI}${BULLET_EMOJI}Kraken
 ${BULLET_EMOJI}No ninja squid.
-${BULLET_EMOJI}No hiding in your own base.
+${BULLET_EMOJI}No where the seekers can't reach you.
 
 ${BULLET_EMOJI}First the hiders will pick their hiding spots
 ${BULLET_EMOJI}After 1 minute in turf war or 2 minutes in ranked,
@@ -30,7 +31,7 @@ ${EMPTY_EMOJI}${EMPTY_EMOJI}${BULLET_EMOJI}win if they splat all hiders once
 ${BULLET_EMOJI}**Hiders ${ROLE_ICON_MAP[PlayerRole.Hider]}**
 ${EMPTY_EMOJI}${SUB_EMOJI}${BULLET_EMOJI}aren't allowed to use the map
 ${EMPTY_EMOJI}${EMPTY_EMOJI}${BULLET_EMOJI}are allowed to fight back with their main weapons, sub weapons, special weapons if they get found
-${EMPTY_EMOJI}${EMPTY_EMOJI}${BULLET_EMOJI}win if they survive until 5 seconds before the match ends`;
+${EMPTY_EMOJI}${EMPTY_EMOJI}${BULLET_EMOJI}win if they survive until the match ends`;
 export const SEEKER_EXPLANATION = `${BULLET_EMOJI}As a seeker you're first going to back up and face away from the map.
 ${BULLET_EMOJI}Meanwhile the hiders are going to be painting the map and picking their hiding spots...
 ${BULLET_EMOJI}Only after hiding time is up can you start seeking!
@@ -38,4 +39,4 @@ ${BULLET_EMOJI}Remember that the hiders can fight back!`;
 export const HIDER_EXPLANATION = `${BULLET_EMOJI}As a hider you're going to head straight to the other teams base or mid,
 ${EMPTY_EMOJI}paint it and find a good hiding spot.
 ${BULLET_EMOJI}The seekers will start seeking after I send a message saying that hiding time is up.
-${BULLET_EMOJI}When there's 5 seconds left of the match you can reveal your hiding spot if you want, you've won!`;
+${BULLET_EMOJI}If you survive until the match ends you've won!`;
