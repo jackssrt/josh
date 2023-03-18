@@ -7,7 +7,7 @@ import type {
 	User,
 	WebhookMessageCreateOptions,
 } from "discord.js";
-import { Collection, EmbedBuilder, GuildMember, normalizeArray, TimestampStyles } from "discord.js";
+import { Collection, EmbedBuilder, GuildMember, TimestampStyles, normalizeArray } from "discord.js";
 import levenshtein from "js-levenshtein";
 import type EventEmitter from "node:events";
 import { existsSync } from "node:fs";

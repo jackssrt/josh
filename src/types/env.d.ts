@@ -15,5 +15,6 @@ declare namespace NodeJS {
 		GREETER_ROLE_ID: string;
 		MEMBER_ROLE_ID: string;
 		JOIN_LEAVE_CHANNEL_ID: string;
+		REPLIT_DB_URL: string | undefined;
 	}
 }

@@ -1,4 +1,4 @@
 .env
-database.sqlite
+database.json
 config.json
 node_modules

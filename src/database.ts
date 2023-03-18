@@ -1,6 +1,6 @@
 import axios from "axios";
-import consola from "consola";
-import Keyv from "keyv";
+import { existsSync } from "fs";
+import { readFile, writeFile } from "fs/promises";
 import { USER_AGENT } from "./client.js";
 import type { SalmonRunAPIResponse } from "./types/rotationNotifier.js";
 
@@ -12,31 +12,63 @@ interface DatabaseData {
 	monthlySalmonRunGear: { name: string; image: string };
 }
 
-export class Database {
-	private keyv = new Keyv<DatabaseData[keyof DatabaseData]>("sqlite://database.sqlite");
-	constructor() {
-		this.keyv.on("error", (err) => consola.error("Keyv connection error:", err));
+type JSONData = {
+	[x in string]: string | number | boolean | JSONData;
+};
+
+class DatabaseBackend<T extends Record<K, JSONData[string]>, K extends string> {
+	private replitDatabaseUrl = process.env["REPLIT_DB_URL"];
+	private data: T | undefined = undefined;
+	private static readonly PATH = "./database.json";
+	private async load() {
+		if (existsSync("./database.json"))
+			this.data = JSON.parse(await readFile(DatabaseBackend.PATH, { encoding: "utf-8" })) as T;
+		else this.data = {} as T;
 	}
+	public async get<K extends keyof T>(key: K): Promise<T[K] | undefined> {
+		if (this.replitDatabaseUrl)
+			return JSON.parse((await axios.get<string>(`${this.replitDatabaseUrl}/${String(key)}`)).data) as T[K];
+		else {
+			if (this.data === undefined) await this.load();
+			return this.data![key];
+		}
+	}
+	public async set<K extends keyof T>(key: K, value: T[K]): Promise<void> {
+		if (this.replitDatabaseUrl)
+			await axios.post(
+				this.replitDatabaseUrl,
+				// typescript thinks `keyof T` can be `Symbol` for some reason
+				`${encodeURIComponent(String(key))}=${encodeURIComponent(JSON.stringify(value))}`,
+				{ headers: { "Content-Type": "application/x-www-form-urlencoded" } },
+			);
+		else {
+			if (this.data === undefined) await this.load();
+			this.data![key] = value;
+			await writeFile(DatabaseBackend.PATH, JSON.stringify(this.data), { encoding: "utf-8" });
+		}
+	}
+}
+
+export class Database {
+	private backend = new DatabaseBackend<DatabaseData, keyof DatabaseData>();
 
 	async setSplatfestEventCreated(id: string) {
-		await this.keyv.set("createdSplatfestEvent", id);
+		await this.backend.set("createdSplatfestEvent", id);
 	}
 	async isSplatfestEventCreated(id: string) {
-		return ((await this.keyv.get("createdSplatfestEvent")) as DatabaseData["createdSplatfestEvent"]) === id;
+		return ((await this.backend.get("createdSplatfestEvent")) as DatabaseData["createdSplatfestEvent"]) === id;
 	}
 
 	async setNextMapRotation(endTime: Date) {
-		await this.keyv.set("nextMapRotation", endTime.getTime());
+		await this.backend.set("nextMapRotation", endTime.getTime());
 	}
 	async setNextSalmonRunRotation(endTime: Date) {
-		await this.keyv.set("nextSalmonRunRotation", endTime.getTime());
+		await this.backend.set("nextSalmonRunRotation", endTime.getTime());
 	}
 	async activeMonthlySalmonRunGear(): Promise<DatabaseData["monthlySalmonRunGear"]> {
-		const lastMonth = (await this.keyv.get("monthlySalmonRunGearMonth")) as
-			| DatabaseData["monthlySalmonRunGearMonth"]
-			| undefined;
+		const lastMonth = await this.backend.get("monthlySalmonRunGearMonth");
 		if (lastMonth === new Date().getMonth())
-			return (await this.keyv.get("monthlySalmonRunGear")) as DatabaseData["monthlySalmonRunGear"];
+			return (await this.backend.get("monthlySalmonRunGear")) as DatabaseData["monthlySalmonRunGear"];
 		const { data: apiData } = await axios.get<SalmonRunAPIResponse>("https://splatoon3.ink/data/coop.json", {
 			headers: { "User-Agent": USER_AGENT },
 		});
@@ -45,18 +77,15 @@ export class Database {
 			image: { url: image },
 		} = apiData.data.coopResult.monthlyGear;
 		const data = { name, image };
-		await this.keyv.set("monthlySalmonRunGear", data);
-		await this.keyv.set("monthlySalmonRunGearMonth", new Date().getMonth());
+		await this.backend.set("monthlySalmonRunGear", data);
+		await this.backend.set("monthlySalmonRunGearMonth", new Date().getMonth());
 		return data;
 	}
 	async shouldSendSalmonRunRotation() {
-		return (
-			(((await this.keyv.get("nextSalmonRunRotation")) as DatabaseData["nextSalmonRunRotation"] | undefined) ??
-				0) < new Date().getTime()
-		);
+		return ((await this.backend.get("nextSalmonRunRotation")) ?? 0) < new Date().getTime();
 	}
 	async timeTillNextMapRotationSend() {
-		return ((await this.keyv.get("nextMapRotation")) as DatabaseData["nextMapRotation"]) - new Date().getTime();
+		return ((await this.backend.get("nextMapRotation")) ?? 0) - new Date().getTime();
 	}
 }
 
