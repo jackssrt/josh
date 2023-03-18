@@ -27,7 +27,11 @@ class DatabaseBackend<T extends Record<K, JSONData[string]>, K extends string> {
 	}
 	public async get<K extends keyof T>(key: K): Promise<T[K] | undefined> {
 		if (this.replitDatabaseUrl)
-			return JSON.parse((await axios.get<string>(`${this.replitDatabaseUrl}/${String(key)}`)).data) as T[K];
+			try {
+				return JSON.parse((await axios.get<string>(`${this.replitDatabaseUrl}/${String(key)}`)).data) as T[K];
+			} catch (e) {
+				return undefined;
+			}
 		else {
 			if (this.data === undefined) await this.load();
 			return this.data![key];
