@@ -136,6 +136,7 @@ export default {
 			if (!(member instanceof GuildMember)) return;
 			if (subcommand === "memberjoin") await onMemberJoin(client, member);
 			else await onMemberLeave(client, member);
+			await interaction.editReply("done");
 		} else {
 			return await interaction.editReply("unimplemented");
 		}
