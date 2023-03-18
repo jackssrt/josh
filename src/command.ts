@@ -10,6 +10,7 @@ import type Client from "./client.js";
 export default interface Command {
 	data(builder: SlashCommandBuilder): SharedNameAndDescription & { toJSON(): object };
 	defer?: "ephemeral" | "standard";
+	ownerOnly?: boolean;
 	autocomplete?(param: { client: Client<true>; interaction: AutocompleteInteraction }): Awaitable<void>;
 	execute(param: { client: Client<true>; interaction: ChatInputCommandInteraction }): Awaitable<void>;
 }

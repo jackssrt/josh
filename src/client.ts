@@ -66,6 +66,12 @@ export default class Client<Ready extends boolean = false> extends DiscordClient
 
 			const command = this.commandRegistry.get(interaction.commandName);
 			if (!command) return;
+			if (command.ownerOnly && interaction.user.id !== process.env["OWNER_ID"]!)
+				return void (await interaction.reply({
+					content: "This command can only be used by the owner.",
+					ephemeral: true,
+				}));
+			if (command.defer) await interaction.deferReply({ ephemeral: command.defer === "ephemeral" });
 			try {
 				await command.execute({ client: this as Client<true>, interaction });
 			} catch (e) {
@@ -108,6 +114,11 @@ export default class Client<Ready extends boolean = false> extends DiscordClient
 			if (!interaction.isContextMenuCommand()) return;
 			const item = this.contextMenuItemsRegistry.get(interaction.commandName);
 			if (!item) return;
+			if (item.ownerOnly && interaction.user.id !== process.env["OWNER_ID"]!)
+				return void (await interaction.reply({
+					content: "This context menu item can only be used by the owner.",
+					ephemeral: true,
+				}));
 			if (item.type === "Message" && interaction.isMessageContextMenuCommand())
 				await item.execute({ client: this as Client<true>, interaction });
 			else if (item.type === "User" && interaction.isUserContextMenuCommand())

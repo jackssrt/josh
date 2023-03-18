@@ -1,4 +1,3 @@
-import dedent from "dedent";
 import type {
 	APIEmbedField,
 	ButtonInteraction,
@@ -25,10 +24,12 @@ import { IS_PROD } from "../../env.js";
 import {
 	awaitEvent,
 	constructEmbedsWrapper,
+	dedent,
 	embeds,
 	futureTimestamp,
 	getRandomValues,
 	messageHiddenText,
+	parallel,
 	wait,
 } from "../../utils.js";
 import {
@@ -235,25 +236,25 @@ export default class Game<State extends GameState = GameState.WaitingForPlayers>
 				const player = this.players.get(interaction.user) as Player<false>;
 				this.players.delete(interaction.user);
 				const leftEmbeds = await embeds((b) => b.setTitle("You have left the game").setColor("Red"));
-				await Promise.all([
+				await parallel(
 					leaveConfirmationInteraction.update({
 						...leftEmbeds,
 						components: [],
 					}),
 					!this.playedAgain && player ? player.interaction.editReply(leftEmbeds) : undefined,
 					this.updateMainMessage(),
-				]);
+				);
 				return;
 			}
 			const p = this.addPlayer(interaction);
-			await Promise.all([
+			await parallel(
 				interaction.reply({
 					...(await p.roleEmbed()),
 					ephemeral: true,
 					fetchReply: true,
 				}),
 				this.updateMainMessage(),
-			]);
+			);
 		});
 		joinCollector.once("end", async (_, reason) => {
 			if (reason !== "started") await this.abort();
@@ -381,7 +382,7 @@ export default class Game<State extends GameState = GameState.WaitingForPlayers>
 				this.players.set(k, v);
 			});
 		else return !!void (await this.abort());
-		await Promise.all(
+		await parallel(
 			this.players.map(async (v) => {
 				if (v.isNotHost()) {
 					if (!this.playedAgain) await v.interaction.editReply(await v.roleEmbed());
@@ -503,7 +504,7 @@ export default class Game<State extends GameState = GameState.WaitingForPlayers>
 		} catch {
 			playAgain = false;
 		}
-		await Promise.all([
+		await parallel(
 			this.mainMessage.edit({
 				...(await embeds((b) =>
 					b.setTitle(`Hide and seek game finished ${VEEMO_PEEK_EMOJI}`).addFields(this.playerListField()),
@@ -518,7 +519,7 @@ export default class Game<State extends GameState = GameState.WaitingForPlayers>
 				)),
 				components: [],
 			}),
-		]);
+		);
 		return playAgain;
 	}
 
@@ -535,7 +536,7 @@ export default class Game<State extends GameState = GameState.WaitingForPlayers>
 	}
 
 	public async abort() {
-		await Promise.all([
+		await parallel(
 			this.mainMessage?.edit({
 				...(await embeds((b) =>
 					b
@@ -545,7 +546,7 @@ export default class Game<State extends GameState = GameState.WaitingForPlayers>
 				)),
 				components: [],
 			}),
-			await this.hostConfigInteraction?.editReply({
+			this.hostConfigInteraction?.editReply({
 				content: "",
 				...(await embeds((b) =>
 					b
@@ -555,7 +556,7 @@ export default class Game<State extends GameState = GameState.WaitingForPlayers>
 				)),
 				components: [],
 			}),
-			this.players.toJSON().map(async (v) => {
+			...this.players.toJSON().map(async (v) => {
 				if (v.isNotHost() && !this.playedAgain)
 					await v.interaction.editReply({
 						content: "",
@@ -568,7 +569,7 @@ export default class Game<State extends GameState = GameState.WaitingForPlayers>
 						components: [],
 					});
 			}),
-		]);
+		);
 	}
 	public async updateMainMessage() {
 		const parts: string[] = ["**Rules**", RULES, ""];

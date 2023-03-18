@@ -33,9 +33,8 @@ export default {
 			.setDescription("eval")
 			.addStringOption((b) => b.setDescription("code").setName("code").setRequired(true))
 			.setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
+	ownerOnly: true,
 	async execute({ client, interaction }) {
-		if (interaction.user.id !== process.env["OWNER_ID"]!)
-			return await interaction.reply("Only the developer can run this command!");
 		client;
 		embeds;
 		impersonate;

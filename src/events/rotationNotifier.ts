@@ -1,6 +1,5 @@
 import axios from "axios";
 import consola from "consola";
-import dedent from "dedent";
 import type { Client, EmbedBuilder, NewsChannel, TextChannel } from "discord.js";
 import { AttachmentBuilder } from "discord.js";
 import sharp from "sharp";
@@ -22,8 +21,10 @@ import type {
 } from "../types/rotationNotifier.js";
 import {
 	dateTimestamp,
+	dedent,
 	embeds,
 	formatTime,
+	parallel,
 	relativeTimestamp,
 	shortenStageName,
 	timeTimestamp,
@@ -70,7 +71,7 @@ const RANKED_MODE_DATA_MAP = {
 } as const satisfies Record<RankedVsRule["rule"], unknown>;
 
 async function makeEmbedImage(vsStages: Stage[]) {
-	const images = await Promise.all(
+	const images = await parallel(
 		vsStages.map(
 			async (v) =>
 				[
@@ -100,7 +101,7 @@ async function makeEmbedImage(vsStages: Stage[]) {
 	})
 		.composite([
 			...(
-				await Promise.all(
+				await parallel(
 					images.map<Promise<sharp.OverlayOptions[]>>(async (v, i) => [
 						{
 							input: await v[1].toBuffer(),
@@ -240,7 +241,7 @@ async function makeSalmonRunImage(salmon: CoopGroupingRegularNode) {
 	return await sharp({ create: { width: WIDTH, height: HEIGHT, background: "#00000000", channels: 4 } })
 		.composite([
 			...(
-				await Promise.all(
+				await parallel(
 					salmon.setting.weapons.map<Promise<sharp.OverlayOptions[]>>(async (v, i) => {
 						// adding "Dg" forces the text image to be as tall as possible,
 						// thus making all weapon names align.
@@ -286,7 +287,7 @@ async function makeSalmonRunImage(salmon: CoopGroupingRegularNode) {
 					}),
 				)
 			).flat(),
-			...(await Promise.all(
+			...(await parallel(
 				new Array(salmon.setting.weapons.length - 1)
 					.fill(false)
 					.map<Promise<sharp.OverlayOptions>>(async (_, i) => ({
@@ -436,12 +437,12 @@ export async function sendRegularRotations(
 
 	// delete previous message
 	await (await mapsChannel.messages.fetch({ limit: 1 })).first()?.delete();
-	await Promise.all([
+	await parallel(
 		// set channel topic
 
 		generalChannel.setTopic(generateChannelTopic(endTime, turfWar, ranked, xBattle)),
 
-		(async () => {
+		async () => {
 			// send message
 			const attachments: AttachmentBuilder[] = [];
 			const message = await mapsChannel.send({
@@ -476,8 +477,8 @@ export async function sendRegularRotations(
 			});
 			// crosspost message
 			await message.crosspost();
-		})(),
-	]);
+		},
+	);
 }
 
 export async function fetchRotations() {
@@ -527,21 +528,20 @@ async function loopSend(client: Client<true>) {
 		const output = await fetchRotations();
 		if (!output) return;
 		const { endTime, turfWar, ranked, xBattle, salmonStartTime, salmonEndTime, salmon } = output;
-		await Promise.all([
-			(async () => {
+		await parallel(
+			async () => {
 				consola.info("Sending regular rotations...");
 				await sendRegularRotations(client, endTime, turfWar, ranked, xBattle);
 				await database.setNextMapRotation(endTime);
-			})(),
-			(await database.shouldSendSalmonRunRotation())
-				? (async () => {
-						consola.info("Sending salmon run rotations...");
+			},
+			(await database.shouldSendSalmonRunRotation()) &&
+				(async () => {
+					consola.info("Sending salmon run rotations...");
 
-						await sendSalmonRunRotation(client, salmonStartTime, salmonEndTime, salmon);
-						await database.setNextSalmonRunRotation(salmonEndTime);
-				  })()
-				: Promise.resolve(),
-		]);
+					await sendSalmonRunRotation(client, salmonStartTime, salmonEndTime, salmon);
+					await database.setNextSalmonRunRotation(salmonEndTime);
+				}),
+		);
 
 		await wait((endTime.getTime() - new Date().getTime()) / 1000);
 	}

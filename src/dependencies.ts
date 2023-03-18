@@ -1,6 +1,7 @@
 import { execFile as _execFile } from "child_process";
 import { promisify } from "util";
 import { IS_PROD } from "./env.js";
+import { parallel } from "./utils.js";
 
 const execFile = promisify(_execFile);
 
@@ -9,5 +10,5 @@ export async function installFont() {
 }
 
 export default async function installDependencies() {
-	await Promise.all([IS_PROD && installFont()]);
+	await parallel(IS_PROD && installFont());
 }

@@ -1,5 +1,12 @@
 import consola from "consola";
-import { ApplicationCommandType, ContextMenuCommandBuilder, REST, Routes, SlashCommandBuilder } from "discord.js";
+import {
+	ApplicationCommandType,
+	ContextMenuCommandBuilder,
+	PermissionFlagsBits,
+	REST,
+	Routes,
+	SlashCommandBuilder,
+} from "discord.js";
 import * as dotenv from "dotenv";
 import Client from "./client.js";
 dotenv.config();
@@ -7,14 +14,21 @@ export async function deploy(guildId: string) {
 	const client = new Client();
 	await client.load();
 	const commands = client.commandRegistry.map((command, key) =>
-		command.data(new SlashCommandBuilder().setName(key)).toJSON(),
+		command
+			.data(
+				new SlashCommandBuilder()
+					.setName(key)
+					.setDefaultMemberPermissions(command.ownerOnly ? PermissionFlagsBits.Administrator : undefined),
+			)
+			.toJSON(),
 	);
 	const contexts = client.contextMenuItemsRegistry.map((item, key) =>
 		item
 			.data(
 				new ContextMenuCommandBuilder()
 					.setType(item.type === "User" ? ApplicationCommandType.User : ApplicationCommandType.Message)
-					.setName(key),
+					.setName(key)
+					.setDefaultMemberPermissions(item.ownerOnly ? PermissionFlagsBits.Administrator : undefined),
 			)
 			.toJSON(),
 	);

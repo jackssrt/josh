@@ -1,6 +1,7 @@
 import type { CategoryChannel } from "discord.js";
 import { ChannelType } from "discord.js";
 import type Event from "../event.js";
+import { parallel } from "../utils.js";
 
 const SUPERSCRIPT_NUMBERS = ["⁰", "¹", "²", "³", "⁴", "⁵", "⁶", "⁷", "⁸", "⁹"] as const;
 
@@ -37,13 +38,13 @@ async function updateChannels(category: CategoryChannel) {
 	else await createChannel(category);
 
 	// perform the deletions
-	await Promise.all(
+	await parallel(
 		willDelete.toJSON().map(async (v) => {
 			if (v.deletable) await v.delete();
 		}),
 	);
 	// rename new channels
-	await Promise.all(
+	await parallel(
 		category.children.cache
 			.sort((a, b) => a.position - b.position)
 			.toJSON()

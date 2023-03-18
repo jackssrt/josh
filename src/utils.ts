@@ -1,12 +1,13 @@
 import type {
 	Awaitable,
 	InteractionReplyOptions,
+	RestOrArray,
 	Role,
 	TextChannel,
 	User,
 	WebhookMessageCreateOptions,
 } from "discord.js";
-import { EmbedBuilder, GuildMember, TimestampStyles } from "discord.js";
+import { Collection, EmbedBuilder, GuildMember, normalizeArray, TimestampStyles } from "discord.js";
 import levenshtein from "js-levenshtein";
 import type EventEmitter from "node:events";
 import { existsSync } from "node:fs";
@@ -66,7 +67,7 @@ export type EmbedFactory = (b: EmbedBuilder) => Awaitable<EmbedBuilder>;
 
 export async function embeds(...funcs: EmbedFactory[]) {
 	return {
-		embeds: await Promise.all(funcs.map(async (func) => await func(new EmbedBuilder().setColor("#2b2d31")))),
+		embeds: await parallel(funcs.map(async (func) => await func(new EmbedBuilder().setColor("#2b2d31")))),
 	} satisfies InteractionReplyOptions;
 }
 export function constructEmbedsWrapper(baseFactory: EmbedFactory): typeof embeds {
@@ -278,4 +279,42 @@ export function hexToRGB(hex: `#${string}`) {
 		?.substring(1)
 		?.match(/.{2}/g)
 		?.map((x) => parseInt(x, 16)) as [number, number, number];
+}
+
+export function dedent(strings: TemplateStringsArray, ...values: unknown[]): string {
+	return strings
+		.reduce((acc, cur, i) => {
+			// eslint-disable-next-line @typescript-eslint/restrict-template-expressions
+			return `${acc ?? ""}${values[i - 1] ?? ""}${cur ?? ""}`;
+		}, "")
+		.replace(/^(\t| {4})+/gm, "");
+}
+export function membersWithRole(roles: Role[]): Collection<string, GuildMember> {
+	return roles.reduce((acc, v) => {
+		return acc.intersect(v.members);
+	}, roles[0]?.members ?? new Collection<string, GuildMember>());
+}
+export function formatNumberIntoNth(num: number): string {
+	const lastDigit = num % 10;
+	const secondLastDigit = Math.floor(num / 10) % 10;
+
+	if (secondLastDigit === 1) {
+		return `${num}th`;
+	} else if (lastDigit === 1) {
+		return `${num}st`;
+	} else if (lastDigit === 2) {
+		return `${num}nd`;
+	} else if (lastDigit === 3) {
+		return `${num}rd`;
+	}
+	return `${num}th`;
+}
+export async function parallel<T extends ((() => Promise<unknown>) | Promise<unknown> | undefined | false)[]>(
+	...funcs: T | [T]
+): Promise<{ -readonly [i in keyof T]: Awaited<T[i]> }> {
+	return (await Promise.all(
+		normalizeArray(funcs as RestOrArray<T[number]>).map((v) => (typeof v === "function" ? v() : v)),
+	)) as {
+		-readonly [i in keyof T]: Awaited<T[i]>;
+	};
 }

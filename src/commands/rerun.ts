@@ -1,14 +1,21 @@
 import { AttachmentBuilder, Collection, GuildMember, PermissionsBitField, Role } from "discord.js";
 import sharp from "sharp";
 import type Command from "../command";
+import { onMemberJoin, onMemberLeave } from "../events/joinLeaveMessage.js";
 import { updateRoleCategories } from "../events/roleCategories.js";
 import { fetchRotations, sendRegularRotations, sendSalmonRunRotation } from "../events/rotationNotifier.js";
-import { colorLuminance, errorEmbeds, hexToRGB, textImage } from "../utils.js";
+import { colorLuminance, errorEmbeds, hexToRGB, parallel, textImage } from "../utils.js";
 import { COLOR_DATA } from "./color.js";
 
-type Subcommand = "mapsandmodesrotation" | "salmonrunrotation" | "rolecategories" | "colorrolesimage";
+type Subcommand =
+	| "mapsandmodesrotation"
+	| "salmonrunrotation"
+	| "rolecategories"
+	| "colorrolesimage"
+	| "memberjoin"
+	| "memberleave";
 
-async function makeColorRolesImages() {
+async function makeColorRolesImage() {
 	const CELL_SIZE = [200, 100] as const;
 	const COLOR_DATA_LEN_SQRT = Math.sqrt(COLOR_DATA.length);
 	const IMAGE_SIZE_IN_CELLS = [Math.ceil(COLOR_DATA_LEN_SQRT), Math.floor(COLOR_DATA_LEN_SQRT)] as const;
@@ -22,7 +29,7 @@ async function makeColorRolesImages() {
 		},
 	})
 		.composite(
-			await Promise.all(
+			await parallel(
 				COLOR_DATA.map(async (v, i) => {
 					return {
 						input: await sharp({
@@ -68,13 +75,24 @@ export default {
 					.addMentionableOption((b) => b.setName("users").setDescription("User(s)").setRequired(true)),
 			)
 			.addSubcommand((b) => b.setName("colorrolesimage").setDescription("Generate color roles image"))
+			.addSubcommand((b) =>
+				b
+					.setName("memberjoin")
+					.setDescription("Rerun member join")
+					.addUserOption((b) => b.setName("member").setDescription("member").setRequired(true)),
+			)
+			.addSubcommand((b) =>
+				b
+					.setName("memberleave")
+					.setDescription("Rerun member leave")
+					.addUserOption((b) => b.setName("member").setDescription("member").setRequired(true)),
+			)
 			.setDescription("Forcefully reruns certain automatic stuff.")
 			.setDMPermission(false)
 			.setDefaultMemberPermissions(PermissionsBitField.Flags.Administrator),
+	ownerOnly: true,
+	defer: "ephemeral",
 	async execute({ interaction, client }) {
-		if (interaction.user.id !== process.env["OWNER_ID"]!)
-			return interaction.reply({ content: "This command can only be run by the developer!", ephemeral: true });
-		await interaction.deferReply({ ephemeral: true });
 		const subcommand = interaction.options.getSubcommand() as Subcommand;
 		if (subcommand === "mapsandmodesrotation" || subcommand === "salmonrunrotation") {
 			const data = await fetchRotations();
@@ -95,7 +113,7 @@ export default {
 					? new Collection([[mentionable.id, mentionable]])
 					: undefined;
 			if (!users) return await interaction.editReply("no users passed in");
-			await Promise.all(
+			await parallel(
 				// typescript stupid moment
 				(
 					users.map as (
@@ -111,8 +129,13 @@ export default {
 		} else if (subcommand === "colorrolesimage") {
 			await interaction.editReply({
 				content: `done:`,
-				files: [new AttachmentBuilder(await makeColorRolesImages()).setName("color-roles.png")],
+				files: [new AttachmentBuilder(await makeColorRolesImage()).setName("color-roles.png")],
 			});
+		} else if (subcommand === "memberjoin" || subcommand === "memberleave") {
+			const member = interaction.options.getMember("member");
+			if (!(member instanceof GuildMember)) return;
+			if (subcommand === "memberjoin") await onMemberJoin(client, member);
+			else await onMemberLeave(client, member);
 		} else {
 			return await interaction.editReply("unimplemented");
 		}
