@@ -3,6 +3,7 @@ import { existsSync } from "fs";
 import { readFile, writeFile } from "fs/promises";
 import { USER_AGENT } from "./client.js";
 import type { SalmonRunAPIResponse } from "./types/rotationNotifier.js";
+import { parallel } from "./utils.js";
 
 interface DatabaseData {
 	createdSplatfestEvent: string;
@@ -60,7 +61,7 @@ export class Database {
 		await this.backend.set("createdSplatfestEvent", id);
 	}
 	async isSplatfestEventCreated(id: string) {
-		return ((await this.backend.get("createdSplatfestEvent")) as DatabaseData["createdSplatfestEvent"]) === id;
+		return (await this.backend.get("createdSplatfestEvent")) === id;
 	}
 
 	async setNextMapRotation(endTime: Date) {
@@ -70,9 +71,11 @@ export class Database {
 		await this.backend.set("nextSalmonRunRotation", endTime.getTime());
 	}
 	async activeMonthlySalmonRunGear(): Promise<DatabaseData["monthlySalmonRunGear"]> {
-		const lastMonth = await this.backend.get("monthlySalmonRunGearMonth");
-		if (lastMonth === new Date().getMonth())
-			return (await this.backend.get("monthlySalmonRunGear")) as DatabaseData["monthlySalmonRunGear"];
+		const [lastMonth, lastGear] = await parallel(
+			this.backend.get("monthlySalmonRunGearMonth"),
+			this.backend.get("monthlySalmonRunGear"),
+		);
+		if (lastMonth === new Date().getMonth() && lastGear) return lastGear;
 		const { data: apiData } = await axios.get<SalmonRunAPIResponse>("https://splatoon3.ink/data/coop.json", {
 			headers: { "User-Agent": USER_AGENT },
 		});
