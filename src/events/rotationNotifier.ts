@@ -241,14 +241,27 @@ function generateChannelTopic(
 	xBattle: XNode[],
 ): string {
 	const splatfestSetting = extractSetting("Splatfest", splatfest[0]!);
+	const nextSplatfestSetting = splatfest[1] && extractSetting("Splatfest", splatfest[1]);
+
 	const turfWarSetting = extractSetting("Turf War", turfWar[0]!);
+
 	const seriesSetting = extractSetting("Anarchy Series", ranked[0]!);
+	const nextSeriesSetting = ranked[1] && extractSetting("Anarchy Series", ranked[1]);
+
 	const openSetting = extractSetting("Anarchy Open", ranked[0]!);
+	const nextOpenSetting = ranked[1] && extractSetting("Anarchy Open", ranked[1]);
+
 	const xSetting = extractSetting("X Battle", xBattle[0]!);
+	const nextXSetting = xBattle[1] && extractSetting("X Battle", xBattle[1]);
+
 	const parts = [
 		`Next ${relativeTimestamp(endTime)}`,
 		splatfestSetting &&
-			`${SPLATFEST_EMOJI} ${splatfestSetting.vsStages.map((v) => `[${shortenStageName(v.name)}]`).join(" & ")}`,
+			`${SPLATFEST_EMOJI} ${splatfestSetting.vsStages.map((v) => `[${shortenStageName(v.name)}]`).join(" & ")}${
+				nextSplatfestSetting
+					? ` ➔ ${nextSplatfestSetting.vsStages.map((v) => `[${shortenStageName(v.name)}]`).join(" & ")}`
+					: ""
+			}`,
 		turfWarSetting &&
 			`${REGULAR_BATTLE_EMOJI} ${turfWarSetting.vsStages
 				.map((v) => `[${shortenStageName(v.name)}]`)
@@ -256,14 +269,17 @@ function generateChannelTopic(
 		seriesSetting &&
 			`${ANARCHY_BATTLE_EMOJI} **Series** [${RANKED_MODE_DATA_MAP[seriesSetting.vsRule.rule].emoji} ${
 				seriesSetting.vsRule.name
-			}]`,
+			}${nextSeriesSetting ? ` ➔ ${RANKED_MODE_DATA_MAP[nextSeriesSetting.vsRule.rule].emoji}` : ""}]`,
 		openSetting &&
 			`${ANARCHY_BATTLE_EMOJI} **Open** [${RANKED_MODE_DATA_MAP[openSetting.vsRule.rule].emoji} ${
 				openSetting.vsRule.name
+			}${nextOpenSetting ? ` ➔ ${RANKED_MODE_DATA_MAP[nextOpenSetting.vsRule.rule].emoji}` : ""}]`,
+		xSetting &&
+			`${X_BATTLE_EMOJI} [${RANKED_MODE_DATA_MAP[xSetting.vsRule.rule].emoji} ${xSetting.vsRule.name}${
+				nextXSetting ? ` ➔ ${RANKED_MODE_DATA_MAP[nextXSetting.vsRule.rule].emoji}` : ""
 			}]`,
-		xSetting && `${X_BATTLE_EMOJI} [${RANKED_MODE_DATA_MAP[xSetting.vsRule.rule].emoji} ${xSetting.vsRule.name}]`,
 	];
-	return parts.map((v) => v || []).join(`\n・\n`);
+	return parts.flatMap((v) => v || []).join(`\n・\n`);
 }
 const TEXT_BLUR_SIGMA = 1.00005;
 async function makeSalmonRunImage(salmon: CoopGroupingRegularNode) {
