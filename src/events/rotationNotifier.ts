@@ -12,6 +12,7 @@ import type {
 	BankaraNode,
 	BankaraSetting,
 	CoopGroupingRegularNode,
+	CoopRegularStage,
 	FestNode,
 	FestSetting,
 	RankedVsRule,
@@ -76,6 +77,13 @@ const RANKED_MODE_DATA_MAP = {
 	},
 } as const satisfies Record<RankedVsRule["rule"], unknown>;
 
+const SALMON_RUN_STAGE_EMOJI_MAP = {
+	"Spawning Grounds": "<:spawningGrounds:1087077105638047764>",
+	"Sockeye Station": "<:sockeyeStation:1087077104274911292>",
+	"Marooner's Bay": "<:maroonersBay:1087077102559432894>",
+	"Gone Fission Hydroplant": "<:goneFissionHydroplant:1087077100294516750>",
+} as const satisfies Record<CoopRegularStage["name"], string>;
+
 async function makeEmbedImage(vsStages: Stage[]) {
 	const images = await parallel(
 		vsStages.map(
@@ -93,14 +101,14 @@ async function makeEmbedImage(vsStages: Stage[]) {
 								})
 							).data,
 						),
-					),
+					).resize(400, 200 - 8, { fit: sharp.fit.cover }),
 				] as const,
 		),
 	);
 	return await sharp({
 		create: {
 			width: 400 * images.length,
-			height: 200,
+			height: 200 - 8,
 			background: "#00000000",
 			channels: 4,
 		},
@@ -220,9 +228,11 @@ async function makeEmbed<T extends RotationType>(
 					.reduce((a, v) => {
 						const nextSetting = extractSetting(mode, v);
 						if (!nextSetting) return a;
-						if (mode === "Turf War") return `${a} ➔ ${nextSetting.vsStages.map((v) => v.name).join(" & ")}`;
-						const { emoji } = RANKED_MODE_DATA_MAP[nextSetting.vsRule.rule as RankedVsRule["rule"]];
-						return `${a} ➔ ${emoji} ${nextSetting.vsRule.name}`;
+						return `${a}\n➔ ${
+							nextSetting.vsRule.rule === "TURF_WAR"
+								? nextSetting.vsStages.map((v) => v.name).join(" & ")
+								: `${RANKED_MODE_DATA_MAP[nextSetting.vsRule.rule].emoji} ${nextSetting.vsRule.name}`
+						} @ ${timeTimestamp(new Date(Date.parse(v.startTime)), false)}`;
 					}, "")
 					.trimStart(),
 			)
@@ -453,12 +463,13 @@ export async function sendSalmonRunRotation(
 					value: salmonNodes
 						.reduce(
 							(acc, v) =>
-								`${acc}➔ ${v.setting.weapons.map((v) => v.name).join(" & ")} @ ${
-									v.setting.coopStage.name
-								}\n`,
+								dedent`${acc}
+
+								➔ ${SALMON_RUN_STAGE_EMOJI_MAP[v.setting.coopStage.name]} ${v.setting.coopStage.name}
+								${v.setting.weapons.map((v) => `**${v.name}**`).join(" & ")}`,
 							"",
 						)
-						.trimEnd(),
+						.trimStart(),
 				})
 				.setThumbnail("attachment://gear.png")
 				.setImage("attachment://salmonrun.png"),
@@ -488,7 +499,6 @@ export async function sendRegularRotations(
 	await (await mapsChannel.messages.fetch({ limit: 1 })).first()?.delete();
 	await parallel(
 		// set channel topic
-
 		generalChannel.setTopic(generateChannelTopic(endTime, splatfest, turfWar, ranked, xBattle)),
 
 		async () => {

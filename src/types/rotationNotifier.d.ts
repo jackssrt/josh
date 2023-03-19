@@ -109,7 +109,7 @@ export interface CoopGroupingRegularSetting {
 	weapons: [CoopWeapon, CoopWeapon, CoopWeapon, CoopWeapon];
 }
 export interface CoopRegularStage {
-	name: string;
+	name: "Spawning Grounds" | "Sockeye Station" | "Marooner's Bay" | "Gone Fission Hydroplant";
 	thumbnailImage: {
 		url: string;
 	};
