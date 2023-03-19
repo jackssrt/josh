@@ -28,7 +28,7 @@ export interface BaseNode {
 	endTime: string;
 }
 
-type FestState = "FIRST_HALF" | "SECOND_HALF" | "CLOSED";
+type FestState = "FIRST_HALF" | "SECOND_HALF" | "CLOSED" | "SCHEDULED";
 
 export interface FestivalNode<State extends FestState> extends CurrentFest<State> {
 	id: string;
@@ -70,8 +70,8 @@ export interface FestivalTeam<State extends FestState> extends CurrentFestTeam {
 				isRegularContributionRatioTop: boolean;
 				challengeContributionRatio: number;
 				isChallengeContributionRatioTop: boolean;
-				tricolorContributionRatio: number;
-				isTricolorContributionRatioTop: boolean;
+				tricolorContributionRatio: number | null;
+				isTricolorContributionRatioTop: boolean | null;
 		  }
 		: null;
 	teamName: string;
