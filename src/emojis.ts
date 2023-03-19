@@ -10,5 +10,6 @@ export const SEEKER_EMOJI = "<:seeker:1079842041174966323>";
 export const REGULAR_BATTLE_EMOJI = "<:regularBattle:1085293922181455942>";
 export const ANARCHY_BATTLE_EMOJI = "<:anarchyBattle:1071472984793034753>";
 export const X_BATTLE_EMOJI = "<:xBattle:1071472975146131476>";
+export const SPLATFEST_EMOJI = "<:splatfest:1086786495286890506>";
 export const SQUID_EMOJI = "<:squid:1080224560303046846>";
 export const DIVIDER_EMOJI = "<:d_:1079836889982455808>";

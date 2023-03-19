@@ -101,7 +101,14 @@ export default {
 					await errorEmbeds({ title: "failed to fetch rotations", description: "failed to send api call" }),
 				);
 			if (subcommand === "mapsandmodesrotation")
-				await sendRegularRotations(client, data.endTime, data.turfWar, data.ranked, data.xBattle);
+				await sendRegularRotations(
+					client,
+					data.endTime,
+					data.splatfest,
+					data.turfWar,
+					data.ranked,
+					data.xBattle,
+				);
 			else await sendSalmonRunRotation(client, data.salmonStartTime, data.salmonEndTime, data.salmon);
 			await interaction.editReply("done");
 		} else if (subcommand === "rolecategories") {

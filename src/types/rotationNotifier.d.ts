@@ -6,7 +6,20 @@ export default interface SchedulesApiResponse {
 		leagueSchedules: { nodes: LeagueNode[] };
 		coopGroupingSchedule: CoopGroupingNode;
 		festSchedules: { nodes: FestNode[] };
-		currentFest: null;
+		currentFest: CurrentFest<"FIRST_HALF" | "SECOND_HALF"> | null;
+	};
+}
+export interface FestivalsApiResponse {
+	US: RegionalFestivalData;
+	EU: RegionalFestivalData;
+	JP: RegionalFestivalData;
+	AP: RegionalFestivalData;
+}
+export interface RegionalFestivalData {
+	data: {
+		festRecords: {
+			nodes: FestivalNode<FestState>[];
+		};
 	};
 }
 
@@ -14,17 +27,74 @@ export interface BaseNode {
 	startTime: string;
 	endTime: string;
 }
+
+type FestState = "FIRST_HALF" | "SECOND_HALF" | "CLOSED";
+
+export interface FestivalNode<State extends FestState> extends CurrentFest<State> {
+	id: string;
+	state: State;
+	title: string;
+	lang: string;
+	image: { url: string };
+	teams: [FestivalTeam<State>, FestivalTeam<State>, FestivalTeam<State>];
+}
+
+export interface CurrentFest<State extends FestState> extends BaseNode {
+	id: string;
+	title: string;
+	midtermTime: string;
+	state: State;
+	teams: [CurrentFestTeam, CurrentFestTeam, CurrentFestTeam];
+	triColorStage: Stage;
+}
+export interface CurrentFestTeam {
+	id: string;
+	color: {
+		a: number;
+		r: number;
+		g: number;
+		b: number;
+	};
+}
+export interface FestivalTeam<State extends FestState> extends CurrentFestTeam {
+	result: State extends "CLOSED"
+		? {
+				isWinner: boolean;
+				// horagai is japanese for conch
+				// this is the ratio of how conch shells the team got
+				horagaiRatio: number;
+				isHoragaiRatioTop: boolean;
+				voteRatio: number;
+				isVoteRatioTop: boolean;
+				regularContributionRatio: number;
+				isRegularContributionRatioTop: boolean;
+				challengeContributionRatio: number;
+				isChallengeContributionRatioTop: boolean;
+				tricolorContributionRatio: number;
+				isTricolorContributionRatioTop: boolean;
+		  }
+		: null;
+	teamName: string;
+	image: {
+		url: string;
+	};
+	// tricolor was changed to have teams randomized for each match,
+	// so new splatfests will always have this as null
+	role: State extends "FIRST_HALF" | "SECOND_HALF" ? "ATTACK" | "DEFENSE" | null : null;
+}
+
+// the match settings below are null during a splatfest
 export interface RegularNode extends BaseNode {
-	regularMatchSetting: RegularSetting;
+	regularMatchSetting: RegularSetting | null;
 }
 export interface BankaraNode extends BaseNode {
-	bankaraMatchSettings: [BankaraSetting<"CHALLENGE">, BankaraSetting<"OPEN">];
+	bankaraMatchSettings: [BankaraSetting<"CHALLENGE">, BankaraSetting<"OPEN">] | null;
 }
 export interface XNode extends BaseNode {
-	xMatchSetting: XSetting;
+	xMatchSetting: XSetting | null;
 }
 export interface LeagueNode extends BaseNode {
-	leagueMatchSetting: LeagueSetting;
+	leagueMatchSetting: LeagueSetting | null;
 }
 export interface CoopGroupingNode {
 	bannerImage: null;
@@ -55,20 +125,21 @@ export interface CoopWeapon {
 	};
 }
 export interface FestNode extends BaseNode {
-	festMatchSetting: null;
+	festMatchSetting: FestSetting | null;
 }
 
 export interface BaseMatchSetting {
-	vsStages: Stage[];
+	vsStages: [Stage, Stage];
 	festMatchSettings: null;
+}
+export interface TurfWarVsRule {
+	name: "Turf War";
+	rule: "TURF_WAR";
+	id: "VnNSdWxlLTA=";
 }
 
 export interface RegularSetting extends BaseMatchSetting {
-	vsRule: {
-		name: "Turf War";
-		rule: "TURF_WAR";
-		id: "VnNSdWxlLTA=";
-	};
+	vsRule: TurfWarVsRule;
 }
 
 export interface TowerControlVsRule {
@@ -105,7 +176,9 @@ export interface XSetting extends BaseMatchSetting {
 export interface LeagueSetting extends BaseMatchSetting {
 	vsRule: RankedVsRule;
 }
-
+export interface FestSetting extends BaseMatchSetting {
+	vsRule: TurfWarVsRule;
+}
 export interface Stage {
 	vsStageId: number;
 	name: string;
