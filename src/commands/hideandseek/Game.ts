@@ -32,6 +32,7 @@ import {
 	parallel,
 	wait,
 } from "../../utils.js";
+import Player, { PlayerRole } from "./Player.js";
 import {
 	RULES,
 	SECONDS_TO_CONFIRM_LEAVE,
@@ -39,7 +40,6 @@ import {
 	SECONDS_TO_PICK_TEAMS,
 	SECONDS_TO_PLAY_AGAIN,
 } from "./consts.js";
-import Player, { PlayerRole } from "./Player.js";
 
 export const enum GameState {
 	WaitingForPlayers,
@@ -391,7 +391,7 @@ export default class Game<State extends GameState = GameState.WaitingForPlayers>
 			}),
 		);
 	}
-	private async awaitMatchStart(this: Game<GameState.WaitingForMatchStart>): Promise<boolean | void> {
+	private async awaitMatchStart(this: Game<GameState.WaitingForMatchStart>): Promise<"skip" | "abort" | void> {
 		this.state = GameState.WaitingForMatchStart;
 		await this.updateMainMessage();
 
@@ -415,6 +415,11 @@ export default class Game<State extends GameState = GameState.WaitingForPlayers>
 						.setEmoji("✔️")
 						.setCustomId("started")
 						.setStyle(ButtonStyle.Success),
+					new ButtonBuilder()
+						.setLabel("I forgor")
+						.setEmoji("💀")
+						.setCustomId("skip")
+						.setStyle(ButtonStyle.Secondary),
 					abortButton,
 				),
 			],
@@ -422,7 +427,17 @@ export default class Game<State extends GameState = GameState.WaitingForPlayers>
 		const waitForMatchInteraction = await waitForMatchMessage.awaitMessageComponent({
 			componentType: ComponentType.Button,
 		});
-		if (waitForMatchInteraction.customId === "abort") return !!void (await this.abort());
+		if (waitForMatchInteraction.customId === "abort") {
+			await this.abort();
+			return "abort";
+		}
+		if (waitForMatchInteraction.customId === "skip") {
+			await waitForMatchInteraction.update({
+				...(await embeds((b) => b.setTitle("You forgor..."))),
+				components: [],
+			});
+			return "skip";
+		}
 		this.startedTime = new Date();
 		await waitForMatchInteraction.update({
 			embeds: [
@@ -528,9 +543,12 @@ export default class Game<State extends GameState = GameState.WaitingForPlayers>
 		while (true) {
 			if ((await (this as Game<GameState.WaitingForPlayers>).awaitPlayers()) === false) break;
 			if ((await (this as Game<GameState.DecidingTeams>).decideTeams()) === false) break;
-			if ((await (this as Game<GameState.WaitingForMatchStart>).awaitMatchStart()) === false) break;
-			if ((await (this as Game<GameState.HideTime>).hideTime()) === false) break;
-			if ((await (this as Game<GameState.SeekTime>).seekTime()) === false) break;
+			const state = await (this as Game<GameState.WaitingForMatchStart>).awaitMatchStart();
+			if (state === "abort") break;
+			else if (state !== "skip") {
+				if ((await (this as Game<GameState.HideTime>).hideTime()) === false) break;
+				if ((await (this as Game<GameState.SeekTime>).seekTime()) === false) break;
+			}
 			if ((await (this as Game<GameState.PlayAgain>).playAgain()) === false) break;
 		}
 	}
