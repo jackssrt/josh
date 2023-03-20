@@ -50,12 +50,14 @@ export default [
 	{
 		event: "guildMemberAdd",
 		async on({ client }, member) {
+			if (member.user.bot) return;
 			await onMemberJoin(client, member);
 		},
 	} as Event<"guildMemberAdd">,
 	{
 		event: "guildMemberRemove",
 		async on({ client }, member) {
+			if (member.user.bot) return;
 			await onMemberLeave(client, member);
 		},
 	} as Event<"guildMemberRemove">,
