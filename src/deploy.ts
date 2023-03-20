@@ -9,6 +9,7 @@ import {
 } from "discord.js";
 import * as dotenv from "dotenv";
 import Client from "./client.js";
+import getEnv from "./env.js";
 dotenv.config();
 export async function deploy(guildId: string) {
 	const client = new Client();
@@ -32,12 +33,12 @@ export async function deploy(guildId: string) {
 			)
 			.toJSON(),
 	);
-	const rest = new REST({ version: "10" }).setToken(process.env["TOKEN"]!);
+	const rest = new REST({ version: "10" }).setToken(getEnv("TOKEN"));
 
-	rest.put(Routes.applicationGuildCommands(process.env["CLIENT_ID"]!, guildId), { body: [...commands, ...contexts] })
+	rest.put(Routes.applicationGuildCommands(getEnv("CLIENT_ID"), guildId), { body: [...commands, ...contexts] })
 		.then((data) => {
 			if (Array.isArray(data)) consola.success(`Successfully registered ${data.length} application commands.`);
 		})
 		.catch((...params: unknown[]) => consola.error(params.shift(), ...params));
 }
-await deploy(process.env["GUILD_ID"]!);
+await deploy(getEnv("GUILD_ID"));

@@ -6,7 +6,7 @@ import type { ClientEvents, InteractionReplyOptions, MessageCreateOptions, Prese
 import { ActivityType, Client as DiscordClient, EmbedBuilder, GatewayIntentBits } from "discord.js";
 import type Command from "./command.js";
 import type { ContextMenuItem } from "./contextMenuItem.js";
-import { IS_BUILT, IS_DEV } from "./env.js";
+import getEnv, { IS_BUILT, IS_DEV } from "./env.js";
 import type Event from "./event.js";
 import Registry from "./registry.js";
 import { pluralize } from "./utils.js";
@@ -66,7 +66,7 @@ export default class Client<Ready extends boolean = false> extends DiscordClient
 
 			const command = this.commandRegistry.get(interaction.commandName);
 			if (!command) return;
-			if (command.ownerOnly && interaction.user.id !== process.env["OWNER_ID"]!)
+			if (command.ownerOnly && interaction.user.id !== getEnv("OWNER_ID"))
 				return void (await interaction.reply({
 					content: "This command can only be used by the owner.",
 					ephemeral: true,
@@ -100,7 +100,7 @@ export default class Client<Ready extends boolean = false> extends DiscordClient
 						await interaction.editReply(data);
 					} catch {
 						try {
-							const owner = await this.users.fetch(process.env["OWNER_ID"]!);
+							const owner = await this.users.fetch(getEnv("OWNER_ID"));
 							await owner.send(data as MessageCreateOptions);
 							await interaction.user.send(data as MessageCreateOptions);
 						} catch {
@@ -114,7 +114,7 @@ export default class Client<Ready extends boolean = false> extends DiscordClient
 			if (!interaction.isContextMenuCommand()) return;
 			const item = this.contextMenuItemsRegistry.get(interaction.commandName);
 			if (!item) return;
-			if (item.ownerOnly && interaction.user.id !== process.env["OWNER_ID"]!)
+			if (item.ownerOnly && interaction.user.id !== getEnv("OWNER_ID"))
 				return void (await interaction.reply({
 					content: "This context menu item can only be used by the owner.",
 					ephemeral: true,
@@ -130,7 +130,7 @@ export default class Client<Ready extends boolean = false> extends DiscordClient
 
 			await command?.autocomplete?.({ client: this as Client<true>, interaction });
 		});
-		await this.login(process.env["TOKEN"]!);
-		if (IS_DEV) await (await this.users.fetch(process.env["OWNER_ID"]!)).send("✅ Started");
+		await this.login(getEnv("TOKEN"));
+		if (IS_DEV) await (await this.users.fetch(getEnv("OWNER_ID"))).send("✅ Started");
 	}
 }

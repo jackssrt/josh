@@ -31,8 +31,8 @@ export type AnyFunction = (...args: any[]) => any;
  * Pauses the program for the specified amount of time.
  * @param delay how many **seconds** (not milliseconds) it should wait
  */
-export function wait(delay: number) {
-	return new Promise<void>((resolve) => setTimeout(() => resolve(), delay * 1000));
+export function wait(delay: number): Promise<void> {
+	return new Promise((resolve) => setTimeout(() => resolve(), delay * 1000));
 }
 
 /**
@@ -64,14 +64,17 @@ export async function generatorToArray<T>(gen: AsyncGenerator<T>): Promise<T[]> 
 	return out;
 }
 export type EmbedFactory = (b: EmbedBuilder) => Awaitable<EmbedBuilder>;
-export type OptionalEmbedFactory = (b: EmbedBuilder) => Awaitable<EmbedBuilder | void>;
+export type OptionalEmbedFactory = (b: EmbedBuilder) => Awaitable<EmbedBuilder | false | undefined>;
 
 export async function embeds(...funcs: OptionalEmbedFactory[]) {
+	// the || operator catches `false` and `undefined`
+	/* eslint-disable @typescript-eslint/prefer-nullish-coalescing */
 	return {
 		embeds: (
-			await parallel(funcs.map(async (func) => (await func(new EmbedBuilder().setColor("#2b2d31"))) ?? []))
+			await parallel(funcs.map(async (func) => (await func(new EmbedBuilder().setColor("#2b2d31"))) || []))
 		).flat(),
 	} satisfies InteractionReplyOptions;
+	/* eslint-enable @typescript-eslint/prefer-nullish-coalescing */
 }
 export function constructEmbedsWrapper(baseFactory: EmbedFactory): typeof embeds {
 	return async (...funcs) =>
@@ -146,7 +149,7 @@ export async function impersonate(
 	message: string | WebhookMessageCreateOptions,
 ) {
 	const webhook =
-		(await channel.fetchWebhooks()).find((v) => v.token !== undefined && v.name === WEBHOOK_NAME) ??
+		(await channel.fetchWebhooks()).find((v) => v.token !== null && v.name === WEBHOOK_NAME) ??
 		(await channel.createWebhook({
 			name: WEBHOOK_NAME,
 			reason: "impersonation webhook",
@@ -205,14 +208,14 @@ export type EventNames<T extends EventEmitter> = Parameters<T["on"]>[0];
  * Await for an eventemitter to emit specific events.
  * Makes eventemitters able to be awaited.
  * @param ee the eventemitter
- * @param timeout longest time to wait for events
+ * @param timeoutSeconds longest time to wait for events in seconds
  * @param event the event(s) to wait for
  * @returns a Promise that resolves when the events are emitted or times out, with the arguments of the event or an empty array
  */
 export async function awaitEvent<T extends EventEmitter, E extends EventNames<T>>(
 	ee: T,
 	event: E[] | E,
-	timeout?: number | undefined,
+	timeoutSeconds?: number | undefined,
 ): Promise<EventParams<T> | []> {
 	const events = Array.isArray(event) ? event : [event];
 	return new Promise((resolve) => {
@@ -226,7 +229,7 @@ export async function awaitEvent<T extends EventEmitter, E extends EventNames<T>
 			events.forEach((e) => ee.removeListener(e, listener));
 			resolve([]);
 		}
-		if (timeout) wait(timeout).then(onTimeout).catch(onTimeout);
+		if (timeoutSeconds) wait(timeoutSeconds).then(onTimeout).catch(onTimeout);
 	});
 }
 
@@ -280,16 +283,16 @@ export function hexToRGB(hex: `#${string}`) {
 			/^#?([a-f\d])([a-f\d])([a-f\d])$/i,
 			(_, r: string, g: string, b: string) => "#" + r + r + g + g + b + b,
 		)
-		?.substring(1)
-		?.match(/.{2}/g)
+		.substring(1)
+		.match(/.{2}/g)
 		?.map((x) => parseInt(x, 16)) as [number, number, number];
 }
 
 export function dedent(strings: TemplateStringsArray, ...values: unknown[]): string {
 	return strings
 		.reduce((acc, cur, i) => {
-			// eslint-disable-next-line @typescript-eslint/restrict-template-expressions
-			return `${acc ?? ""}${values[i - 1] ?? ""}${cur ?? ""}`;
+			// eslint-disable-next-line @typescript-eslint/restrict-template-expressions, @typescript-eslint/no-base-to-string
+			return `${acc}${values[i - 1] ?? ""}${cur}`;
 		}, "")
 		.replace(/^(\t| {4})+/gm, "");
 }

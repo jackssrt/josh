@@ -43,15 +43,16 @@ export default class Player<Host extends boolean = boolean> {
 		return `${this.role !== undefined ? ROLE_ICON_MAP[this.role] : this.host ? "👑" : "👤"} - <@${this.user.id}>`;
 	}
 	public async roleEmbed() {
-		return await embeds((b) => {
-			b.setAuthor(
-				!this.host
-					? {
-							name: `Host: ${this.gameHost.user.username}・Room code: ${this.gameCode}`,
-							iconURL: this.gameHost.user.avatarURL() || "",
-					  }
-					: null,
-			)
+		return await embeds((b) =>
+			b
+				.setAuthor(
+					!this.host
+						? {
+								name: `Host: ${this.gameHost.user.username}・Room code: ${this.gameCode}`,
+								iconURL: this.gameHost.user.avatarURL() ?? "",
+						  }
+						: null,
+				)
 				.setTitle(
 					this.role === undefined
 						? `Waiting for role... ${SQUIDSHUFFLE_EMOJI}`
@@ -70,13 +71,10 @@ export default class Player<Host extends boolean = boolean> {
 					this.role === undefined && !this.host
 						? { text: `You can leave this game by pressing on the "I'm in!" button again` }
 						: null,
-				);
-
-			if (this.role !== undefined)
-				b.setColor(
+				)
+				.setColor(
 					this.role === PlayerRole.Seeker ? "#55acee" : this.role === PlayerRole.Hider ? "#fdcb58" : null,
-				);
-			return b;
-		});
+				),
+		);
 	}
 }

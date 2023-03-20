@@ -1,6 +1,7 @@
 import { GuildMember } from "discord.js";
 import type Command from "../command.js";
 import { BOOYAH_EMOJI } from "../emojis.js";
+import getEnv from "../env.js";
 import Lock from "../lock.js";
 import { getLowerRolesInSameCategory, parallel, search } from "../utils.js";
 
@@ -87,7 +88,7 @@ export default {
 		const colorData = COLOR_DATA.find((a) => a.name.toLowerCase().trim() === colorInput.toLowerCase().trim());
 		if (!colorData) return await interaction.reply({ content: "That color doesn't exist!", ephemeral: true });
 		let key = "color-command-emoji-lock";
-		const colorsCategory = (await interaction.guild.roles.fetch(process.env["COLORS_ROLE_CATEGORY_ID"]!))!;
+		const colorsCategory = (await interaction.guild.roles.fetch(getEnv("COLORS_ROLE_CATEGORY_ID")))!;
 		try {
 			await parallel(interaction.deferReply(), async () => {
 				key = await colorEmojiLock.lock();
@@ -96,15 +97,15 @@ export default {
 					(v) => (v.hexColor.toLowerCase() as `#${string}`) === `#${colorData.value.toLowerCase()}`,
 				);
 				const otherColorRoles = colorRoles.filter(
-					(v) => v.members.has((<GuildMember>interaction.member).id) && v.id !== alreadyExistingRole?.id,
+					(v) => v.members.has((interaction.member as GuildMember).id) && v.id !== alreadyExistingRole?.id,
 				);
 				if (otherColorRoles.length > 0)
-					await (<GuildMember>interaction.member).roles.remove(
+					await (interaction.member as GuildMember).roles.remove(
 						otherColorRoles,
 						"A user cannot have multiple color roles at once.",
 					);
-				if (alreadyExistingRole && !alreadyExistingRole.members.has((<GuildMember>interaction.member).id))
-					await (<GuildMember>interaction.member).roles.add(alreadyExistingRole, "Requested color");
+				if (alreadyExistingRole && !alreadyExistingRole.members.has((interaction.member as GuildMember).id))
+					await (interaction.member as GuildMember).roles.add(alreadyExistingRole, "Requested color");
 				if (alreadyExistingRole) return;
 
 				// make a new role
@@ -117,14 +118,14 @@ export default {
 					position: colorsCategory.position,
 					name: `🎨・${colorData.name}`,
 				});
-				await (<GuildMember>interaction.member).roles.add(newRole, "Requested color");
+				await (interaction.member as GuildMember).roles.add(newRole, "Requested color");
 			});
 			const colorRoles = await getLowerRolesInSameCategory(colorsCategory);
 			await parallel(
 				interaction.editReply(`All done! Enjoy your new name color! ${BOOYAH_EMOJI}`),
 
 				...colorRoles.map(async (v) => {
-					if (v.members.size === 0 && v.id !== process.env["DEFAULT_COLOR_ROLE_ID"]!)
+					if (v.members.size === 0 && v.id !== getEnv("DEFAULT_COLOR_ROLE_ID"))
 						await v.delete("Color role clean up");
 				}),
 			);

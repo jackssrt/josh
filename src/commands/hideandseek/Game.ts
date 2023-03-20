@@ -76,6 +76,7 @@ export default class Game<State extends GameState = GameState.WaitingForPlayers>
 	private startedMessage = undefined as DefinedAt<State, GameState.HideTime, Message>;
 	private readonly hideTimeSeconds: number;
 	private readonly seekTimeSeconds: number;
+	private aborted = false;
 
 	private hostConfigEmbeds = constructEmbedsWrapper((b) =>
 		b.setFooter({
@@ -128,7 +129,7 @@ export default class Game<State extends GameState = GameState.WaitingForPlayers>
 			};
 		}
 	}
-	private async awaitPlayers(this: Game<GameState.WaitingForPlayers>): Promise<Promise<boolean | void>> {
+	private async awaitPlayers(this: Game): Promise<boolean | undefined> {
 		this.state = GameState.WaitingForPlayers;
 		const data = {
 			...(await embeds((b) => b.setDescription(`${SQUIDSHUFFLE_EMOJI} Setting everything up...`))),
@@ -143,9 +144,9 @@ export default class Game<State extends GameState = GameState.WaitingForPlayers>
 			],
 			fetchReply: true,
 		} as InteractionReplyOptions & { fetchReply: true };
-		this.mainMessage = (await this.host.interaction[this.playedAgain ? "followUp" : "reply"](
-			data,
-		)) as Message<boolean>;
+		this.mainMessage = this.playedAgain
+			? await this.host.interaction.followUp(data)
+			: await this.host.interaction.editReply(data);
 
 		this.createdTime = new Date();
 		this.players.forEach((v) => {
@@ -191,7 +192,7 @@ export default class Game<State extends GameState = GameState.WaitingForPlayers>
 			if (hostActionInteraction.customId === "start") {
 				joinCollector.stop("started");
 				startedEe.emit("started");
-			} else return void (await this.abort());
+			} else return await this.abort();
 		});
 		const joinCollector = this.mainMessage.createMessageComponentCollector({
 			componentType: ComponentType.Button,
@@ -241,7 +242,7 @@ export default class Game<State extends GameState = GameState.WaitingForPlayers>
 						...leftEmbeds,
 						components: [],
 					}),
-					!this.playedAgain && player ? player.interaction.editReply(leftEmbeds) : undefined,
+					!this.playedAgain ? player.interaction.editReply(leftEmbeds) : undefined,
 					this.updateMainMessage(),
 				);
 				return;
@@ -261,10 +262,11 @@ export default class Game<State extends GameState = GameState.WaitingForPlayers>
 			hostConfigCollector.stop("started");
 			startedEe.emit("started");
 		});
-		await awaitEvent(startedEe, "started");
+		await awaitEvent(startedEe, "started", SECONDS_TO_JOIN);
+		if (this.aborted) return false;
 	}
 
-	private async decideTeams(this: Game<GameState.DecidingTeams>): Promise<boolean | void> {
+	private async decideTeams(this: Game<GameState.DecidingTeams>): Promise<boolean> {
 		this.state = GameState.DecidingTeams;
 		await this.updateMainMessage();
 		const maxNumSeekers = Math.min(4, this.players.size - 1);
@@ -356,21 +358,21 @@ export default class Game<State extends GameState = GameState.WaitingForPlayers>
 			this.players.delete(head.user);
 			this.players.set(head.user, head);
 
-			const count =
-				pickTeamsInteraction.customId === "rotate" && pickTeamsInteraction.isStringSelectMenu()
-					? parseInt(pickTeamsInteraction.values[0] ?? "-1")
-					: fairestNumSeekers;
+			const count = pickTeamsInteraction.isStringSelectMenu()
+				? parseInt(pickTeamsInteraction.values[0] ?? "-1")
+				: fairestNumSeekers;
 			let i = 0;
 			// sets the first X players in the rotated players collection as seekers
 			this.players.forEach((v) => {
 				v.role = i++ < count ? PlayerRole.Seeker : PlayerRole.Hider;
 			});
 		} else if (pickTeamsInteraction.customId === "random" && pickTeamsInteraction.isStringSelectMenu()) {
-			const count =
-				pickTeamsInteraction.customId === "random"
-					? parseInt(pickTeamsInteraction.values[0] ?? "-1")
-					: fairestNumSeekers;
-			if (count === -1) return await this.abort();
+			const count = parseInt(pickTeamsInteraction.values[0] ?? "-1");
+
+			if (count === -1) {
+				await this.abort();
+				return false;
+			}
 			const seekerKeys = getRandomValues(Array.from(this.players.keys()), count);
 			this.players.map((v, k) => {
 				v.role = seekerKeys.includes(k) ? PlayerRole.Seeker : PlayerRole.Hider;
@@ -381,7 +383,10 @@ export default class Game<State extends GameState = GameState.WaitingForPlayers>
 				v.role = pickTeamsInteraction.values.includes(k.id) ? PlayerRole.Seeker : PlayerRole.Hider;
 				this.players.set(k, v);
 			});
-		else return !!void (await this.abort());
+		else {
+			await this.abort();
+			return false;
+		}
 		await parallel(
 			this.players.map(async (v) => {
 				if (v.isNotHost()) {
@@ -390,8 +395,9 @@ export default class Game<State extends GameState = GameState.WaitingForPlayers>
 				}
 			}),
 		);
+		return true;
 	}
-	private async awaitMatchStart(this: Game<GameState.WaitingForMatchStart>): Promise<"skip" | "abort" | void> {
+	private async awaitMatchStart(this: Game<GameState.WaitingForMatchStart>): Promise<"skip" | "abort" | undefined> {
 		this.state = GameState.WaitingForMatchStart;
 		await this.updateMainMessage();
 
@@ -457,7 +463,7 @@ export default class Game<State extends GameState = GameState.WaitingForPlayers>
 			)} ${messageHiddenText(this.players.map((v) => `<@${v.user.id}>`).join(""))}`,
 		);
 	}
-	private async hideTime(this: Game<GameState.HideTime>): Promise<boolean | void> {
+	private async hideTime(this: Game<GameState.HideTime>): Promise<void> {
 		this.state = GameState.HideTime;
 		await this.updateMainMessage();
 		await wait(this.startedTime.getTime() / 1000 + this.hideTimeSeconds - new Date().getTime() / 1000);
@@ -469,7 +475,7 @@ export default class Game<State extends GameState = GameState.WaitingForPlayers>
 			)} ${messageHiddenText(this.players.map((v) => `<@${v.user.id}>`).join(""))}`,
 		});
 	}
-	private async seekTime(this: Game<GameState.SeekTime>): Promise<boolean | void> {
+	private async seekTime(this: Game<GameState.SeekTime>): Promise<void> {
 		this.state = GameState.SeekTime;
 		await this.updateMainMessage();
 
@@ -481,7 +487,7 @@ export default class Game<State extends GameState = GameState.WaitingForPlayers>
 		);
 		if (this.hidingTimeUpMsg.deletable) await this.hidingTimeUpMsg.delete();
 	}
-	public async playAgain(this: Game<GameState.PlayAgain>): Promise<boolean | void> {
+	public async playAgain(this: Game<GameState.PlayAgain>): Promise<boolean> {
 		this.state = GameState.PlayAgain;
 		await this.updateMainMessage();
 
@@ -539,17 +545,17 @@ export default class Game<State extends GameState = GameState.WaitingForPlayers>
 	}
 
 	public async start() {
-		// eslint-disable-next-line no-constant-condition
+		// eslint-disable-next-line no-constant-condition, @typescript-eslint/no-unnecessary-condition
 		while (true) {
-			if ((await (this as Game<GameState.WaitingForPlayers>).awaitPlayers()) === false) break;
-			if ((await (this as Game<GameState.DecidingTeams>).decideTeams()) === false) break;
+			if ((await (this as Game).awaitPlayers()) === false) break;
+			if (!(await (this as Game<GameState.DecidingTeams>).decideTeams())) break;
 			const state = await (this as Game<GameState.WaitingForMatchStart>).awaitMatchStart();
 			if (state === "abort") break;
 			else if (state !== "skip") {
-				if ((await (this as Game<GameState.HideTime>).hideTime()) === false) break;
-				if ((await (this as Game<GameState.SeekTime>).seekTime()) === false) break;
+				await (this as Game<GameState.HideTime>).hideTime();
+				await (this as Game<GameState.SeekTime>).seekTime();
 			}
-			if ((await (this as Game<GameState.PlayAgain>).playAgain()) === false) break;
+			if (await (this as Game<GameState.PlayAgain>).playAgain()) break;
 		}
 	}
 

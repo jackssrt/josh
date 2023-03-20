@@ -104,6 +104,7 @@ export default {
 				await sendRegularRotations(
 					client,
 					data.endTime,
+					data.currentFest?.state === "SECOND_HALF" ? data.currentFest : undefined,
 					data.splatfest,
 					data.turfWar,
 					data.ranked,
@@ -138,6 +139,7 @@ export default {
 				content: `done:`,
 				files: [new AttachmentBuilder(await makeColorRolesImage()).setName("color-roles.png")],
 			});
+			// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
 		} else if (subcommand === "memberjoin" || subcommand === "memberleave") {
 			const member = interaction.options.getMember("member");
 			if (!(member instanceof GuildMember)) return;

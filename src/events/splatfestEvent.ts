@@ -3,6 +3,7 @@ import consola from "consola";
 import { GuildScheduledEventEntityType, GuildScheduledEventPrivacyLevel, TimestampStyles } from "discord.js";
 import { USER_AGENT } from "../client.js";
 import database from "../database.js";
+import getEnv from "../env.js";
 import type Event from "../event.js";
 import type { FestivalsApiResponse } from "../types/rotationNotifier.js";
 import { parallel } from "../utils.js";
@@ -25,7 +26,7 @@ export default {
 		});
 		const fest = fests.find((v) => v.state !== "CLOSED");
 		if (!fest || (await database.isSplatfestEventCreated(fest.id))) return;
-		const guild = await client.guilds.fetch(process.env["GUILD_ID"]!);
+		const guild = await client.guilds.fetch(getEnv("GUILD_ID"));
 		await parallel(
 			async () => {
 				await guild.scheduledEvents.create({
@@ -43,7 +44,7 @@ export default {
 				await database.setSplatfestEventCreated(fest.id);
 			},
 			async () => {
-				const categoryRolePosition = (await guild.roles.fetch(process.env["SPLATFEST_TEAM_CATEGORY_ROLE_ID"]!))
+				const categoryRolePosition = (await guild.roles.fetch(getEnv("SPLATFEST_TEAM_CATEGORY_ROLE_ID")))
 					?.position;
 				if (!categoryRolePosition) return consola.error("Splatfest team role category role not found");
 				for (const [i, team] of Object.entries(fest.teams)) {

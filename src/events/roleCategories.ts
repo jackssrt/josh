@@ -20,7 +20,7 @@ export async function updateRoleCategories(member: GuildMember) {
 			roleCategory = undefined;
 		}
 	}
-	if (roleCategory && roleCategory.members.has(member.id)) {
+	if (roleCategory?.members.has(member.id)) {
 		// member has no roles in last role category
 		// remove the role category from them
 		await member.roles.remove(roleCategory, "Automatic role category remove");

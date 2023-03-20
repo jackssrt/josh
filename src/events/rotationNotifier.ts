@@ -6,6 +6,7 @@ import sharp from "sharp";
 import { USER_AGENT } from "../client.js";
 import database from "../database.js";
 import { ANARCHY_BATTLE_EMOJI, REGULAR_BATTLE_EMOJI, SPLATFEST_EMOJI, X_BATTLE_EMOJI } from "../emojis.js";
+import getEnv from "../env.js";
 import type Event from "../event.js";
 import type SchedulesApiResponse from "../types/rotationNotifier.js";
 import type {
@@ -13,6 +14,7 @@ import type {
 	BankaraSetting,
 	CoopGroupingRegularNode,
 	CoopRegularStage,
+	CurrentFest,
 	FestNode,
 	FestSetting,
 	RankedVsRule,
@@ -33,7 +35,7 @@ import {
 	timeTimestamp,
 	wait,
 } from "../utils.js";
-type RotationType = "Turf War" | "Anarchy Open" | "Anarchy Series" | "X Battle" | "Splatfest";
+type RotationType = "Turf War" | "Anarchy Open" | "Anarchy Series" | "X Battle" | "Splatfest" | "Tricolor";
 
 const EMBED_DATA_MAP = {
 	"Turf War": {
@@ -53,6 +55,10 @@ const EMBED_DATA_MAP = {
 		color: "#0FDB9B",
 	},
 	Splatfest: {
+		emoji: "<:splatfest:1086786495286890506>",
+		color: "#0033FF",
+	},
+	Tricolor: {
 		emoji: "<:splatfest:1086786495286890506>",
 		color: "#0033FF",
 	},
@@ -212,19 +218,29 @@ function extractSetting<T extends RotationType>(
 async function makeEmbed<T extends RotationType>(
 	b: EmbedBuilder,
 	mode: T,
-	data: RotationTypeToNodeType<T>[],
-): Promise<[EmbedBuilder, AttachmentBuilder] | void> {
+	data: T extends "Tricolor" ? CurrentFest<"SECOND_HALF"> : RotationTypeToNodeType<T>[],
+): Promise<[EmbedBuilder, AttachmentBuilder] | undefined> {
 	const { emoji, color } = EMBED_DATA_MAP[mode];
-	const setting = extractSetting(mode, data[0]!);
+	if (mode === "Tricolor")
+		return [
+			b
+				.setTitle(`${emoji} ${mode}`)
+				.setColor(color)
+				.setImage(`attachment://${mode.replace(" ", "-")}.png`),
+			new AttachmentBuilder(await makeEmbedImage([(data as CurrentFest<"SECOND_HALF">).triColorStage])).setName(
+				`${mode.replace(" ", "-")}.png`,
+			),
+		];
+	const setting = extractSetting(mode, (data as RotationTypeToNodeType<T>[])[0]!);
 	if (!setting) return;
 	// limit next rotations to 3
-	data = data.slice(1, 4);
+	const newData = (data as RotationTypeToNodeType<T>[]).slice(1, 4);
 	const { image } = setting.vsRule.rule !== "TURF_WAR" ? RANKED_MODE_DATA_MAP[setting.vsRule.rule] : { image: null };
 	return [
 		b
-			.setTitle(`${emoji} ${mode}`)
+			.setTitle(`${emoji} ${mode === "Splatfest" ? "Splatfest Open & Pro" : mode}`)
 			.setDescription(
-				data
+				newData
 					.reduce((a, v) => {
 						const nextSetting = extractSetting(mode, v);
 						if (!nextSetting) return a;
@@ -234,7 +250,7 @@ async function makeEmbed<T extends RotationType>(
 								: `${RANKED_MODE_DATA_MAP[nextSetting.vsRule.rule].emoji} ${nextSetting.vsRule.name}`
 						} @ ${timeTimestamp(new Date(Date.parse(v.startTime)), false)}`;
 					}, "")
-					.trimStart(),
+					.trimStart() || null,
 			)
 			.setThumbnail(image)
 			.setColor(color)
@@ -245,6 +261,7 @@ async function makeEmbed<T extends RotationType>(
 
 function generateChannelTopic(
 	endTime: Date,
+	currentFest: CurrentFest<"FIRST_HALF" | "SECOND_HALF"> | undefined,
 	splatfest: FestNode[],
 	turfWar: RegularNode[],
 	ranked: BankaraNode[],
@@ -267,11 +284,15 @@ function generateChannelTopic(
 	const parts = [
 		`Next ${relativeTimestamp(endTime)}`,
 		splatfestSetting &&
-			`${SPLATFEST_EMOJI} ${splatfestSetting.vsStages.map((v) => `[${shortenStageName(v.name)}]`).join(" & ")}${
+			`${SPLATFEST_EMOJI} **Open & Pro** ${splatfestSetting.vsStages
+				.map((v) => `[${shortenStageName(v.name)}]`)
+				.join(" & ")}${
 				nextSplatfestSetting
 					? ` ➔ ${nextSplatfestSetting.vsStages.map((v) => `[${shortenStageName(v.name)}]`).join(" & ")}`
 					: ""
 			}`,
+		currentFest?.state === "SECOND_HALF" &&
+			`${SPLATFEST_EMOJI} **Tricolor** [${shortenStageName(currentFest.triColorStage.name)}]`,
 		turfWarSetting &&
 			`${REGULAR_BATTLE_EMOJI} ${turfWarSetting.vsStages
 				.map((v) => `[${shortenStageName(v.name)}]`)
@@ -289,6 +310,7 @@ function generateChannelTopic(
 				nextXSetting ? ` ➔ ${RANKED_MODE_DATA_MAP[nextXSetting.vsRule.rule].emoji}` : ""
 			}]`,
 	];
+	// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
 	return parts.flatMap((v) => v || []).join(`\n・\n`);
 }
 const TEXT_BLUR_SIGMA = 1.00005;
@@ -437,7 +459,7 @@ export async function sendSalmonRunRotation(
 	salmonNodes: CoopGroupingRegularNode[],
 ) {
 	// get channel
-	const salmonRunChannel = (await client.channels.fetch(process.env["SALMON_RUN_CHANNEL_ID"]!)) as NewsChannel;
+	const salmonRunChannel = (await client.channels.fetch(getEnv("SALMON_RUN_CHANNEL_ID"))) as NewsChannel;
 
 	// delete previous message
 	await (await salmonRunChannel.messages.fetch({ limit: 1 })).first()?.delete();
@@ -486,20 +508,21 @@ export async function sendSalmonRunRotation(
 export async function sendRegularRotations(
 	client: Client<true>,
 	endTime: Date,
+	currentFest: CurrentFest<"FIRST_HALF" | "SECOND_HALF"> | undefined,
 	splatfest: FestNode[],
 	turfWar: RegularNode[],
 	ranked: BankaraNode[],
 	xBattle: XNode[],
 ) {
 	// get channels
-	const mapsChannel = (await client.channels.fetch(process.env["MAPS_CHANNEL_ID"]!)) as NewsChannel;
-	const generalChannel = (await client.channels.fetch(process.env["GENERAL_CHANNEL_ID"]!)) as TextChannel;
+	const mapsChannel = (await client.channels.fetch(getEnv("MAPS_CHANNEL_ID"))) as NewsChannel;
+	const generalChannel = (await client.channels.fetch(getEnv("GENERAL_CHANNEL_ID"))) as TextChannel;
 
 	// delete previous message
 	await (await mapsChannel.messages.fetch({ limit: 1 })).first()?.delete();
 	await parallel(
 		// set channel topic
-		generalChannel.setTopic(generateChannelTopic(endTime, splatfest, turfWar, ranked, xBattle)),
+		generalChannel.setTopic(generateChannelTopic(endTime, currentFest, splatfest, turfWar, ranked, xBattle)),
 
 		async () => {
 			// send message
@@ -507,8 +530,8 @@ export async function sendRegularRotations(
 			async function makeEmbedAndAddImage<T extends RotationType>(
 				b: EmbedBuilder,
 				mode: T,
-				nodes: RotationTypeToNodeType<T>[],
-			): Promise<EmbedBuilder | void> {
+				nodes: T extends "Tricolor" ? CurrentFest<"SECOND_HALF"> : RotationTypeToNodeType<T>[],
+			): Promise<EmbedBuilder | undefined> {
 				const data = await makeEmbed(b, mode, nodes);
 				if (!data) return;
 				attachments.push(data[1]);
@@ -522,6 +545,9 @@ export async function sendRegularRotations(
 							.setTitle(`Splatoon 3 maps and modes rotations`)
 							.setDescription(`Ends ${relativeTimestamp(endTime)} @ ${timeTimestamp(endTime, false)}`),
 					async (b) => await makeEmbedAndAddImage(b, "Splatfest", splatfest),
+					async (b) =>
+						currentFest?.state === "SECOND_HALF" &&
+						(await makeEmbedAndAddImage(b, "Tricolor", currentFest as CurrentFest<"SECOND_HALF">)),
 					async (b) => await makeEmbedAndAddImage(b, "Turf War", turfWar),
 					async (b) => await makeEmbedAndAddImage(b, "Anarchy Series", ranked),
 					async (b) => await makeEmbedAndAddImage(b, "Anarchy Open", ranked),
@@ -547,6 +573,7 @@ export async function fetchRotations() {
 					regularSchedules: { nodes: salmon },
 				},
 				festSchedules: { nodes: splatfest },
+				currentFest,
 			},
 		},
 	} = await axios.get<SchedulesApiResponse>("https://splatoon3.ink/data/schedules.json", {
@@ -574,19 +601,39 @@ export async function fetchRotations() {
 	const salmonStartTime = new Date(Date.parse(salmon[0]!.startTime));
 	const salmonEndTime = new Date(Date.parse(salmon[0]!.endTime));
 
-	return { startTime, endTime, splatfest, turfWar, ranked, xBattle, salmonStartTime, salmonEndTime, salmon } as const;
+	return {
+		startTime,
+		endTime,
+		splatfest,
+		turfWar,
+		ranked,
+		xBattle,
+		salmonStartTime,
+		salmonEndTime,
+		salmon,
+		currentFest: currentFest ?? undefined,
+	} as const;
 }
 
 async function loopSend(client: Client<true>) {
-	// eslint-disable-next-line no-constant-condition
+	// eslint-disable-next-line no-constant-condition, @typescript-eslint/no-unnecessary-condition
 	while (true) {
 		const output = await fetchRotations();
 		if (!output) return;
-		const { endTime, splatfest, turfWar, ranked, xBattle, salmonStartTime, salmonEndTime, salmon } = output;
+		const { endTime, splatfest, turfWar, ranked, xBattle, salmonStartTime, salmonEndTime, salmon, currentFest } =
+			output;
 		await parallel(
 			async () => {
 				consola.info("Sending regular rotations...");
-				await sendRegularRotations(client, endTime, splatfest, turfWar, ranked, xBattle);
+				await sendRegularRotations(
+					client,
+					endTime,
+					currentFest ?? undefined,
+					splatfest,
+					turfWar,
+					ranked,
+					xBattle,
+				);
 				await database.setNextMapRotation(endTime);
 			},
 			(await database.shouldSendSalmonRunRotation()) &&

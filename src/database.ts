@@ -2,6 +2,7 @@ import axios from "axios";
 import { existsSync } from "fs";
 import { readFile, writeFile } from "fs/promises";
 import { USER_AGENT } from "./client.js";
+import getEnv from "./env.js";
 import type { SalmonRunAPIResponse } from "./types/rotationNotifier.js";
 import { parallel } from "./utils.js";
 
@@ -18,7 +19,7 @@ type JSONData = {
 };
 
 class DatabaseBackend<T extends Record<K, JSONData[string]>, K extends string> {
-	private replitDatabaseUrl = process.env["REPLIT_DB_URL"];
+	private replitDatabaseUrl = getEnv("REPLIT_DB_URL");
 	private data: T | undefined = undefined;
 	private static readonly PATH = "./database.json";
 	private async load() {

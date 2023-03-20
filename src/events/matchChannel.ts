@@ -22,9 +22,9 @@ export default {
 		if (newState.channelId === "1067938899751620648") {
 			const channel = await newState.guild.channels.create({
 				type: ChannelType.GuildVoice,
-				name: `🔊・${adjectives[~~(Math.random() * adjectives.length)] as string} ${
-					nouns[~~(Math.random() * nouns.length)] as string
-				}`,
+				name: `🔊・${adjectives[~~(Math.random() * adjectives.length)]!} ${nouns[
+					~~(Math.random() * nouns.length)
+				]!}`,
 				userLimit: 4,
 				parent: "1061706281385205910",
 			});
