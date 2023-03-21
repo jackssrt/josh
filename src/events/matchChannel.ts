@@ -1,41 +1,23 @@
 import { ChannelType } from "discord.js";
+import getEnv from "../env.js";
 import type Event from "../event";
-
-const adjectives = ["cool", "evasive", "unique", "predictable", "anonymous", "unknown", "known", "popular"];
-const nouns = [
-	"inkling",
-	"octoling",
-	"squid game",
-	"splatoon",
-	"person",
-	"player",
-	"shop",
-	"splatnet",
-	"turf war",
-	"x battle",
-];
 
 export default {
 	event: "voiceStateUpdate",
 	async on(_, oldState, newState) {
 		if (!newState.member) return;
-		if (newState.channelId === "1067938899751620648") {
+		if (newState.channelId === getEnv("CREATE_MATCH_CHANNEL_ID")) {
 			const channel = await newState.guild.channels.create({
 				type: ChannelType.GuildVoice,
-				name: `🔊・${adjectives[~~(Math.random() * adjectives.length)]!} ${nouns[
-					~~(Math.random() * nouns.length)
-				]!}`,
+				name: `⚽・${newState.member.displayName}`,
 				userLimit: 4,
-				parent: "1061706281385205910",
+				parent: getEnv("MATCH_CHANNEL_CATEGORY_ID"),
 			});
 			await newState.member.voice.setChannel(channel);
 		} else if (
-			!newState.channel &&
-			oldState.channel &&
-			oldState.channel.parentId === "1061706281385205910" &&
+			oldState.channel?.parentId === getEnv("MATCH_CHANNEL_CATEGORY_ID") &&
 			oldState.channel.members.size === 0
-		) {
+		)
 			await oldState.channel.delete();
-		}
 	},
 } as Event<"voiceStateUpdate">;

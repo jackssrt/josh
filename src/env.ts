@@ -19,6 +19,8 @@ export interface ProcessEnv {
 	JOIN_LEAVE_CHANNEL_ID: string;
 	REPLIT_DB_URL: string | undefined;
 	REPL_ID: string | undefined;
+	CREATE_MATCH_CHANNEL_ID: string;
+	MATCH_CHANNEL_CATEGORY_ID: string;
 }
 
 export default function getEnv<T extends keyof ProcessEnv>(key: T): ProcessEnv[T] {
