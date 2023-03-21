@@ -103,6 +103,7 @@ export interface CoopGroupingNode {
 }
 export interface CoopGroupingRegularNode extends BaseNode {
 	setting: CoopGroupingRegularSetting;
+	__splatoon3ink_king_salmonid_guess: "Horrorboros" | "Cohozuna";
 }
 export interface CoopGroupingRegularSetting {
 	coopStage: CoopRegularStage;

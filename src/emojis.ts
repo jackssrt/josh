@@ -13,3 +13,5 @@ export const X_BATTLE_EMOJI = "<:xBattle:1071472975146131476>";
 export const SPLATFEST_EMOJI = "<:splatfest:1086786495286890506>";
 export const SQUID_EMOJI = "<:squid:1080224560303046846>";
 export const DIVIDER_EMOJI = "<:d_:1079836889982455808>";
+export const COHOZUNA_EMOJI = "<:cohozuna:1087767404194582570>";
+export const HORRORBOROS_EMOJI = "<:horrorboros:1087767796794003508>";

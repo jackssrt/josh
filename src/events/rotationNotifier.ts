@@ -5,7 +5,14 @@ import { AttachmentBuilder } from "discord.js";
 import sharp from "sharp";
 import { USER_AGENT } from "../client.js";
 import database from "../database.js";
-import { ANARCHY_BATTLE_EMOJI, REGULAR_BATTLE_EMOJI, SPLATFEST_EMOJI, X_BATTLE_EMOJI } from "../emojis.js";
+import {
+	ANARCHY_BATTLE_EMOJI,
+	COHOZUNA_EMOJI,
+	HORRORBOROS_EMOJI,
+	REGULAR_BATTLE_EMOJI,
+	SPLATFEST_EMOJI,
+	X_BATTLE_EMOJI,
+} from "../emojis.js";
 import getEnv from "../env.js";
 import type Event from "../event.js";
 import type SchedulesApiResponse from "../types/rotationNotifier.js";
@@ -410,7 +417,7 @@ async function makeSalmonRunImage(salmon: CoopGroupingRegularNode) {
 		.png()
 		.toBuffer();
 }
-export async function makeSalmonRunGearImage() {
+export async function makeSalmonRunThumbnail() {
 	const gear = await database.activeMonthlySalmonRunGear();
 	// adding "Dg" forces the text image to be as tall as possible,
 	// thus making the text have a constant height
@@ -480,25 +487,35 @@ export async function sendSalmonRunRotation(
 						salmonEndTime,
 					)} @ ${dateTimestamp(salmonEndTime)} ${timeTimestamp(salmonEndTime, false)}`,
 				)
-				.addFields({
-					name: "Next rotations",
-					value: salmonNodes
-						.reduce(
-							(acc, v) =>
-								dedent`${acc}
+				.addFields(
+					{
+						name: "Next rotations",
+						value: salmonNodes
+							.reduce(
+								(acc, v) =>
+									dedent`${acc}
 
 								➔ ${SALMON_RUN_STAGE_EMOJI_MAP[v.setting.coopStage.name]} ${v.setting.coopStage.name}
 								${v.setting.weapons.map((v) => `**${v.name}**`).join(" & ")}`,
-							"",
-						)
-						.trimStart(),
-				})
+								"",
+							)
+							.trimStart(),
+					},
+					{
+						name: "Predicted king salmonid",
+						value: `${
+							currentNode.__splatoon3ink_king_salmonid_guess === "Horrorboros"
+								? HORRORBOROS_EMOJI
+								: COHOZUNA_EMOJI
+						} ${currentNode.__splatoon3ink_king_salmonid_guess}`,
+					},
+				)
 				.setThumbnail("attachment://gear.png")
 				.setImage("attachment://salmonrun.png"),
 		)),
 		files: [
 			new AttachmentBuilder(await makeSalmonRunImage(currentNode)).setName("salmonrun.png"),
-			new AttachmentBuilder(await makeSalmonRunGearImage()).setName("gear.png"),
+			new AttachmentBuilder(await makeSalmonRunThumbnail()).setName("gear.png"),
 		],
 	});
 
