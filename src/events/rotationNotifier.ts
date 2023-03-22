@@ -42,9 +42,9 @@ import {
 	timeTimestamp,
 	wait,
 } from "../utils.js";
-type RotationType = "Turf War" | "Anarchy Open" | "Anarchy Series" | "X Battle" | "Splatfest" | "Tricolor";
+export type RotationType = "Turf War" | "Anarchy Open" | "Anarchy Series" | "X Battle" | "Splatfest" | "Tricolor";
 
-const EMBED_DATA_MAP = {
+export const MAPSNMODES_EMBED_DATA_MAP = {
 	"Turf War": {
 		emoji: "<:regularBattle:1071473255841542176>",
 		color: "#CFF622",
@@ -184,7 +184,7 @@ async function makeEmbedImage(vsStages: Stage[]) {
 		.png({ force: true })
 		.toBuffer();
 }
-type RotationTypeToNodeType<T extends RotationType> = T extends "Turf War"
+export type RotationTypeToNodeType<T extends RotationType> = T extends "Turf War"
 	? RegularNode
 	: T extends "Anarchy Open" | "Anarchy Series"
 	? BankaraNode
@@ -193,7 +193,7 @@ type RotationTypeToNodeType<T extends RotationType> = T extends "Turf War"
 	: T extends "X Battle"
 	? XNode
 	: never;
-type RotationTypeToSettingType<T extends RotationType> = T extends "Turf War"
+export type RotationTypeToSettingType<T extends RotationType> = T extends "Turf War"
 	? RegularSetting
 	: T extends "Anarchy Open"
 	? BankaraSetting<"OPEN">
@@ -204,7 +204,7 @@ type RotationTypeToSettingType<T extends RotationType> = T extends "Turf War"
 	: T extends "X Battle"
 	? XSetting
 	: never;
-function extractSetting<T extends RotationType>(
+function extractSetting<T extends Exclude<RotationType, "Tricolor">>(
 	mode: T,
 	data: RotationTypeToNodeType<T>,
 ): RotationTypeToSettingType<T> | null {
@@ -222,12 +222,42 @@ function extractSetting<T extends RotationType>(
 	) as RotationTypeToSettingType<T> | null;
 }
 
+export function makeCompactRotationText<T extends Exclude<RotationType, "Tricolor">>(
+	mode: T,
+	data: RotationTypeToNodeType<T>,
+	includeDate: boolean,
+): string | undefined {
+	const startTime = new Date(Date.parse(data.startTime));
+	const setting = extractSetting(mode, data);
+	const isNow = new Date(Date.parse(data.startTime)).getTime() < new Date().getTime();
+	return setting
+		? `${isNow ? "**" : ""}${
+				setting.vsRule.rule === "TURF_WAR"
+					? setting.vsStages.map((v) => v.name).join(" & ")
+					: `${RANKED_MODE_DATA_MAP[setting.vsRule.rule].emoji} ${setting.vsRule.name}`
+		  } @ ${timeTimestamp(startTime, false)}${includeDate ? dateTimestamp(startTime) : ""}${
+				isNow ? " [now]**" : ` [${relativeTimestamp(startTime)}]`
+		  }`
+		: undefined;
+}
+
+export function makeCompactSalmonRunRotationText(salmon: CoopGroupingRegularNode): string {
+	const startTime = new Date(Date.parse(salmon.startTime));
+	const isNow = startTime.getTime() < new Date().getTime();
+	return dedent`${isNow ? "**" : ""}${SALMON_RUN_STAGE_EMOJI_MAP[salmon.setting.coopStage.name]} ${
+		salmon.setting.coopStage.name
+	} @ ${timeTimestamp(startTime, false)}${dateTimestamp(startTime)}${
+		isNow ? " [now]**" : ` [${relativeTimestamp(startTime)}]`
+	}
+	${salmon.setting.weapons.map((v) => `**${v.name}**`).join(" & ")}`;
+}
+
 async function makeEmbed<T extends RotationType>(
 	b: EmbedBuilder,
 	mode: T,
 	data: T extends "Tricolor" ? CurrentFest<"SECOND_HALF"> : RotationTypeToNodeType<T>[],
 ): Promise<[EmbedBuilder, AttachmentBuilder] | undefined> {
-	const { emoji, color } = EMBED_DATA_MAP[mode];
+	const { emoji, color } = MAPSNMODES_EMBED_DATA_MAP[mode];
 	if (mode === "Tricolor")
 		return [
 			b
@@ -248,14 +278,10 @@ async function makeEmbed<T extends RotationType>(
 			.setTitle(`${emoji} ${mode === "Splatfest" ? "Splatfest Open & Pro" : mode}`)
 			.setDescription(
 				newData
-					.reduce((a, v) => {
-						const nextSetting = extractSetting(mode, v);
-						if (!nextSetting) return a;
-						return `${a}\n➔ ${
-							nextSetting.vsRule.rule === "TURF_WAR"
-								? nextSetting.vsStages.map((v) => v.name).join(" & ")
-								: `${RANKED_MODE_DATA_MAP[nextSetting.vsRule.rule].emoji} ${nextSetting.vsRule.name}`
-						} @ ${timeTimestamp(new Date(Date.parse(v.startTime)), false)}`;
+					.reduce((acc, v) => {
+						const text = makeCompactRotationText(mode, v, false);
+						if (!text) return acc;
+						return `${acc}\n➔ ${text}`;
 					}, "")
 					.trimStart() || null,
 			)
@@ -495,8 +521,7 @@ export async function sendSalmonRunRotation(
 								(acc, v) =>
 									dedent`${acc}
 
-								➔ ${SALMON_RUN_STAGE_EMOJI_MAP[v.setting.coopStage.name]} ${v.setting.coopStage.name}
-								${v.setting.weapons.map((v) => `**${v.name}**`).join(" & ")}`,
+								➔ ${makeCompactSalmonRunRotationText(v)}`,
 								"",
 							)
 							.trimStart(),
@@ -609,8 +634,10 @@ export async function fetchRotations() {
 		}
 	});
 	// if any(isEmptyArray, turfWar, ranked, xBattles)
-	if ([turfWar, ranked, xBattle, salmon, splatfest].find((v) => v.length === 0) !== undefined)
-		return consola.warn("A schedule was empty!");
+	if ([turfWar, ranked, xBattle, salmon, splatfest].find((v) => v.length === 0) !== undefined) {
+		consola.warn("A schedule was empty!");
+		return undefined;
+	}
 
 	// get start time and end time
 	const startTime = new Date(Date.parse(turfWar[0]!.startTime));
