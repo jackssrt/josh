@@ -46,27 +46,27 @@ export type RotationType = "Turf War" | "Anarchy Open" | "Anarchy Series" | "X B
 
 export const MAPSNMODES_EMBED_DATA_MAP = {
 	"Turf War": {
-		emoji: "<:regularBattle:1071473255841542176>",
+		emoji: REGULAR_BATTLE_EMOJI,
 		color: "#CFF622",
 	},
 	"Anarchy Series": {
-		emoji: "<:anarchyBattle:1071472984793034753>",
+		emoji: ANARCHY_BATTLE_EMOJI,
 		color: "#F54910",
 	},
 	"Anarchy Open": {
-		emoji: "<:anarchyBattle:1071472984793034753>",
+		emoji: ANARCHY_BATTLE_EMOJI,
 		color: "#F54910",
 	},
 	"X Battle": {
-		emoji: "<:xBattle:1071472975146131476>",
+		emoji: X_BATTLE_EMOJI,
 		color: "#0FDB9B",
 	},
 	Splatfest: {
-		emoji: "<:splatfest:1086786495286890506>",
+		emoji: SPLATFEST_EMOJI,
 		color: "#0033FF",
 	},
 	Tricolor: {
-		emoji: "<:splatfest:1086786495286890506>",
+		emoji: SPLATFEST_EMOJI,
 		color: "#0033FF",
 	},
 } as const satisfies Record<RotationType, { emoji: string; color: string }>;
