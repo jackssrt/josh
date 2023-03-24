@@ -25,7 +25,7 @@ export default {
 			},
 		});
 		const fest = fests.find((v) => v.state !== "CLOSED");
-		if (!fest || (await database.isSplatfestEventCreated(fest.id))) return;
+		if (!fest || (await database.isSplatfestEventCreated(fest.title))) return;
 		const guild = await client.guilds.fetch(getEnv("GUILD_ID"));
 		await parallel(
 			async () => {

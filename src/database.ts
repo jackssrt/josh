@@ -58,11 +58,11 @@ class DatabaseBackend<T extends Record<K, JSONData[string]>, K extends string> {
 export class Database {
 	private backend = new DatabaseBackend<DatabaseData, keyof DatabaseData>();
 
-	async setSplatfestEventCreated(id: string) {
-		await this.backend.set("createdSplatfestEvent", id);
+	async setSplatfestEventCreated(name: string) {
+		await this.backend.set("createdSplatfestEvent", name);
 	}
-	async isSplatfestEventCreated(id: string) {
-		return (await this.backend.get("createdSplatfestEvent")) === id;
+	async isSplatfestEventCreated(name: string) {
+		return (await this.backend.get("createdSplatfestEvent")) === name;
 	}
 
 	async setNextMapRotation(endTime: Date) {
