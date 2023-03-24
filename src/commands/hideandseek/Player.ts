@@ -73,7 +73,11 @@ export default class Player<Host extends boolean = boolean> {
 						: null,
 				)
 				.setColor(
-					this.role === PlayerRole.Seeker ? "#55acee" : this.role === PlayerRole.Hider ? "#fdcb58" : null,
+					this.role === PlayerRole.Seeker
+						? "#55acee"
+						: this.role === PlayerRole.Hider
+						? "#fdcb58"
+						: "#2b2d31",
 				),
 		);
 	}
