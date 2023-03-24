@@ -146,7 +146,7 @@ export default class Game<State extends GameState = GameState.WaitingForPlayers>
 		} as InteractionReplyOptions & { fetchReply: true };
 		this.mainMessage = this.playedAgain
 			? await this.host.interaction.followUp(data)
-			: await this.host.interaction.editReply(data);
+			: await this.host.interaction.reply(data);
 
 		this.createdTime = new Date();
 		this.players.forEach((v) => {
