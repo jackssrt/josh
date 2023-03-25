@@ -1,10 +1,12 @@
 import consola from "consola";
 import { Collection } from "discord.js";
 import { readdir } from "fs/promises";
+import { existsSync } from "node:fs";
 import path from "path";
 
 export default class Registry<I> extends Collection<string, I> {
 	public async loadFromDirectory(directory: string): Promise<void> {
+		if (!existsSync(directory)) return;
 		for (const filename of await readdir(directory)) {
 			if (!filename.endsWith("ts") && !filename.endsWith("js")) continue;
 
