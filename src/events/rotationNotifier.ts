@@ -536,7 +536,8 @@ export async function sendSalmonRunRotation(
 					},
 				)
 				.setThumbnail("attachment://gear.png")
-				.setImage("attachment://salmonrun.png"),
+				.setImage("attachment://salmonrun.png")
+				.setColor("#ff5033"),
 		)),
 		files: [
 			new AttachmentBuilder(await makeSalmonRunImage(currentNode)).setName("salmonrun.png"),

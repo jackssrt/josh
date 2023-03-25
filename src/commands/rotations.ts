@@ -68,14 +68,17 @@ export default {
 		} else {
 			await interaction.editReply(
 				await embeds((b) =>
-					b.setTitle("Future Salmon Run rotations").setDescription(
-						lastData!.salmon.reduce(
-							(acc, v) => dedent`${acc}
+					b
+						.setTitle("Future Salmon Run rotations")
+						.setDescription(
+							lastData!.salmon.reduce(
+								(acc, v) => dedent`${acc}
 
 							➔ ${makeCompactSalmonRunRotationText(v)}`,
-							"",
-						),
-					),
+								"",
+							),
+						)
+						.setColor("#ff5033"),
 				),
 			);
 		}
