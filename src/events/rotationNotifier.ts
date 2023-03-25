@@ -235,7 +235,7 @@ export function makeCompactRotationText<T extends Exclude<RotationType, "Tricolo
 				setting.vsRule.rule === "TURF_WAR"
 					? setting.vsStages.map((v) => shortenStageName(v.name)).join(" & ")
 					: `${RANKED_MODE_DATA_MAP[setting.vsRule.rule].emoji} ${setting.vsRule.name}`
-		  } @ ${timeTimestamp(startTime, false)}${includeDate ? dateTimestamp(startTime) : ""}${
+		  } @ ${timeTimestamp(startTime, false)}${includeDate ? ` ${dateTimestamp(startTime)}` : ""}${
 				isNow ? " [now]**" : ` [${relativeTimestamp(startTime)}]`
 		  }`
 		: undefined;
@@ -246,7 +246,7 @@ export function makeCompactSalmonRunRotationText(salmon: CoopGroupingRegularNode
 	const isNow = startTime.getTime() < new Date().getTime();
 	return dedent`${isNow ? "**" : ""}${SALMON_RUN_STAGE_EMOJI_MAP[salmon.setting.coopStage.name]} ${
 		salmon.setting.coopStage.name
-	} @ ${timeTimestamp(startTime, false)}${dateTimestamp(startTime)}${
+	} @ ${timeTimestamp(startTime, false)} ${dateTimestamp(startTime)}${
 		isNow ? " [now]**" : ` [${relativeTimestamp(startTime)}]`
 	}
 	${salmon.setting.weapons.map((v) => `**${v.name}**`).join(" & ")}`;
