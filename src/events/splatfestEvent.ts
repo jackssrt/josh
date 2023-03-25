@@ -26,6 +26,7 @@ export default {
 		});
 		const fest = fests.find((v) => v.state !== "CLOSED");
 		if (!fest || (await database.isSplatfestEventCreated(fest.title))) return;
+		await database.setSplatfestEventCreated(fest.id);
 		const guild = await client.guilds.fetch(getEnv("GUILD_ID"));
 		await parallel(
 			async () => {
@@ -41,7 +42,6 @@ export default {
 						new Date(Date.parse(fest.startTime)).getTime() / 1000,
 					)}:${TimestampStyles.RelativeTime}>\nData provided by https://splatoon3.ink`,
 				});
-				await database.setSplatfestEventCreated(fest.id);
 			},
 			async () => {
 				const categoryRolePosition = (await guild.roles.fetch(getEnv("SPLATFEST_TEAM_CATEGORY_ROLE_ID")))
