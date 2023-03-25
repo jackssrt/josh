@@ -233,7 +233,7 @@ export function makeCompactRotationText<T extends Exclude<RotationType, "Tricolo
 	return setting
 		? `${isNow ? "**" : ""}${
 				setting.vsRule.rule === "TURF_WAR"
-					? setting.vsStages.map((v) => v.name).join(" & ")
+					? setting.vsStages.map((v) => shortenStageName(v.name)).join(" & ")
 					: `${RANKED_MODE_DATA_MAP[setting.vsRule.rule].emoji} ${setting.vsRule.name}`
 		  } @ ${timeTimestamp(startTime, false)}${includeDate ? dateTimestamp(startTime) : ""}${
 				isNow ? " [now]**" : ` [${relativeTimestamp(startTime)}]`
