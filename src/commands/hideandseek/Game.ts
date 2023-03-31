@@ -560,6 +560,7 @@ export default class Game<State extends GameState = GameState.WaitingForPlayers>
 	}
 
 	public async abort() {
+		this.aborted = true;
 		await parallel(
 			this.mainMessage?.edit({
 				...(await embeds((b) =>
