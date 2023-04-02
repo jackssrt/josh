@@ -45,7 +45,7 @@ export interface CurrentFest<State extends FestState> extends BaseNode {
 	midtermTime: string;
 	state: State;
 	teams: [CurrentFestTeam, CurrentFestTeam, CurrentFestTeam];
-	triColorStage: Stage;
+	tricolorStage: Stage;
 }
 export interface CurrentFestTeam {
 	id: string;

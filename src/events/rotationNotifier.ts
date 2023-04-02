@@ -264,7 +264,7 @@ async function makeEmbed<T extends RotationType>(
 				.setTitle(`${emoji} ${mode}`)
 				.setColor(color)
 				.setImage(`attachment://${mode.replace(" ", "-")}.png`),
-			new AttachmentBuilder(await makeEmbedImage([(data as CurrentFest<"SECOND_HALF">).triColorStage])).setName(
+			new AttachmentBuilder(await makeEmbedImage([(data as CurrentFest<"SECOND_HALF">).tricolorStage])).setName(
 				`${mode.replace(" ", "-")}.png`,
 			),
 		];
@@ -325,7 +325,7 @@ function generateChannelTopic(
 					: ""
 			}`,
 		currentFest?.state === "SECOND_HALF" &&
-			`${SPLATFEST_EMOJI} **Tricolor** [${shortenStageName(currentFest.triColorStage.name)}]`,
+			`${SPLATFEST_EMOJI} **Tricolor** [${shortenStageName(currentFest.tricolorStage.name)}]`,
 		turfWarSetting &&
 			`${REGULAR_BATTLE_EMOJI} ${turfWarSetting.vsStages
 				.map((v) => `[${shortenStageName(v.name)}]`)
