@@ -4,6 +4,7 @@ import type { Client, EmbedBuilder, NewsChannel, TextChannel } from "discord.js"
 import { AttachmentBuilder } from "discord.js";
 import sharp from "sharp";
 import { USER_AGENT } from "../client.js";
+import type { DatabaseData } from "../database.js";
 import database from "../database.js";
 import {
 	ANARCHY_BATTLE_EMOJI,
@@ -443,11 +444,10 @@ async function makeSalmonRunImage(salmon: CoopGroupingRegularNode) {
 		.png()
 		.toBuffer();
 }
-export async function makeSalmonRunThumbnail() {
-	const gear = await database.activeMonthlySalmonRunGear();
+export async function makeSalmonRunThumbnail(gear: DatabaseData["monthlySalmonRunGear"]) {
 	// adding "Dg" forces the text image to be as tall as possible,
 	// thus making the text have a constant height
-	const nameImage = sharp({
+	/*const nameImage = sharp({
 		text: {
 			text: `<span foreground="white">Dg ${gear.name} Dg</span>`,
 			font: "Splatoon2",
@@ -460,7 +460,7 @@ export async function makeSalmonRunThumbnail() {
 	const nameImageHeight = (await nameImage.metadata()).height ?? 0;
 	// cuts off the "Dg" text while keeping the height
 	// and extra horizontal space for the blur to look good
-	nameImage.resize(nameImageWidth, nameImageHeight);
+	nameImage.resize(nameImageWidth, nameImageHeight);*/
 	return await sharp({ create: { width: 256, height: 256, background: "#00000000", channels: 4 } })
 		.composite([
 			{
@@ -475,11 +475,11 @@ export async function makeSalmonRunThumbnail() {
 				left: 0,
 				top: 0,
 			},
-			{
+			/*{
 				input: await nameImage.blur(TEXT_BLUR_SIGMA).png().toBuffer(),
 				left: Math.round(256 / 2 - nameImageWidth / 2),
 				top: Math.round(256 - nameImageHeight),
-			},
+			}*/
 		])
 		.png()
 		.toBuffer();
@@ -498,6 +498,7 @@ export async function sendSalmonRunRotation(
 	await (await salmonRunChannel.messages.fetch({ limit: 1 })).first()?.delete();
 
 	const currentNode = salmonNodes[0]!;
+	const gear = await database.activeMonthlySalmonRunGear();
 
 	// limit next rotations to 3
 	salmonNodes = salmonNodes.slice(1, 4);
@@ -515,7 +516,17 @@ export async function sendSalmonRunRotation(
 				)
 				.addFields(
 					{
-						name: "Next rotations",
+						name: "🐟・King salmonid",
+						value: `${
+							currentNode.__splatoon3ink_king_salmonid_guess === "Horrorboros"
+								? HORRORBOROS_EMOJI
+								: COHOZUNA_EMOJI
+						} ${currentNode.__splatoon3ink_king_salmonid_guess}`,
+						inline: true,
+					},
+					{ name: "👕・Monthly gear", value: `${gear.name}`, inline: true },
+					{
+						name: "⏰・Next rotations",
 						value: salmonNodes
 							.reduce(
 								(acc, v) =>
@@ -526,23 +537,15 @@ export async function sendSalmonRunRotation(
 							)
 							.trimStart(),
 					},
-					{
-						name: "Predicted king salmonid",
-						value: `${
-							currentNode.__splatoon3ink_king_salmonid_guess === "Horrorboros"
-								? HORRORBOROS_EMOJI
-								: COHOZUNA_EMOJI
-						} ${currentNode.__splatoon3ink_king_salmonid_guess}`,
-					},
 				)
 				.setThumbnail("attachment://gear.png")
 				.setImage("attachment://salmonrun.png")
 				.setColor("#ff5033"),
 		)),
-		files: [
-			new AttachmentBuilder(await makeSalmonRunImage(currentNode)).setName("salmonrun.png"),
-			new AttachmentBuilder(await makeSalmonRunThumbnail()).setName("gear.png"),
-		],
+		files: await parallel(
+			async () => new AttachmentBuilder(await makeSalmonRunImage(currentNode)).setName("salmonrun.png"),
+			async () => new AttachmentBuilder(await makeSalmonRunThumbnail(gear)).setName("gear.png"),
+		),
 	});
 
 	// crosspost message
@@ -670,6 +673,7 @@ async function loopSend(client: Client<true>) {
 		await parallel(
 			async () => {
 				consola.info("Sending regular rotations...");
+				await database.setNextMapRotation(endTime);
 				await sendRegularRotations(
 					client,
 					endTime,
@@ -679,14 +683,13 @@ async function loopSend(client: Client<true>) {
 					ranked,
 					xBattle,
 				);
-				await database.setNextMapRotation(endTime);
 			},
 			(await database.shouldSendSalmonRunRotation()) &&
 				(async () => {
 					consola.info("Sending salmon run rotations...");
+					await database.setNextSalmonRunRotation(salmonEndTime);
 
 					await sendSalmonRunRotation(client, salmonStartTime, salmonEndTime, salmon);
-					await database.setNextSalmonRunRotation(salmonEndTime);
 				}),
 		);
 

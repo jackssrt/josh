@@ -9,7 +9,7 @@ import type { ContextMenuItem } from "./contextMenuItem.js";
 import getEnv, { IS_BUILT, IS_DEV } from "./env.js";
 import type Event from "./event.js";
 import Registry from "./registry.js";
-import { pluralize } from "./utils.js";
+import { errorEmbeds, pluralize } from "./utils.js";
 consola.wrapAll();
 export const USER_AGENT =
 	"Splat Squad Bot (source code: https://github.com/jackssrt/splatsquad-bot , make an issue if it's misbehaving)";
@@ -60,6 +60,16 @@ export default class Client<Ready extends boolean = false> extends DiscordClient
 			);
 		}
 		consola.success(`Hooked ${this.eventRegistry.size} event${this.eventRegistry.size === 1 ? "" : "s"}`);
+
+		this.on("error", async (error) => {
+			const owner = await this.users.fetch(getEnv("OWNER_ID"));
+			await owner.send(
+				await errorEmbeds({
+					title: "Generic Error",
+					description: `${error.name} ${error.message}\n${error.stack ?? "no stack"}`,
+				}),
+			);
+		});
 
 		this.on("interactionCreate", async (interaction) => {
 			if (!interaction.isChatInputCommand()) return;

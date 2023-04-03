@@ -89,30 +89,20 @@ export function errorEmbeds(...data: { title: string; description: string }[]) {
 	);
 }
 
-export function pluralize(word: string, count: number | bigint): string {
-	return (
-		word + ((typeof count === "bigint" && count === 1n) || (typeof count === "number" && count === 1) ? "" : "s")
-	);
+export function pluralize(word: string, count: number): string {
+	return `${word}${count === 1 ? "" : "s"}`;
 }
 
-export function formatTime(totalSeconds: number | bigint): string {
+export function formatTime(totalSeconds: number): string {
 	const parts: string[] = [];
-	if (typeof totalSeconds === "number") {
-		const hours = Math.floor(totalSeconds / 60 / 60);
-		const minutes = Math.floor(totalSeconds / 60);
-		const seconds = Math.floor(totalSeconds);
-		if (hours > 0) parts.push(`${hours}h`);
-		if (minutes % 60 > 0) parts.push(`${minutes % 60}m`);
-		if (seconds % 60 > 0 || totalSeconds < 60) parts.push(`${seconds % 60}s`);
-	} else {
-		const hours = totalSeconds / 60n / 60n;
-		const minutes = totalSeconds / 60n;
-		const seconds = totalSeconds;
-		if (hours > 0n) parts.push(`${hours}h`);
-		if (minutes % 60n > 0n) parts.push(`${minutes % 60n}m`);
+	const hours = Math.floor(Math.abs(totalSeconds) / 60 / 60);
+	const minutes = Math.floor(Math.abs(totalSeconds) / 60);
+	const seconds = Math.floor(Math.abs(totalSeconds));
+	if (hours > 0) parts.push(`${hours}h`);
+	if (minutes % 60 > 0) parts.push(`${minutes % 60}m`);
+	if (seconds % 60 > 0 || Math.abs(totalSeconds) < 60) parts.push(`${seconds % 60}s`);
+	if (totalSeconds < 0) parts.push("ago");
 
-		if (seconds % 60n > 0n || totalSeconds < 60) parts.push(`${seconds % 60n}s`);
-	}
 	return parts.join(" ");
 }
 export function futureTimestamp(inXSeconds: number, from = new Date()) {
@@ -318,10 +308,10 @@ export function formatNumberIntoNth(num: number): string {
 }
 export async function parallel<T extends ((() => Promise<unknown>) | Promise<unknown> | undefined | false)[]>(
 	...funcs: T | [T]
-): Promise<{ -readonly [i in keyof T]: Awaited<T[i]> }> {
+) {
 	return (await Promise.all(
 		normalizeArray(funcs as RestOrArray<T[number]>).map((v) => (typeof v === "function" ? v() : v)),
 	)) as {
-		-readonly [i in keyof T]: Awaited<T[i]>;
+		-readonly [i in keyof T]: Awaited<T[i] extends (...args: unknown[]) => unknown ? ReturnType<T[i]> : T[i]>;
 	};
 }

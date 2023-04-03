@@ -6,7 +6,7 @@ import getEnv from "./env.js";
 import type { SalmonRunAPIResponse } from "./types/rotationNotifier.js";
 import { parallel } from "./utils.js";
 
-interface DatabaseData {
+export interface DatabaseData {
 	createdSplatfestEvent: string;
 	nextMapRotation: number;
 	nextSalmonRunRotation: number;
