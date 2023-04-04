@@ -6,7 +6,7 @@ import { impersonate, parallel } from "../utils.js";
 export default {
 	event: "messageCreate",
 	async on({ client }, message) {
-		if (!message.member || message.channel.type !== ChannelType.GuildText) return;
+		if (!message.member || message.channel.type !== ChannelType.GuildText || message.attachments.size > 0 || message.embeds.length > 0) return;
 
 		if (randomInt(0, 11) === 0)
 			return await parallel(
