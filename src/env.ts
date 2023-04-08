@@ -10,6 +10,7 @@ export interface ProcessEnv {
 	SPLATFEST_TEAM_CATEGORY_ROLE_ID: string;
 	GENERAL_CHANNEL_ID: string;
 	VOICE_CATEGORY_ID: string;
+	UNUSED_VOICE_CATEGORY_ID: string;
 	COLORS_ROLE_CATEGORY_ID: string;
 	DEFAULT_COLOR_ROLE_ID: string;
 	INFO_CHANNEL_ID: string;
