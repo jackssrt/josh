@@ -16,6 +16,7 @@ export default {
 			await newState.member.voice.setChannel(channel);
 		} else if (
 			oldState.channel?.parentId === getEnv("MATCH_CHANNEL_CATEGORY_ID") &&
+			oldState.channel.id !== getEnv("CREATE_MATCH_CHANNEL_ID") &&
 			oldState.channel.members.size === 0
 		)
 			await oldState.channel.delete();
