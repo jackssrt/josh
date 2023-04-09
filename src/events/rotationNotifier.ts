@@ -1,7 +1,7 @@
 import axios from "axios";
 import consola from "consola";
 import type { Client, EmbedBuilder, NewsChannel, TextChannel } from "discord.js";
-import { AttachmentBuilder } from "discord.js";
+import { AttachmentBuilder, TimestampStyles, time } from "discord.js";
 import sharp from "sharp";
 import { USER_AGENT } from "../client.js";
 import type { DatabaseData } from "../database.js";
@@ -32,17 +32,7 @@ import type {
 	XNode,
 	XSetting,
 } from "../types/rotationNotifier.js";
-import {
-	dateTimestamp,
-	dedent,
-	embeds,
-	formatTime,
-	parallel,
-	relativeTimestamp,
-	shortenStageName,
-	timeTimestamp,
-	wait,
-} from "../utils.js";
+import { dedent, embeds, formatTime, parallel, shortenStageName, wait } from "../utils.js";
 export type RotationType = "Turf War" | "Anarchy Open" | "Anarchy Series" | "X Battle" | "Splatfest" | "Tricolor";
 
 export const MAPSNMODES_EMBED_DATA_MAP = {
@@ -236,9 +226,9 @@ export function makeCompactRotationText<T extends Exclude<RotationType, "Tricolo
 				setting.vsRule.rule === "TURF_WAR"
 					? setting.vsStages.map((v) => shortenStageName(v.name)).join(" & ")
 					: `${RANKED_MODE_DATA_MAP[setting.vsRule.rule].emoji} ${setting.vsRule.name}`
-		  } @ ${timeTimestamp(startTime, false)}${includeDate ? ` ${dateTimestamp(startTime)}` : ""}${
-				isNow ? " [now]**" : ` [${relativeTimestamp(startTime)}]`
-		  }`
+		  } @ ${time(startTime, TimestampStyles.ShortTime)}${
+				includeDate ? ` ${time(startTime, TimestampStyles.ShortDate)}` : ""
+		  }${isNow ? " [now]**" : ` [${time(startTime, TimestampStyles.RelativeTime)}]`}`
 		: undefined;
 }
 
@@ -247,8 +237,8 @@ export function makeCompactSalmonRunRotationText(salmon: CoopGroupingRegularNode
 	const isNow = startTime.getTime() < new Date().getTime();
 	return dedent`${isNow ? "**" : ""}${SALMON_RUN_STAGE_EMOJI_MAP[salmon.setting.coopStage.name]} ${
 		salmon.setting.coopStage.name
-	} @ ${timeTimestamp(startTime, false)} ${dateTimestamp(startTime)}${
-		isNow ? " [now]**" : ` [${relativeTimestamp(startTime)}]`
+	} @ ${time(startTime, TimestampStyles.ShortTime)} ${time(startTime, TimestampStyles.ShortDate)}${
+		isNow ? " [now]**" : ` [${time(startTime, TimestampStyles.RelativeTime)}]`
 	}
 	${salmon.setting.weapons.map((v) => `**${v.name}**`).join(" & ")}`;
 }
@@ -316,7 +306,7 @@ function generateChannelTopic(
 	const nextXSetting = xBattle[1] && extractSetting("X Battle", xBattle[1]);
 
 	const parts = [
-		`Next ${relativeTimestamp(endTime)}`,
+		`Next ${time(endTime, TimestampStyles.RelativeTime)}`,
 		splatfestSetting &&
 			`${SPLATFEST_EMOJI} **Open & Pro** ${splatfestSetting.vsStages
 				.map((v) => `[${shortenStageName(v.name)}]`)
@@ -510,9 +500,13 @@ export async function sendSalmonRunRotation(
 				.setAuthor({ name: "Data provided by splatoon3.ink", url: "https://splatoon3.ink/" })
 				.setTitle("Splatoon 3 Salmon Run rotation")
 				.setDescription(
-					dedent`Started ${relativeTimestamp(salmonStartTime)}\nEnds ${relativeTimestamp(
+					dedent`Started ${time(salmonStartTime, TimestampStyles.RelativeTime)}\nEnds ${time(
 						salmonEndTime,
-					)} @ ${dateTimestamp(salmonEndTime)} ${timeTimestamp(salmonEndTime, false)}`,
+						TimestampStyles.RelativeTime,
+					)} @ ${time(salmonEndTime, TimestampStyles.ShortDate)} ${time(
+						salmonEndTime,
+						TimestampStyles.ShortTime,
+					)}`,
 				)
 				.addFields(
 					{
@@ -589,7 +583,12 @@ export async function sendRegularRotations(
 						b
 							.setAuthor({ name: "Data provided by splatoon3.ink", url: "https://splatoon3.ink/" })
 							.setTitle(`Splatoon 3 maps and modes rotations`)
-							.setDescription(`Ends ${relativeTimestamp(endTime)} @ ${timeTimestamp(endTime, false)}`),
+							.setDescription(
+								`Ends ${time(endTime, TimestampStyles.RelativeTime)} @ ${time(
+									endTime,
+									TimestampStyles.ShortTime,
+								)}`,
+							),
 					async (b) => await makeEmbedAndAddImage(b, "Splatfest", splatfest),
 					async (b) =>
 						currentFest?.state === "SECOND_HALF" &&

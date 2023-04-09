@@ -7,7 +7,7 @@ import type {
 	User,
 	WebhookMessageCreateOptions,
 } from "discord.js";
-import { Collection, EmbedBuilder, GuildMember, TimestampStyles, normalizeArray } from "discord.js";
+import { Collection, EmbedBuilder, GuildMember, TimestampStyles, normalizeArray, time } from "discord.js";
 import levenshtein from "js-levenshtein";
 import type EventEmitter from "node:events";
 import { existsSync } from "node:fs";
@@ -106,18 +106,7 @@ export function formatTime(totalSeconds: number): string {
 	return parts.join(" ");
 }
 export function futureTimestamp(inXSeconds: number, from = new Date()) {
-	return relativeTimestamp(new Date(from.getTime() + inXSeconds * 1000));
-}
-export function relativeTimestamp(date: Date) {
-	return `<t:${Math.floor(date.getTime() / 1000)}:${TimestampStyles.RelativeTime}>` as const;
-}
-export function dateTimestamp(date: Date) {
-	return `<t:${Math.floor(date.getTime() / 1000)}:${TimestampStyles.ShortDate}>` as const;
-}
-export function timeTimestamp(date: Date, includeSeconds: boolean) {
-	return `<t:${Math.floor(date.getTime() / 1000)}:${
-		includeSeconds ? TimestampStyles.LongTime : TimestampStyles.ShortTime
-	}>` as const;
+	return time(new Date(from.getTime() + inXSeconds * 1000), TimestampStyles.RelativeTime);
 }
 /**
  * @link https://stackoverflow.com/a/12646864
@@ -127,7 +116,6 @@ export function getRandomValues<T extends unknown[]>(arr: T, count: number): T[n
 		const j = Math.floor(Math.random() * (i + 1));
 		[arr[i], arr[j]] = [arr[j], arr[i]];
 	}
-
 	return arr.slice(0, count);
 }
 
@@ -258,6 +246,7 @@ export async function textImage(text: string, color: string, size: number): Prom
 	// cuts off the "Dg" text while keeping the height
 	return img.resize(width, height).png();
 }
+
 /**
  * @link https://stackoverflow.com/a/596243
  */
