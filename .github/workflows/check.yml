@@ -1,0 +1,17 @@
+name: splatsquad-bot
+
+on: push
+
+jobs:
+    check:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v3
+            - name: Setup node
+              uses: actions/setup-node@v3
+              with:
+                  node-version: latest
+            - name: Install dependencies
+              run: npm install
+            - name: Run check script
+              run: npm run check
