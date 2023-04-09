@@ -13,8 +13,7 @@ export interface ProcessEnv {
 	UNUSED_VOICE_CATEGORY_ID: string;
 	COLORS_ROLE_CATEGORY_ID: string;
 	DEFAULT_COLOR_ROLE_ID: string;
-	INFO_CHANNEL_ID: string;
-	GET_ROLES_CHANNEL_ID: string;
+	RULES_CHANNEL_ID: string;
 	GREETER_ROLE_ID: string;
 	MEMBER_ROLE_ID: string;
 	JOIN_LEAVE_CHANNEL_ID: string;

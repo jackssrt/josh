@@ -4,7 +4,7 @@ import type Client from "../client.js";
 import { BOOYAH_EMOJI } from "../emojis.js";
 import getEnv from "../env.js";
 import type Event from "../event.js";
-import { dedent, formatNumberIntoNth, impersonate, membersWithRole, parallel } from "../utils.js";
+import { dedent, embeds, formatNumberIntoNth, impersonate, membersWithRole, parallel } from "../utils.js";
 export async function onMemberJoin(client: Client<true>, member: GuildMember) {
 	const allMembers = membersWithRole([(await member.guild.roles.fetch(getEnv("MEMBER_ROLE_ID")))!]);
 	// adds the new member to the collection if they aren't already in it
@@ -12,12 +12,22 @@ export async function onMemberJoin(client: Client<true>, member: GuildMember) {
 	await parallel(
 		async () => {
 			const channel = (await client.channels.fetch(getEnv("GENERAL_CHANNEL_ID"))) as TextChannel;
-			await channel.send(dedent`Welcome to Splat Squad, ${userMention(member.id)}! 👋
-	We're a tight knit splatoon community. We've invited (almost) everyone from splatoon!
-	You can see a cool graph of who invited whom in ${channelMention(getEnv("INFO_CHANNEL_ID"))}!
-	Remember to pick up some roles at ${channelMention(getEnv("GET_ROLES_CHANNEL_ID"))}
-	And most importantly have fun! ${BOOYAH_EMOJI}
-	You're our ${formatNumberIntoNth(allMembers.size)} member, ${roleMention(getEnv("GREETER_ROLE_ID"))}s come say hi!`);
+			await channel.send({
+				content: `${userMention(member.id)} ${roleMention(getEnv("GREETER_ROLE_ID"))}`,
+				...(await embeds((b) =>
+					b
+						.setTitle(`Welcome ${member.displayName}! 👋`)
+						.setDescription(
+							dedent`We're a tight knit splatoon community, we've invited (almost) everyone from splatoon!
+						Please read the rules in ${channelMention(getEnv("RULES_CHANNEL_ID"))},
+						and if you want, pick up some more roles in <id:customize>.
+						But most importantly, have fun! ${BOOYAH_EMOJI}`,
+						)
+						.setFooter({ text: `You're our ${formatNumberIntoNth(allMembers.size)} member!` })
+						.setTimestamp(new Date())
+						.setColor("Blurple"),
+				)),
+			});
 		},
 		async () => {
 			const channel = (await client.channels.fetch(getEnv("JOIN_LEAVE_CHANNEL_ID"))) as TextChannel;
@@ -38,6 +48,7 @@ export async function onMemberLeave(client: Client<true>, member: GuildMember | 
 	// adds the new member to the collection if they aren't already in it
 	allMembers.set(member.id, member);
 	const channel = (await client.channels.fetch(getEnv("JOIN_LEAVE_CHANNEL_ID"))) as TextChannel;
+
 	await impersonate(
 		client,
 		member.user,
