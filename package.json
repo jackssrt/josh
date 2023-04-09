@@ -38,6 +38,7 @@
 		"deploy": "ts-node-esm src/deploy.ts",
 		"lint": "eslint ./src/**/*.ts",
 		"build": "tsc",
-		"start": "node ./build/index.js"
+		"start": "node ./build/index.js",
+		"check": "tsc --noEmit && eslint ./src/**/*.ts"
 	}
 }
