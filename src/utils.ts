@@ -151,7 +151,7 @@ export function shortenStageName(stage: string): string {
 }
 
 export function roleIsCategory(role: Role): boolean {
-	return role.name.startsWith("⠀") && role.hexColor !== "#010101";
+	return role.name.match(/⠀+[A-Z]/g) !== null && role.hexColor !== "#010101";
 }
 
 /**
