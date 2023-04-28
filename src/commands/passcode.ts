@@ -6,8 +6,9 @@ export default {
 		b
 			.setDescription("Generates a random 4 digit room join code")
 			.addBooleanOption((b) =>
-				b.setName("hidden").setDescription("Should your code be only shown to you?").setRequired(false),
+				b.setName("hidden").setDescription("Should the code be only shown to you?").setRequired(false),
 			),
+	aliases: ["password"],
 	async execute({ interaction }) {
 		await interaction.reply({
 			content: `Your random join code is: \`${randomInt(0, 9)}${randomInt(0, 9)}${randomInt(0, 9)}${randomInt(

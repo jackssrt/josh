@@ -9,7 +9,7 @@ import type { ContextMenuItem } from "./contextMenuItem.js";
 import getEnv, { IS_BUILT, IS_DEV } from "./env.js";
 import type Event from "./event.js";
 import Registry from "./registry.js";
-import { errorEmbeds, pluralize } from "./utils.js";
+import { errorEmbeds, formatTime, parallel, pluralize } from "./utils.js";
 consola.wrapAll();
 export const USER_AGENT =
 	"Splat Squad Bot (source code: https://github.com/jackssrt/splatsquad-bot , make an issue if it's misbehaving)";
@@ -41,17 +41,27 @@ export default class Client<Ready extends boolean = false> extends DiscordClient
 	}
 	public async load() {
 		const dirName = IS_BUILT ? "build" : "src";
-		await this.commandRegistry.loadFromDirectory(`./${dirName}/commands`);
+		const start = new Date();
+		await parallel(
+			this.commandRegistry.loadFromDirectory(`./${dirName}/commands`),
+			this.eventRegistry.loadFromDirectory(`./${dirName}/events`),
+			this.contextMenuItemsRegistry.loadFromDirectory(`./${dirName}/contextMenuItems`),
+		);
 		consola.success(`Loaded ${this.commandRegistry.size} ${pluralize("command", this.commandRegistry.size)}`);
-		await this.eventRegistry.loadFromDirectory(`./${dirName}/events`);
+		new Set(this.commandRegistry.values()).forEach((v) => {
+			v.aliases?.forEach((alias) => {
+				this.commandRegistry.set(alias, v);
+			});
+		});
+		const end = new Date();
 		consola.success(`Loaded ${this.eventRegistry.size} ${pluralize("event", this.eventRegistry.size)}`);
-		await this.contextMenuItemsRegistry.loadFromDirectory(`./${dirName}/contextMenuItems`);
 		consola.success(
 			`Loaded ${this.contextMenuItemsRegistry.size} ${pluralize(
 				"context menu item",
 				this.contextMenuItemsRegistry.size,
 			)}`,
 		);
+		consola.success(`Loading took ${formatTime((end.getTime() - start.getTime()) / 1000)}`);
 	}
 	public async start() {
 		for (const event of this.eventRegistry.values()) {
