@@ -22,7 +22,7 @@
 	"devDependencies": {
 		"@types/js-levenshtein": "^1.1.1",
 		"@types/node": "^18.15.11",
-		"@types/sharp": "^0.31.1",
+		"@types/sharp": "^0.32.0",
 		"@typescript-eslint/eslint-plugin": "^5.57.1",
 		"@typescript-eslint/parser": "^5.57.1",
 		"eslint": "^8.37.0",
