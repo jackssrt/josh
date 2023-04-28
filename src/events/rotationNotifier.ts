@@ -20,6 +20,7 @@ import type SchedulesApiResponse from "../types/rotationNotifier.js";
 import type {
 	BankaraNode,
 	BankaraSetting,
+	BaseCoopRegularSetting,
 	CoopGroupingRegularNode,
 	CoopRegularStage,
 	CurrentFest,
@@ -29,6 +30,7 @@ import type {
 	RegularNode,
 	RegularSetting,
 	Stage,
+	TeamContestNode,
 	XNode,
 	XSetting,
 } from "../types/rotationNotifier.js";
@@ -338,7 +340,7 @@ function generateChannelTopic(
 	return parts.flatMap((v) => v || []).join(`\n・\n`);
 }
 const TEXT_BLUR_SIGMA = 1.00005;
-async function makeSalmonRunImage(salmon: CoopGroupingRegularNode) {
+async function makeSalmonRunImage(salmon: BaseCoopRegularSetting) {
 	const WIDTH = 800;
 	const HEIGHT = 600;
 	const ICON_SIZE = HEIGHT - 450 - 16;
@@ -346,7 +348,7 @@ async function makeSalmonRunImage(salmon: CoopGroupingRegularNode) {
 		.composite([
 			...(
 				await parallel(
-					salmon.setting.weapons.map<Promise<sharp.OverlayOptions[]>>(async (v, i) => {
+					salmon.weapons.map<Promise<sharp.OverlayOptions[]>>(async (v, i) => {
 						// adding "Dg" forces the text image to be as tall as possible,
 						// thus making all weapon names align.
 						const nameImage = sharp({
@@ -392,28 +394,26 @@ async function makeSalmonRunImage(salmon: CoopGroupingRegularNode) {
 				)
 			).flat(),
 			...(await parallel(
-				new Array(salmon.setting.weapons.length - 1)
-					.fill(false)
-					.map<Promise<sharp.OverlayOptions>>(async (_, i) => ({
-						input: await sharp({
-							create: {
-								background: "#ffffff80",
-								channels: 4,
-								height: HEIGHT - 450 - 16 - 32 - 16,
-								width: 2,
-							},
-						})
-							.png()
-							.toBuffer(),
-						top: 450 + 16 + 16 + 8,
-						left: (WIDTH / 4) * (i + 1) - 1,
-					})),
+				new Array(salmon.weapons.length - 1).fill(false).map<Promise<sharp.OverlayOptions>>(async (_, i) => ({
+					input: await sharp({
+						create: {
+							background: "#ffffff80",
+							channels: 4,
+							height: HEIGHT - 450 - 16 - 32 - 16,
+							width: 2,
+						},
+					})
+						.png()
+						.toBuffer(),
+					top: 450 + 16 + 16 + 8,
+					left: (WIDTH / 4) * (i + 1) - 1,
+				})),
 			)),
 			{
 				input: await sharp(
 					Buffer.from(
 						(
-							await axios.get<ArrayBuffer>(salmon.setting.coopStage.image.url, {
+							await axios.get<ArrayBuffer>(salmon.coopStage.image.url, {
 								responseType: "arraybuffer",
 							})
 						).data,
@@ -480,6 +480,7 @@ export async function sendSalmonRunRotation(
 	salmonStartTime: Date,
 	salmonEndTime: Date,
 	salmonNodes: CoopGroupingRegularNode[],
+	eggstraWorkNodes: TeamContestNode[],
 ) {
 	// get channel
 	const salmonRunChannel = (await client.channels.fetch(getEnv("SALMON_RUN_CHANNEL_ID"))) as NewsChannel;
@@ -487,58 +488,91 @@ export async function sendSalmonRunRotation(
 	// delete previous message
 	await (await salmonRunChannel.messages.fetch({ limit: 1 })).first()?.delete();
 
-	const currentNode = salmonNodes[0]!;
+	const currentSalmonNode = salmonNodes[0]!;
 	const gear = await database.activeMonthlySalmonRunGear();
 
 	// limit next rotations to 3
 	salmonNodes = salmonNodes.slice(1, 4);
 
+	const eggstraWork = eggstraWorkNodes[0];
+	const eggstraWorkStart = eggstraWork && new Date(Date.parse(eggstraWork.startTime));
+	const eggstraWorkEnd = eggstraWork && new Date(Date.parse(eggstraWork.endTime));
 	// send message
 	const message = await salmonRunChannel.send({
-		...(await embeds((b) =>
-			b
-				.setAuthor({ name: "Data provided by splatoon3.ink", url: "https://splatoon3.ink/" })
-				.setTitle("Splatoon 3 Salmon Run rotation")
-				.setDescription(
-					dedent`Started ${time(salmonStartTime, TimestampStyles.RelativeTime)}\nEnds ${time(
-						salmonEndTime,
-						TimestampStyles.RelativeTime,
-					)} @ ${time(salmonEndTime, TimestampStyles.ShortDate)} ${time(
-						salmonEndTime,
-						TimestampStyles.ShortTime,
-					)}`,
-				)
-				.addFields(
-					{
-						name: "🐟・King salmonid",
-						value: `${
-							currentNode.__splatoon3ink_king_salmonid_guess === "Horrorboros"
-								? HORRORBOROS_EMOJI
-								: COHOZUNA_EMOJI
-						} ${currentNode.__splatoon3ink_king_salmonid_guess}`,
-						inline: true,
-					},
-					{ name: "👕・Monthly gear", value: `${gear.name}`, inline: true },
-					{
-						name: "⏰・Next rotations",
-						value: salmonNodes
-							.reduce(
-								(acc, v) =>
-									dedent`${acc}
+		...(await embeds(
+			(b) =>
+				b
+					.setAuthor({ name: "Data provided by splatoon3.ink", url: "https://splatoon3.ink/" })
+					.setTitle("Splatoon 3 Salmon Run rotation")
+					.setDescription(
+						dedent`Started ${time(salmonStartTime, TimestampStyles.RelativeTime)}\nEnds ${time(
+							salmonEndTime,
+							TimestampStyles.RelativeTime,
+						)} @ ${time(salmonEndTime, TimestampStyles.ShortDate)} ${time(
+							salmonEndTime,
+							TimestampStyles.ShortTime,
+						)}`,
+					)
+					.addFields(
+						{
+							name: "King salmonid",
+							value: `${
+								currentSalmonNode.__splatoon3ink_king_salmonid_guess === "Horrorboros"
+									? HORRORBOROS_EMOJI
+									: COHOZUNA_EMOJI
+							} ${currentSalmonNode.__splatoon3ink_king_salmonid_guess}`,
+							inline: true,
+						},
+						{ name: "Monthly gear", value: gear.name, inline: true },
+						{
+							name: "Next rotations",
+							value: salmonNodes
+								.reduce(
+									(acc, v) =>
+										dedent`${acc}
 
 								➔ ${makeCompactSalmonRunRotationText(v)}`,
-								"",
-							)
-							.trimStart(),
-					},
-				)
-				.setThumbnail("attachment://gear.png")
-				.setImage("attachment://salmonrun.png")
-				.setColor("#ff5033"),
+									"",
+								)
+								.trimStart(),
+						},
+					)
+					.setThumbnail("attachment://gear.png")
+					.setImage("attachment://salmonrun.png")
+					.setColor("#ff5033"),
+			(b) =>
+				eggstraWork &&
+				eggstraWorkStart &&
+				eggstraWorkEnd &&
+				b
+					.setTitle("Eggstra work")
+					.setDescription(
+						`Started ${time(eggstraWorkStart, TimestampStyles.RelativeTime)} @ ${time(
+							eggstraWorkStart,
+							TimestampStyles.ShortDate,
+						)} ${time(eggstraWorkStart, TimestampStyles.ShortTime)}\nEnds ${time(
+							eggstraWorkEnd,
+							TimestampStyles.RelativeTime,
+						)} @ ${time(eggstraWorkEnd, TimestampStyles.ShortDate)} ${time(
+							eggstraWorkEnd,
+							TimestampStyles.ShortTime,
+						)}`,
+					)
+					.setImage("attachment://eggstrawork.png")
+					.setColor("#FDD400"),
 		)),
 		files: await parallel(
-			async () => new AttachmentBuilder(await makeSalmonRunImage(currentNode)).setName("salmonrun.png"),
+			async () =>
+				new AttachmentBuilder(await makeSalmonRunImage(currentSalmonNode.setting)).setName("salmonrun.png"),
 			async () => new AttachmentBuilder(await makeSalmonRunThumbnail(gear)).setName("gear.png"),
+			...(eggstraWork
+				? [
+						async () =>
+							new AttachmentBuilder(await makeSalmonRunImage(eggstraWork.setting)).setName(
+								"eggstrawork.png",
+							),
+				  ]
+				: []),
 		),
 	});
 
@@ -616,6 +650,7 @@ export async function fetchRotations() {
 				xSchedules: { nodes: xBattle },
 				coopGroupingSchedule: {
 					regularSchedules: { nodes: salmon },
+					teamContestSchedules: { nodes: eggstraWork },
 				},
 				festSchedules: { nodes: splatfest },
 				currentFest,
@@ -628,7 +663,7 @@ export async function fetchRotations() {
 	});
 
 	// fastforward to active nodes
-	[turfWar, ranked, xBattle, salmon, splatfest].forEach((v) => {
+	[turfWar, ranked, xBattle, salmon, splatfest, eggstraWork].forEach((v) => {
 		if (v.length === 0) return;
 		while (new Date(Date.parse(v[0]!.endTime)).getTime() < new Date().getTime()) {
 			// first node has ended, remove it from the array
@@ -637,7 +672,7 @@ export async function fetchRotations() {
 		}
 	});
 	// if any(isEmptyArray, turfWar, ranked, xBattles)
-	if ([turfWar, ranked, xBattle, salmon, splatfest].find((v) => v.length === 0) !== undefined) {
+	if ([turfWar, ranked, xBattle, salmon].find((v) => v.length === 0) !== undefined) {
 		consola.warn("A schedule was empty!");
 		return undefined;
 	}
@@ -658,6 +693,7 @@ export async function fetchRotations() {
 		salmonStartTime,
 		salmonEndTime,
 		salmon,
+		eggstraWork,
 		currentFest: currentFest ?? undefined,
 	} as const;
 }
@@ -667,8 +703,18 @@ async function loopSend(client: Client<true>) {
 	while (true) {
 		const output = await fetchRotations();
 		if (!output) return;
-		const { endTime, splatfest, turfWar, ranked, xBattle, salmonStartTime, salmonEndTime, salmon, currentFest } =
-			output;
+		const {
+			endTime,
+			splatfest,
+			turfWar,
+			ranked,
+			xBattle,
+			salmonStartTime,
+			salmonEndTime,
+			salmon,
+			currentFest,
+			eggstraWork,
+		} = output;
 		await parallel(
 			async () => {
 				consola.info("Sending regular rotations...");
@@ -688,7 +734,7 @@ async function loopSend(client: Client<true>) {
 					consola.info("Sending salmon run rotations...");
 					await database.setNextSalmonRunRotation(salmonEndTime);
 
-					await sendSalmonRunRotation(client, salmonStartTime, salmonEndTime, salmon);
+					await sendSalmonRunRotation(client, salmonStartTime, salmonEndTime, salmon, eggstraWork);
 				}),
 		);
 

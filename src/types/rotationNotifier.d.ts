@@ -100,12 +100,13 @@ export interface CoopGroupingNode {
 	bannerImage: null;
 	regularSchedules: { nodes: CoopGroupingRegularNode[] };
 	bigRunSchedules: { nodes: never[] };
+	teamContestSchedules: { nodes: TeamContestNode[] };
 }
 export interface CoopGroupingRegularNode extends BaseNode {
-	setting: CoopGroupingRegularSetting;
+	setting: BaseCoopRegularSetting;
 	__splatoon3ink_king_salmonid_guess: "Horrorboros" | "Cohozuna";
 }
-export interface CoopGroupingRegularSetting {
+export interface BaseCoopRegularSetting {
 	coopStage: CoopRegularStage;
 	weapons: [CoopWeapon, CoopWeapon, CoopWeapon, CoopWeapon];
 }
@@ -119,7 +120,14 @@ export interface CoopRegularStage {
 	};
 	id: string;
 }
+export interface TeamContestNode extends BaseNode {
+	setting: TeamContestSetting;
+}
+export interface TeamContestSetting extends BaseCoopRegularSetting {
+	rule: "TEAM_CONTEST";
+}
 export interface CoopWeapon {
+	__splatoon3ink_id: string;
 	name: string;
 	image: {
 		url: string;

@@ -110,7 +110,14 @@ export default {
 					data.ranked,
 					data.xBattle,
 				);
-			else await sendSalmonRunRotation(client, data.salmonStartTime, data.salmonEndTime, data.salmon);
+			else
+				await sendSalmonRunRotation(
+					client,
+					data.salmonStartTime,
+					data.salmonEndTime,
+					data.salmon,
+					data.eggstraWork,
+				);
 			await interaction.editReply("done");
 		} else if (subcommand === "rolecategories") {
 			const mentionable = interaction.options.getMentionable("users", true);
