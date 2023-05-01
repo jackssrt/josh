@@ -1,9 +1,23 @@
-import { AttachmentBuilder, Collection, GuildMember, PermissionsBitField, Role } from "discord.js";
+import axios from "axios";
+import consola from "consola";
+import {
+	AttachmentBuilder,
+	Collection,
+	GuildMember,
+	GuildScheduledEventEntityType,
+	GuildScheduledEventPrivacyLevel,
+	PermissionsBitField,
+	Role,
+	TimestampStyles,
+} from "discord.js";
 import sharp from "sharp";
+import { USER_AGENT } from "../client.js";
 import type Command from "../command";
+import getEnv from "../env.js";
 import { onMemberJoin, onMemberLeave } from "../events/joinLeaveMessage.js";
 import { updateRoleCategories } from "../events/roleCategories.js";
 import { fetchRotations, sendRegularRotations, sendSalmonRunRotation } from "../events/rotationNotifier.js";
+import type { FestivalsApiResponse } from "../types/rotationNotifier.js";
 import { colorLuminance, errorEmbeds, hexToRGB, parallel, textImage } from "../utils.js";
 import { COLOR_DATA } from "./color.js";
 
@@ -87,6 +101,7 @@ export default {
 					.setDescription("Rerun member leave")
 					.addUserOption((b) => b.setName("member").setDescription("member").setRequired(true)),
 			)
+			.addSubcommand((b) => b.setName("splatfest").setDescription("Rerun splatfest"))
 			.setDescription("Forcefully reruns certain automatic stuff.")
 			.setDMPermission(false)
 			.setDefaultMemberPermissions(PermissionsBitField.Flags.Administrator),
@@ -153,8 +168,56 @@ export default {
 			if (subcommand === "memberjoin") await onMemberJoin(client, member);
 			else await onMemberLeave(client, member);
 			await interaction.editReply("done");
+		} else if (subcommand === "splatfest") {
+			const {
+				data: {
+					EU: {
+						data: {
+							festRecords: { nodes: fests },
+						},
+					},
+				},
+			} = await axios.get<FestivalsApiResponse>("https://splatoon3.ink/data/festivals.json", {
+				headers: {
+					"User-Agent": USER_AGENT,
+				},
+			});
+			const fest = fests.find((v) => v.state !== "CLOSED");
+			if (!fest) return await interaction.editReply("No active splatfest");
+			const guild = await client.guilds.fetch(getEnv("GUILD_ID"));
+			await parallel(
+				async () => {
+					await guild.scheduledEvents.create({
+						entityType: GuildScheduledEventEntityType.External,
+						name: fest.title,
+						privacyLevel: GuildScheduledEventPrivacyLevel.GuildOnly,
+						scheduledStartTime: new Date(Date.parse(fest.startTime)),
+						scheduledEndTime: new Date(Date.parse(fest.endTime)),
+						entityMetadata: { location: "Splatoon 3" },
+						image: fest.image.url,
+						description: `Automatically created event for the upcoming splatfest.\n<t:${Math.floor(
+							new Date(Date.parse(fest.startTime)).getTime() / 1000,
+						)}:${TimestampStyles.RelativeTime}>\nData provided by https://splatoon3.ink`,
+					});
+				},
+				async () => {
+					const categoryRolePosition = (await guild.roles.fetch(getEnv("SPLATFEST_TEAM_CATEGORY_ROLE_ID")))
+						?.position;
+					if (!categoryRolePosition) return consola.error("Splatfest team role category role not found");
+					for (const [i, team] of Object.entries(fest.teams)) {
+						await guild.roles.create({
+							name: `⚽・${team.teamName}`,
+							color: [team.color.r * 255, team.color.g * 255, team.color.b * 255],
+							permissions: [],
+							mentionable: false,
+							position: +i + categoryRolePosition,
+						});
+					}
+				},
+			);
+			await interaction.editReply("done");
 		} else {
-			return await interaction.editReply("unimplemented");
+			await interaction.editReply("unimplemented");
 		}
 	},
 } as Command;
