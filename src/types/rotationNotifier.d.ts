@@ -148,6 +148,7 @@ export interface TurfWarVsRule {
 }
 
 export interface RegularSetting extends BaseMatchSetting {
+	__typename: "RegularMatchSetting";
 	vsRule: TurfWarVsRule;
 }
 
@@ -175,11 +176,13 @@ export interface RainmakerVsRule {
 type RankedVsRule = TowerControlVsRule | ClamBlitzVsRule | SplatZonesVsRule | RainmakerVsRule;
 
 export interface BankaraSetting<Mode extends "OPEN" | "CHALLENGE" = "OPEN" | "CHALLENGE"> extends BaseMatchSetting {
+	__typename: "BankaraMatchSetting";
 	vsRule: RankedVsRule;
 	mode: Mode;
 }
 
 export interface XSetting extends BaseMatchSetting {
+	__typename: "XMatchSetting";
 	vsRule: RankedVsRule;
 }
 export interface LeagueSetting extends BaseMatchSetting {

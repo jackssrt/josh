@@ -15,14 +15,10 @@ import { readFile } from "node:fs/promises";
 import type { Sharp } from "sharp";
 import sharp from "sharp";
 import type Client from "./client.js";
-export interface Config {
-	token: string;
-	guildId: string;
-	clientId: string;
-	generalChannelId: string;
-	levelUpChannelId: string;
-	ownerId: string;
-}
+
+export type StrictOmit<T extends Record<string, unknown>, K extends keyof T> = Omit<T, K>;
+
+export type StrictExclude<T, K extends T> = Exclude<T, K>;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type AnyFunction = (...args: any[]) => any;

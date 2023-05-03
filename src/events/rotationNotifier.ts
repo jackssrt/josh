@@ -16,6 +16,8 @@ import {
 } from "../emojis.js";
 import getEnv from "../env.js";
 import type Event from "../event.js";
+import type { RotationType } from "../maps.js";
+import { GAME_MODE_MAP, ROTATION_TYPE_MAP } from "../maps.js";
 import type SchedulesApiResponse from "../types/rotationNotifier.js";
 import type {
 	BankaraNode,
@@ -26,7 +28,6 @@ import type {
 	CurrentFest,
 	FestNode,
 	FestSetting,
-	RankedVsRule,
 	RegularNode,
 	RegularSetting,
 	Stage,
@@ -34,55 +35,8 @@ import type {
 	XNode,
 	XSetting,
 } from "../types/rotationNotifier.js";
+import type { StrictExclude } from "../utils.js";
 import { dedent, embeds, formatTime, parallel, shortenStageName, wait } from "../utils.js";
-export type RotationType = "Turf War" | "Anarchy Open" | "Anarchy Series" | "X Battle" | "Splatfest" | "Tricolor";
-
-export const MAPSNMODES_EMBED_DATA_MAP = {
-	"Turf War": {
-		emoji: REGULAR_BATTLE_EMOJI,
-		color: "#CFF622",
-	},
-	"Anarchy Series": {
-		emoji: ANARCHY_BATTLE_EMOJI,
-		color: "#F54910",
-	},
-	"Anarchy Open": {
-		emoji: ANARCHY_BATTLE_EMOJI,
-		color: "#F54910",
-	},
-	"X Battle": {
-		emoji: X_BATTLE_EMOJI,
-		color: "#0FDB9B",
-	},
-	Splatfest: {
-		emoji: SPLATFEST_EMOJI,
-		color: "#0033FF",
-	},
-	Tricolor: {
-		emoji: SPLATFEST_EMOJI,
-		color: "#0033FF",
-	},
-} as const satisfies Record<RotationType, { emoji: string; color: string }>;
-
-const RANKED_MODE_DATA_MAP = {
-	AREA: {
-		image: "https://cdn.wikimg.net/en/splatoonwiki/images/3/38/S3_icon_Splat_Zones.png",
-		emoji: "<:splatZones:1071477929969721474>",
-	},
-	CLAM: {
-		image: "https://cdn.wikimg.net/en/splatoonwiki/images/e/e3/S3_icon_Clam_Blitz.png",
-		emoji: "<:clamBlitz:1071477924764598313>",
-	},
-	GOAL: {
-		image: "https://cdn.wikimg.net/en/splatoonwiki/images/1/12/S3_icon_Rainmaker.png",
-		emoji: "<:rainmaker:1071477926974992384>",
-	},
-	LOFT: {
-		image: "https://cdn.wikimg.net/en/splatoonwiki/images/b/bc/S3_icon_Tower_Control.png",
-		emoji: "<:towerControl:1071477928304578560>",
-	},
-} as const satisfies Record<RankedVsRule["rule"], unknown>;
-
 const SALMON_RUN_STAGE_EMOJI_MAP = {
 	"Spawning Grounds": "<:spawningGrounds:1087077105638047764>",
 	"Sockeye Station": "<:sockeyeStation:1087077104274911292>",
@@ -177,45 +131,45 @@ async function makeEmbedImage(vsStages: Stage[]) {
 		.png({ force: true })
 		.toBuffer();
 }
-export type RotationTypeToNodeType<T extends RotationType> = T extends "Turf War"
+export type RotationTypeToNodeType<T extends RotationType> = T extends "turfwar"
 	? RegularNode
-	: T extends "Anarchy Open" | "Anarchy Series"
+	: T extends "anarchyopen" | "anarchyseries"
 	? BankaraNode
-	: T extends "Splatfest"
+	: T extends "splatfest"
 	? FestNode
-	: T extends "X Battle"
+	: T extends "xbattle"
 	? XNode
 	: never;
-export type RotationTypeToSettingType<T extends RotationType> = T extends "Turf War"
+export type RotationTypeToSettingType<T extends RotationType> = T extends "turfwar"
 	? RegularSetting
-	: T extends "Anarchy Open"
+	: T extends "anarchyopen"
 	? BankaraSetting<"OPEN">
-	: T extends "Anarchy Series"
+	: T extends "anarchyseries"
 	? BankaraSetting<"CHALLENGE">
-	: T extends "Splatfest"
+	: T extends "splatfest"
 	? FestSetting
-	: T extends "X Battle"
+	: T extends "xbattle"
 	? XSetting
 	: never;
-function extractSetting<T extends Exclude<RotationType, "Tricolor">>(
+export function extractSetting<T extends StrictExclude<RotationType, "tricolor">>(
 	mode: T,
 	data: RotationTypeToNodeType<T>,
 ): RotationTypeToSettingType<T> | null {
 	// typescript stupid moment (implied type is RegularSetting | XSetting | null | undefined AND (data as NodeType))
 	return (
-		mode === "Turf War"
+		mode === "turfwar"
 			? (data as RegularNode).regularMatchSetting
-			: mode === "Anarchy Open" || mode === "Anarchy Series"
+			: mode === "anarchyopen" || mode === "anarchyseries"
 			? (data as BankaraNode).bankaraMatchSettings?.find(
-					(v) => v.mode === (mode === "Anarchy Series" ? "CHALLENGE" : "OPEN"),
+					(v) => v.mode === (mode === "anarchyseries" ? "CHALLENGE" : "OPEN"),
 			  )
-			: mode === "Splatfest"
+			: mode === "splatfest"
 			? (data as FestNode).festMatchSetting
 			: (data as XNode).xMatchSetting
 	) as RotationTypeToSettingType<T> | null;
 }
 
-export function makeCompactRotationText<T extends Exclude<RotationType, "Tricolor">>(
+export function makeCompactRotationText<T extends StrictExclude<RotationType, "tricolor">>(
 	mode: T,
 	data: RotationTypeToNodeType<T>,
 	includeDate: boolean,
@@ -227,7 +181,7 @@ export function makeCompactRotationText<T extends Exclude<RotationType, "Tricolo
 		? `${isNow ? "**" : ""}${
 				setting.vsRule.rule === "TURF_WAR"
 					? setting.vsStages.map((v) => shortenStageName(v.name)).join(" & ")
-					: `${RANKED_MODE_DATA_MAP[setting.vsRule.rule].emoji} ${setting.vsRule.name}`
+					: `${GAME_MODE_MAP[setting.vsRule.rule].emoji} ${setting.vsRule.name}`
 		  } @ ${time(startTime, TimestampStyles.ShortTime)}${
 				includeDate ? ` ${time(startTime, TimestampStyles.ShortDate)}` : ""
 		  }${isNow ? " [now]**" : ` [${time(startTime, TimestampStyles.RelativeTime)}]`}`
@@ -248,10 +202,10 @@ export function makeCompactSalmonRunRotationText(salmon: CoopGroupingRegularNode
 async function makeEmbed<T extends RotationType>(
 	b: EmbedBuilder,
 	mode: T,
-	data: T extends "Tricolor" ? CurrentFest<"SECOND_HALF"> : RotationTypeToNodeType<T>[],
+	data: T extends "tricolor" ? CurrentFest<"SECOND_HALF"> : RotationTypeToNodeType<T>[],
 ): Promise<[EmbedBuilder, AttachmentBuilder] | undefined> {
-	const { emoji, color } = MAPSNMODES_EMBED_DATA_MAP[mode];
-	if (mode === "Tricolor")
+	const { emoji, color } = ROTATION_TYPE_MAP[mode];
+	if (mode === "tricolor")
 		return [
 			b
 				.setTitle(`${emoji} ${mode}`)
@@ -265,10 +219,10 @@ async function makeEmbed<T extends RotationType>(
 	if (!setting) return;
 	// limit next rotations to 3
 	const newData = (data as RotationTypeToNodeType<T>[]).slice(1, 4);
-	const { image } = setting.vsRule.rule !== "TURF_WAR" ? RANKED_MODE_DATA_MAP[setting.vsRule.rule] : { image: null };
+	const { image } = setting.vsRule.rule !== "TURF_WAR" ? GAME_MODE_MAP[setting.vsRule.rule] : { image: null };
 	return [
 		b
-			.setTitle(`${emoji} ${mode === "Splatfest" ? "Splatfest Open & Pro" : mode}`)
+			.setTitle(`${emoji} ${mode === "splatfest" ? "Splatfest Open & Pro" : mode}`)
 			.setDescription(
 				newData
 					.reduce((acc, v) => {
@@ -293,19 +247,19 @@ function generateChannelTopic(
 	ranked: BankaraNode[],
 	xBattle: XNode[],
 ): string {
-	const splatfestSetting = extractSetting("Splatfest", splatfest[0]!);
-	const nextSplatfestSetting = splatfest[1] && extractSetting("Splatfest", splatfest[1]);
+	const splatfestSetting = extractSetting("splatfest", splatfest[0]!);
+	const nextSplatfestSetting = splatfest[1] && extractSetting("splatfest", splatfest[1]);
 
-	const turfWarSetting = extractSetting("Turf War", turfWar[0]!);
+	const turfWarSetting = extractSetting("turfwar", turfWar[0]!);
 
-	const seriesSetting = extractSetting("Anarchy Series", ranked[0]!);
-	const nextSeriesSetting = ranked[1] && extractSetting("Anarchy Series", ranked[1]);
+	const seriesSetting = extractSetting("anarchyseries", ranked[0]!);
+	const nextSeriesSetting = ranked[1] && extractSetting("anarchyseries", ranked[1]);
 
-	const openSetting = extractSetting("Anarchy Open", ranked[0]!);
-	const nextOpenSetting = ranked[1] && extractSetting("Anarchy Open", ranked[1]);
+	const openSetting = extractSetting("anarchyopen", ranked[0]!);
+	const nextOpenSetting = ranked[1] && extractSetting("anarchyopen", ranked[1]);
 
-	const xSetting = extractSetting("X Battle", xBattle[0]!);
-	const nextXSetting = xBattle[1] && extractSetting("X Battle", xBattle[1]);
+	const xSetting = extractSetting("xbattle", xBattle[0]!);
+	const nextXSetting = xBattle[1] && extractSetting("xbattle", xBattle[1]);
 
 	const parts = [
 		`Next ${time(endTime, TimestampStyles.RelativeTime)}`,
@@ -324,16 +278,16 @@ function generateChannelTopic(
 				.map((v) => `[${shortenStageName(v.name)}]`)
 				.join(" & ")}`,
 		seriesSetting &&
-			`${ANARCHY_BATTLE_EMOJI} **Series** [${RANKED_MODE_DATA_MAP[seriesSetting.vsRule.rule].emoji} ${
+			`${ANARCHY_BATTLE_EMOJI} **Series** [${GAME_MODE_MAP[seriesSetting.vsRule.rule].emoji} ${
 				seriesSetting.vsRule.name
-			}${nextSeriesSetting ? ` ➔ ${RANKED_MODE_DATA_MAP[nextSeriesSetting.vsRule.rule].emoji}` : ""}]`,
+			}${nextSeriesSetting ? ` ➔ ${GAME_MODE_MAP[nextSeriesSetting.vsRule.rule].emoji}` : ""}]`,
 		openSetting &&
-			`${ANARCHY_BATTLE_EMOJI} **Open** [${RANKED_MODE_DATA_MAP[openSetting.vsRule.rule].emoji} ${
+			`${ANARCHY_BATTLE_EMOJI} **Open** [${GAME_MODE_MAP[openSetting.vsRule.rule].emoji} ${
 				openSetting.vsRule.name
-			}${nextOpenSetting ? ` ➔ ${RANKED_MODE_DATA_MAP[nextOpenSetting.vsRule.rule].emoji}` : ""}]`,
+			}${nextOpenSetting ? ` ➔ ${GAME_MODE_MAP[nextOpenSetting.vsRule.rule].emoji}` : ""}]`,
 		xSetting &&
-			`${X_BATTLE_EMOJI} [${RANKED_MODE_DATA_MAP[xSetting.vsRule.rule].emoji} ${xSetting.vsRule.name}${
-				nextXSetting ? ` ➔ ${RANKED_MODE_DATA_MAP[nextXSetting.vsRule.rule].emoji}` : ""
+			`${X_BATTLE_EMOJI} [${GAME_MODE_MAP[xSetting.vsRule.rule].emoji} ${xSetting.vsRule.name}${
+				nextXSetting ? ` ➔ ${GAME_MODE_MAP[nextXSetting.vsRule.rule].emoji}` : ""
 			}]`,
 	];
 	// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
@@ -604,7 +558,7 @@ export async function sendRegularRotations(
 			async function makeEmbedAndAddImage<T extends RotationType>(
 				b: EmbedBuilder,
 				mode: T,
-				nodes: T extends "Tricolor" ? CurrentFest<"SECOND_HALF"> : RotationTypeToNodeType<T>[],
+				nodes: T extends "tricolor" ? CurrentFest<"SECOND_HALF"> : RotationTypeToNodeType<T>[],
 			): Promise<EmbedBuilder | undefined> {
 				const data = await makeEmbed(b, mode, nodes);
 				if (!data) return;
@@ -623,14 +577,14 @@ export async function sendRegularRotations(
 									TimestampStyles.ShortTime,
 								)}`,
 							),
-					async (b) => await makeEmbedAndAddImage(b, "Splatfest", splatfest),
+					async (b) => await makeEmbedAndAddImage(b, "splatfest", splatfest),
 					async (b) =>
 						currentFest?.state === "SECOND_HALF" &&
-						(await makeEmbedAndAddImage(b, "Tricolor", currentFest as CurrentFest<"SECOND_HALF">)),
-					async (b) => await makeEmbedAndAddImage(b, "Turf War", turfWar),
-					async (b) => await makeEmbedAndAddImage(b, "Anarchy Series", ranked),
-					async (b) => await makeEmbedAndAddImage(b, "Anarchy Open", ranked),
-					async (b) => await makeEmbedAndAddImage(b, "X Battle", xBattle),
+						(await makeEmbedAndAddImage(b, "tricolor", currentFest as CurrentFest<"SECOND_HALF">)),
+					async (b) => await makeEmbedAndAddImage(b, "turfwar", turfWar),
+					async (b) => await makeEmbedAndAddImage(b, "anarchyseries", ranked),
+					async (b) => await makeEmbedAndAddImage(b, "anarchyopen", ranked),
+					async (b) => await makeEmbedAndAddImage(b, "xbattle", xBattle),
 				)),
 				files: attachments,
 			});
