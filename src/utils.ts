@@ -271,7 +271,7 @@ export function dedent(strings: TemplateStringsArray, ...values: unknown[]): str
 		}, "")
 		.replace(/^(\t| {4})+/gm, "");
 }
-export function membersWithRole(roles: Role[]): Collection<string, GuildMember> {
+export function membersWithRoles(roles: Role[]): Collection<string, GuildMember> {
 	return roles.reduce((acc, v) => {
 		return acc.intersect(v.members);
 	}, roles[0]?.members ?? new Collection<string, GuildMember>());

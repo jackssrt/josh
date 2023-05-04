@@ -14,7 +14,8 @@ import sharp from "sharp";
 import { USER_AGENT } from "../client.js";
 import type Command from "../command";
 import getEnv from "../env.js";
-import { onMemberJoin, onMemberLeave } from "../events/joinLeaveMessage.js";
+import { onMemberJoin, onMemberLeave } from "../events/joinLeave.js";
+import { updateMemberCount } from "../events/memberCount.js";
 import { updateRoleCategories } from "../events/roleCategories.js";
 import { fetchRotations, sendRegularRotations, sendSalmonRunRotation } from "../events/rotationNotifier.js";
 import type { FestivalsApiResponse } from "../types/rotationNotifier.js";
@@ -27,7 +28,9 @@ type Subcommand =
 	| "rolecategories"
 	| "colorrolesimage"
 	| "memberjoin"
-	| "memberleave";
+	| "memberleave"
+	| "splatfest"
+	| "membercount";
 
 async function makeColorRolesImage() {
 	const CELL_SIZE = [200, 100] as const;
@@ -101,6 +104,7 @@ export default {
 					.setDescription("Rerun member leave")
 					.addUserOption((b) => b.setName("member").setDescription("member").setRequired(true)),
 			)
+			.addSubcommand((b) => b.setName("membercount").setDescription("Rerun member count"))
 			.addSubcommand((b) => b.setName("splatfest").setDescription("Rerun splatfest"))
 			.setDescription("Forcefully reruns certain automatic stuff.")
 			.setDMPermission(false)
@@ -161,13 +165,17 @@ export default {
 				content: `done:`,
 				files: [new AttachmentBuilder(await makeColorRolesImage()).setName("color-roles.png")],
 			});
-			// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
 		} else if (subcommand === "memberjoin" || subcommand === "memberleave") {
 			const member = interaction.options.getMember("member");
 			if (!(member instanceof GuildMember)) return;
 			if (subcommand === "memberjoin") await onMemberJoin(client, member);
 			else await onMemberLeave(client, member);
 			await interaction.editReply("done");
+		} else if (subcommand === "membercount") {
+			consola.log("membercount");
+			const count = await updateMemberCount(await client.guilds.fetch(getEnv("GUILD_ID")));
+			await interaction.editReply(`done, ${count} members`);
+			// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
 		} else if (subcommand === "splatfest") {
 			const {
 				data: {

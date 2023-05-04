@@ -1,12 +1,13 @@
 import type { Collection, GuildMember, PartialGuildMember, TextChannel } from "discord.js";
-import { channelMention, roleMention, userMention } from "discord.js";
+import { Colors, channelMention, roleMention, userMention } from "discord.js";
 import type Client from "../client.js";
 import { BOOYAH_EMOJI } from "../emojis.js";
 import getEnv from "../env.js";
 import type Event from "../event.js";
-import { dedent, embeds, formatNumberIntoNth, impersonate, membersWithRole, parallel } from "../utils.js";
+import { dedent, embeds, formatNumberIntoNth, impersonate, membersWithRoles, parallel } from "../utils.js";
+
 export async function onMemberJoin(client: Client<true>, member: GuildMember) {
-	const allMembers = membersWithRole([(await member.guild.roles.fetch(getEnv("MEMBER_ROLE_ID")))!]);
+	const allMembers = membersWithRoles([(await member.guild.roles.fetch(getEnv("MEMBER_ROLE_ID")))!]);
 	// adds the new member to the collection if they aren't already in it
 	allMembers.set(member.id, member);
 	await parallel(
@@ -25,7 +26,7 @@ export async function onMemberJoin(client: Client<true>, member: GuildMember) {
 						)
 						.setFooter({ text: `You're our ${formatNumberIntoNth(allMembers.size)} member!` })
 						.setTimestamp(new Date())
-						.setColor("Blurple"),
+						.setColor(Colors.Blurple),
 				)),
 			});
 		},
@@ -42,7 +43,7 @@ export async function onMemberJoin(client: Client<true>, member: GuildMember) {
 }
 
 export async function onMemberLeave(client: Client<true>, member: GuildMember | PartialGuildMember) {
-	const allMembers: Collection<string, GuildMember | PartialGuildMember> = membersWithRole([
+	const allMembers: Collection<string, GuildMember | PartialGuildMember> = membersWithRoles([
 		(await member.guild.roles.fetch(getEnv("MEMBER_ROLE_ID")))!,
 	]);
 	// adds the new member to the collection if they aren't already in it
@@ -61,14 +62,14 @@ export default [
 	{
 		event: "guildMemberAdd",
 		async on({ client }, member) {
-			if (member.user.bot) return;
+			if (member.user.bot || member.guild.id !== getEnv("GUILD_ID")) return;
 			await onMemberJoin(client, member);
 		},
 	} as Event<"guildMemberAdd">,
 	{
 		event: "guildMemberRemove",
 		async on({ client }, member) {
-			if (member.user.bot) return;
+			if (member.user.bot || member.guild.id !== getEnv("GUILD_ID")) return;
 			await onMemberLeave(client, member);
 		},
 	} as Event<"guildMemberRemove">,
