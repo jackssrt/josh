@@ -21,6 +21,7 @@ export interface ProcessEnv {
 	REPL_ID: string | undefined;
 	CREATE_MATCH_CHANNEL_ID: string;
 	MATCH_CHANNEL_CATEGORY_ID: string;
+	TTS_CHANNEL_ID: string;
 }
 
 export default function getEnv<T extends keyof ProcessEnv>(key: T): ProcessEnv[T] {
