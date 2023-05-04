@@ -204,15 +204,12 @@ async function makeEmbed<T extends RotationType>(
 	mode: T,
 	data: T extends "tricolor" ? CurrentFest<"SECOND_HALF"> : RotationTypeToNodeType<T>[],
 ): Promise<[EmbedBuilder, AttachmentBuilder] | undefined> {
-	const { emoji, color } = ROTATION_TYPE_MAP[mode];
+	const { emoji, color, name } = ROTATION_TYPE_MAP[mode];
 	if (mode === "tricolor")
 		return [
-			b
-				.setTitle(`${emoji} ${mode}`)
-				.setColor(color)
-				.setImage(`attachment://${mode.replace(" ", "-")}.png`),
+			b.setTitle(`${emoji} ${name}`).setColor(color).setImage(`attachment://${mode}.png`),
 			new AttachmentBuilder(await makeEmbedImage([(data as CurrentFest<"SECOND_HALF">).tricolorStage])).setName(
-				`${mode.replace(" ", "-")}.png`,
+				`${mode}.png`,
 			),
 		];
 	const setting = extractSetting(mode, (data as RotationTypeToNodeType<T>[])[0]!);
@@ -222,7 +219,7 @@ async function makeEmbed<T extends RotationType>(
 	const { image } = setting.vsRule.rule !== "TURF_WAR" ? GAME_MODE_MAP[setting.vsRule.rule] : { image: null };
 	return [
 		b
-			.setTitle(`${emoji} ${mode === "splatfest" ? "Splatfest Open & Pro" : mode}`)
+			.setTitle(`${emoji} ${mode === "splatfest" ? "Splatfest Open & Pro" : name}`)
 			.setDescription(
 				newData
 					.reduce((acc, v) => {
@@ -234,8 +231,8 @@ async function makeEmbed<T extends RotationType>(
 			)
 			.setThumbnail(image)
 			.setColor(color)
-			.setImage(`attachment://${mode.replace(" ", "-")}.png`),
-		new AttachmentBuilder(await makeEmbedImage(setting.vsStages)).setName(`${mode.replace(" ", "-")}.png`),
+			.setImage(`attachment://${mode}.png`),
+		new AttachmentBuilder(await makeEmbedImage(setting.vsStages)).setName(`${mode}.png`),
 	];
 }
 
