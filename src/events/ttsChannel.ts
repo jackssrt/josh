@@ -15,7 +15,7 @@ import type Event from "./../event.js";
 let lastName: string | undefined = undefined;
 const lock = new Lock();
 const SPEAK_REGEX =
-	/((https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([/\w .-]*))|^\[[a-z]+\]|<:|:\d+>|<id:\w+>|[^A-Za-z\d\s.,!&?;:'"\-()@À-ÿ]/g;
+	/((https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([/\w .-]*))|<:|:\d+>|<id:\w+>|[^A-Za-z\d\s.,!&?;:'"\-()@À-ÿ]/g;
 
 export default [
 	{
