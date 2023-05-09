@@ -69,11 +69,11 @@ export default {
 					),
 				);
 			} else {
-				const { emoji, color } = ROTATION_TYPE_MAP[rotationType];
+				const { emoji, color, name } = ROTATION_TYPE_MAP[rotationType];
 				await interaction.editReply(
 					await embeds((b) =>
 						b
-							.setTitle(`${emoji} Future ${rotationType} rotations`)
+							.setTitle(`${emoji} Future ${name} rotations`)
 							.setDescription(
 								(
 									(
