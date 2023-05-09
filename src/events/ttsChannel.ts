@@ -35,37 +35,40 @@ export default [
 			if (queue.length > 1) return;
 			while (queue[0]) {
 				const x = queue[0]!;
-				const [player, resource] = await parallel(
-					async () => {
-						const connection =
-							(memberVoiceChannel.id === (await message.guild.members.fetchMe()).voice.channelId &&
-								getVoiceConnection(message.guildId)) ||
-							joinVoiceChannel({
-								channelId: memberVoiceChannel.id,
-								guildId: message.guildId,
-								adapterCreator: message.channel.guild.voiceAdapterCreator,
-							});
-						const player = createAudioPlayer();
-						connection.subscribe(player);
-						return player;
-					},
-					async () => {
-						const tts = Buffer.concat(
-							(
-								await getAllAudioBase64(x, {
-									lang: "en",
-								})
-							).map((result) => Buffer.from(result.base64, "base64")),
-						);
-						lastName = memberName;
-						const resource = createAudioResource(Readable.from(tts), { inlineVolume: true });
-						resource.volume?.setVolume(0.2);
-						return resource;
-					},
-				);
-				player.play(resource);
-				await awaitEvent(player, AudioPlayerStatus.Idle, 30);
-				queue.shift();
+				try {
+					const [player, resource] = await parallel(
+						async () => {
+							const connection =
+								(memberVoiceChannel.id === (await message.guild.members.fetchMe()).voice.channelId &&
+									getVoiceConnection(message.guildId)) ||
+								joinVoiceChannel({
+									channelId: memberVoiceChannel.id,
+									guildId: message.guildId,
+									adapterCreator: message.channel.guild.voiceAdapterCreator,
+								});
+							const player = createAudioPlayer();
+							connection.subscribe(player);
+							return player;
+						},
+						async () => {
+							const tts = Buffer.concat(
+								(
+									await getAllAudioBase64(x, {
+										lang: "en",
+									})
+								).map((result) => Buffer.from(result.base64, "base64")),
+							);
+							lastName = memberName;
+							const resource = createAudioResource(Readable.from(tts), { inlineVolume: true });
+							resource.volume?.setVolume(0.2);
+							return resource;
+						},
+					);
+					player.play(resource);
+					await awaitEvent(player, AudioPlayerStatus.Idle, 30);
+				} finally {
+					queue.shift();
+				}
 			}
 		},
 	} as Event<"messageCreate">,
