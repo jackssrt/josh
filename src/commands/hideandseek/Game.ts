@@ -555,7 +555,7 @@ export default class Game<State extends GameState = GameState.WaitingForPlayers>
 				await (this as Game<GameState.HideTime>).hideTime();
 				await (this as Game<GameState.SeekTime>).seekTime();
 			}
-			if (await (this as Game<GameState.PlayAgain>).playAgain()) break;
+			if (!await (this as Game<GameState.PlayAgain>).playAgain()) break;
 		}
 	}
 
