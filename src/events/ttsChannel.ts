@@ -13,8 +13,7 @@ import { awaitEvent, parallel } from "../utils.js";
 import type Event from "./../event.js";
 let lastName: string | undefined = undefined;
 const queue: string[] = [];
-const SPEAK_REGEX =
-	/((https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([/\w .-]*))|<:|:\d+>|<id:\w+>|[^A-Za-z\d\s.,!&?;:'"\-()@À-ÿ]/g;
+const SPEAK_REGEX = /((https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([/\w .-]*))|<:|:\d+>|<id:\w+>|^--.*/g;
 
 export default [
 	{
