@@ -9,11 +9,10 @@ import { getAllAudioBase64 } from "google-tts-api";
 
 import { Readable } from "node:stream";
 import getEnv from "../env.js";
-import Lock from "../lock.js";
 import { awaitEvent, parallel } from "../utils.js";
 import type Event from "./../event.js";
 let lastName: string | undefined = undefined;
-const lock = new Lock();
+const queue: string[] = [];
 const SPEAK_REGEX =
 	/((https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([/\w .-]*))|<:|:\d+>|<id:\w+>|[^A-Za-z\d\s.,!&?;:'"\-()@À-ÿ]/g;
 
@@ -33,38 +32,42 @@ export default [
 			const content = message.cleanContent.replace(SPEAK_REGEX, "");
 			if (content === "") return;
 			const text = `${lastName !== memberName ? `${memberName} says ` : ""}${content}`;
-			const lockKey = await lock.lock();
-			const [player, resource] = await parallel(
-				async () => {
-					const connection =
-						(memberVoiceChannel.id === (await message.guild.members.fetchMe()).voice.channelId &&
-							getVoiceConnection(message.guildId)) ||
-						joinVoiceChannel({
-							channelId: memberVoiceChannel.id,
-							guildId: message.guildId,
-							adapterCreator: message.channel.guild.voiceAdapterCreator,
-						});
-					const player = createAudioPlayer();
-					connection.subscribe(player);
-					return player;
-				},
-				async () => {
-					const tts = Buffer.concat(
-						(
-							await getAllAudioBase64(text, {
-								lang: "en",
-							})
-						).map((result) => Buffer.from(result.base64, "base64")),
-					);
-					lastName = memberName;
-					const resource = createAudioResource(Readable.from(tts), { inlineVolume: true });
-					resource.volume?.setVolume(0.2);
-					return resource;
-				},
-			);
-			player.play(resource);
-			await awaitEvent(player, AudioPlayerStatus.Idle, 30);
-			lock.unlock(lockKey);
+			queue.push(text);
+			if (queue.length > 1) return;
+			while (queue[0]) {
+				const x = queue[0]!;
+				const [player, resource] = await parallel(
+					async () => {
+						const connection =
+							(memberVoiceChannel.id === (await message.guild.members.fetchMe()).voice.channelId &&
+								getVoiceConnection(message.guildId)) ||
+							joinVoiceChannel({
+								channelId: memberVoiceChannel.id,
+								guildId: message.guildId,
+								adapterCreator: message.channel.guild.voiceAdapterCreator,
+							});
+						const player = createAudioPlayer();
+						connection.subscribe(player);
+						return player;
+					},
+					async () => {
+						const tts = Buffer.concat(
+							(
+								await getAllAudioBase64(x, {
+									lang: "en",
+								})
+							).map((result) => Buffer.from(result.base64, "base64")),
+						);
+						lastName = memberName;
+						const resource = createAudioResource(Readable.from(tts), { inlineVolume: true });
+						resource.volume?.setVolume(0.2);
+						return resource;
+					},
+				);
+				player.play(resource);
+				await awaitEvent(player, AudioPlayerStatus.Idle, 30);
+				queue.shift();
+			}
 		},
 	} as Event<"messageCreate">,
 	{
