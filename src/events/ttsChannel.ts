@@ -26,9 +26,9 @@ export default [
 				!message.member?.voice.channel
 			)
 				return;
-			const memberName = message.member.displayName.replace(SPEAK_REGEX, "");
+			const memberName = message.member.displayName.replace(SPEAK_REGEX, "").replace("_", " ");
 			const memberVoiceChannel = message.member.voice.channel;
-			const content = message.cleanContent.replace(SPEAK_REGEX, "");
+			const content = message.cleanContent.replace(SPEAK_REGEX, "").replace("_", " ");
 			if (content === "") return;
 			const text = `${lastName !== memberName ? `${memberName} says ` : ""}${content}`;
 			queue.push(text);
