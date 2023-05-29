@@ -67,10 +67,11 @@ export abstract class DisplayableMatchNode extends BaseNode {
 		if (this.channelTopicLabel) parts.push(`**${this.channelTopicLabel}**`);
 		parts.push(":");
 		if (this.rule.rule === "TURF_WAR") parts.push(this.stages.map((v) => v.short()).join(", "));
-		else parts.push(this.rule.emoji);
-		if (future)
-			if (future.rule.rule === "TURF_WAR") parts.push(future.stages.map((v) => v.short()).join(", "));
-			else parts.push(future.rule.emoji);
+		else parts.push(this.rule.emoji, this.rule.name);
+		if (future && future.rule.rule !== "TURF_WAR") {
+			parts.push("➔");
+			parts.push(future.rule.emoji);
+		}
 		return parts.join(" ");
 	}
 
