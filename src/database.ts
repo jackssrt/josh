@@ -31,7 +31,7 @@ class DatabaseBackend<T extends Record<K, unknown>, K extends string> {
 	): Promise<T[K] | NonNullable<D> | undefined> {
 		if (this.replitDatabaseUrl)
 			try {
-				return JSON.parse((await axios.get<string>(`${this.replitDatabaseUrl}/${String(key)}`)).data) as T[K];
+				return (await axios.get<T[K]>(`${this.replitDatabaseUrl}/${String(key)}`)).data;
 			} catch (e) {
 				return defaultValue ?? undefined;
 			}
