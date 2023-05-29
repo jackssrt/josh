@@ -22,6 +22,7 @@ import EventEmitter from "node:events";
 import { BOOYAH_EMOJI, DIVIDER_EMOJI, OUCH_EMOJI, SQUIDSHUFFLE_EMOJI, VEEMO_PEEK_EMOJI } from "../../emojis.js";
 import { IS_PROD } from "../../env.js";
 import {
+	SMALLEST_DATE,
 	awaitEvent,
 	constructEmbedsWrapper,
 	dedent,
@@ -64,9 +65,8 @@ const abortButton = new ButtonBuilder()
 export default class Game<State extends GameState = GameState.WaitingForPlayers> {
 	public players = new Collection<User, Player>();
 	public host: Player<true>;
-	// smallest possible date
-	public createdTime = new Date(-8640000000000000);
-	public startedTime = new Date(-8640000000000000);
+	public createdTime = SMALLEST_DATE;
+	public startedTime = SMALLEST_DATE;
 	private state = GameState.WaitingForPlayers as State;
 	private hostConfigInteraction = undefined as NotDefinedAt<State, GameState.WaitingForPlayers, ButtonInteraction>;
 	public readonly code: string;

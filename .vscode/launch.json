@@ -1,15 +1,12 @@
 {
 	"configurations": [
 		{
-			"console": "integratedTerminal",
-			"internalConsoleOptions": "neverOpen",
-			"name": "nodemon",
-			"program": "dev",
+			"type": "node",
 			"request": "launch",
-			"restart": true,
-			"runtimeExecutable": "pnpm",
-			"skipFiles": ["<node_internals>/**"],
-			"type": "node"
+			"name": "Launch Program",
+			"program": "${workspaceFolder}/src/index.ts",
+			"preLaunchTask": "tsc: debug build - tsconfig.json",
+			"outFiles": ["${workspaceFolder}/build/**/*.js"]
 		}
 	]
 }

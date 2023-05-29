@@ -17,12 +17,13 @@ import getEnv from "../env.js";
 import { onMemberJoin, onMemberLeave } from "../events/joinLeave.js";
 import { updateMemberCount } from "../events/memberCount.js";
 import { updateRoleCategories } from "../events/roleCategories.js";
-import { fetchRotations, sendRegularRotations, sendSalmonRunRotation } from "../events/rotationNotifier.js";
-import type { FestivalsApiResponse } from "../types/rotationNotifier.js";
-import { colorLuminance, errorEmbeds, hexToRGB, parallel, textImage } from "../utils.js";
+import rotations from "../rotations/index.js";
+import type { FestivalsAPI } from "../types/rotationNotifier.js";
+import { colorLuminance, hexToRGB, parallel, textImage } from "../utils.js";
 import { COLOR_DATA } from "./color.js";
 
 type Subcommand =
+	| "forcerotations"
 	| "mapsandmodesrotation"
 	| "salmonrunrotation"
 	| "rolecategories"
@@ -83,6 +84,7 @@ async function makeColorRolesImage() {
 export default {
 	data: (b) =>
 		b
+			.addSubcommand((b) => b.setName("forcerotations").setDescription("Force fetch new rotations"))
 			.addSubcommand((b) => b.setName("mapsandmodesrotation").setDescription("Rerun maps and modes rotation"))
 			.addSubcommand((b) => b.setName("salmonrunrotation").setDescription("Rerun salmon run rotation"))
 			.addSubcommand((b) =>
@@ -106,37 +108,18 @@ export default {
 			)
 			.addSubcommand((b) => b.setName("membercount").setDescription("Rerun member count"))
 			.addSubcommand((b) => b.setName("splatfest").setDescription("Rerun splatfest"))
-			.setDescription("Forcefully reruns certain automatic stuff.")
 			.setDMPermission(false)
 			.setDefaultMemberPermissions(PermissionsBitField.Flags.Administrator),
 	ownerOnly: true,
 	defer: "ephemeral",
 	async execute({ interaction, client }) {
 		const subcommand = interaction.options.getSubcommand() as Subcommand;
-		if (subcommand === "mapsandmodesrotation" || subcommand === "salmonrunrotation") {
-			const data = await fetchRotations();
-			if (!data)
-				return await interaction.editReply(
-					await errorEmbeds({ title: "failed to fetch rotations", description: "failed to send api call" }),
-				);
-			if (subcommand === "mapsandmodesrotation")
-				await sendRegularRotations(
-					client,
-					data.endTime,
-					data.currentFest?.state === "SECOND_HALF" ? data.currentFest : undefined,
-					data.splatfest,
-					data.turfWar,
-					data.ranked,
-					data.xBattle,
-				);
-			else
-				await sendSalmonRunRotation(
-					client,
-					data.salmonStartTime,
-					data.salmonEndTime,
-					data.salmon,
-					data.eggstraWork,
-				);
+		if (subcommand === "forcerotations") {
+			await rotations.forceUpdate();
+			await interaction.editReply("done");
+		} else if (subcommand === "mapsandmodesrotation" || subcommand === "salmonrunrotation") {
+			if (subcommand === "mapsandmodesrotation") await rotations.notifyChanged();
+			else await rotations.notifySalmonChanged();
 			await interaction.editReply("done");
 		} else if (subcommand === "rolecategories") {
 			const mentionable = interaction.options.getMentionable("users", true);
@@ -185,7 +168,7 @@ export default {
 						},
 					},
 				},
-			} = await axios.get<FestivalsApiResponse>("https://splatoon3.ink/data/festivals.json", {
+			} = await axios.get<FestivalsAPI.Response>("https://splatoon3.ink/data/festivals.json", {
 				headers: {
 					"User-Agent": USER_AGENT,
 				},

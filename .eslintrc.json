@@ -32,6 +32,15 @@
 				"allowInGenericTypeArguments": ["Promise", "Awaitable"]
 			}
 		],
+		"@typescript-eslint/explicit-member-accessibility": [
+			"error",
+			{
+				"accessibility": "explicit",
+				"overrides": {
+					"constructors": "no-public"
+				}
+			}
+		],
 		"prettier/prettier": [
 			"warn",
 			{

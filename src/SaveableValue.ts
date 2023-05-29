@@ -10,10 +10,10 @@ export class SaveableValue<T> {
 		return new this(filename, data);
 	}
 
-	get value(): T {
+	public get value(): T {
 		return this.privateValue;
 	}
-	async setValue(value: T): Promise<T> {
+	public async setValue(value: T): Promise<T> {
 		this.privateValue = value;
 		await writeFile(
 			this.filename,

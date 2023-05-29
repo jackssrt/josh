@@ -23,6 +23,9 @@ export type StrictExclude<T, K extends T> = Exclude<T, K>;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type AnyFunction = (...args: any[]) => any;
 
+export const SMALLEST_DATE = new Date(-8640000000000000);
+export const LARGEST_DATE = new Date(8640000000000000);
+
 /**
  * Pauses the program for the specified amount of time.
  * @param delay how many **seconds** (not milliseconds) it should wait
@@ -140,12 +143,6 @@ export function messageHiddenText(text: string) {
 	return ` ||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​|| ${text}` as const;
 }
 
-export function shortenStageName(stage: string): string {
-	return ["Wahoo World", "Scorch Gorge", "Flounder Heights", "Um'ami Ruins", "Manta Maria"].includes(stage)
-		? stage
-		: stage.split(" ")[0]!;
-}
-
 export function roleIsCategory(role: Role): boolean {
 	return role.name.match(/⠀+[A-Z]/g) !== null && role.hexColor !== "#010101";
 }
@@ -236,7 +233,7 @@ export async function textImage(text: string, color: string, size: number): Prom
 			rgba: true,
 		},
 	});
-	const width = ((await img.metadata()).width ?? 14 * 2 * size) - 14 * 2 * size;
+	const width = Math.ceil(((await img.metadata()).width ?? 15.5 * 2 * size) - 15.5 * 2 * size);
 
 	const height = (await img.metadata()).height ?? 0;
 	// cuts off the "Dg" text while keeping the height

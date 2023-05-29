@@ -6,12 +6,12 @@ import type {
 } from "discord.js";
 import type Client from "./client.js";
 
-export interface ContextMenuItem<K extends "User" | "Message"> {
-	type: K;
+export interface ContextMenuItem<T extends "User" | "Message"> {
+	type: T;
 	ownerOnly?: boolean;
 	data(builder: ContextMenuCommandBuilder): ContextMenuCommandBuilder;
 	execute(param: {
 		client: Client<true>;
-		interaction: K extends "User" ? UserContextMenuCommandInteraction : MessageContextMenuCommandInteraction;
+		interaction: T extends "User" ? UserContextMenuCommandInteraction : MessageContextMenuCommandInteraction;
 	}): Awaitable<void>;
 }

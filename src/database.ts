@@ -1,24 +1,20 @@
 import axios from "axios";
 import { existsSync } from "fs";
 import { readFile, writeFile } from "fs/promises";
-import { USER_AGENT } from "./client.js";
 import getEnv from "./env.js";
-import type { SalmonRunAPIResponse } from "./types/rotationNotifier.js";
-import { parallel } from "./utils.js";
+import type { SalmonRunAPI, SchedulesAPI } from "./types/rotationNotifier.js";
+import { SMALLEST_DATE, parallel } from "./utils.js";
 
 export interface DatabaseData {
 	createdSplatfestEvent: string;
-	nextMapRotation: number;
+	cachedMapRotation: SchedulesAPI.Response;
+	cachedMapRotationExpiry: number;
 	nextSalmonRunRotation: number;
 	monthlySalmonRunGearMonth: number;
-	monthlySalmonRunGear: { name: string; image: string };
+	monthlySalmonRunGear: SalmonRunAPI.MonthlyGear;
 }
 
-type JSONData = {
-	[x in string]: string | number | boolean | JSONData;
-};
-
-class DatabaseBackend<T extends Record<K, JSONData[string]>, K extends string> {
+class DatabaseBackend<T extends Record<K, unknown>, K extends string> {
 	private replitDatabaseUrl = getEnv("REPLIT_DB_URL");
 	private data: T | undefined = undefined;
 	private static readonly PATH = "./database.json";
@@ -27,12 +23,17 @@ class DatabaseBackend<T extends Record<K, JSONData[string]>, K extends string> {
 			this.data = JSON.parse(await readFile(DatabaseBackend.PATH, { encoding: "utf-8" })) as T;
 		else this.data = {} as T;
 	}
-	public async get<K extends keyof T>(key: K): Promise<T[K] | undefined> {
+	public async get<K extends keyof T>(key: K): Promise<T[K] | undefined>;
+	public async get<K extends keyof T, D extends T[K]>(key: K, defaultValue: D): Promise<T[K] | D>;
+	public async get<K extends keyof T, D extends T[K]>(
+		key: K,
+		defaultValue?: D | undefined,
+	): Promise<T[K] | NonNullable<D> | undefined> {
 		if (this.replitDatabaseUrl)
 			try {
 				return JSON.parse((await axios.get<string>(`${this.replitDatabaseUrl}/${String(key)}`)).data) as T[K];
 			} catch (e) {
-				return undefined;
+				return defaultValue ?? undefined;
 			}
 		else {
 			if (this.data === undefined) await this.load();
@@ -58,42 +59,38 @@ class DatabaseBackend<T extends Record<K, JSONData[string]>, K extends string> {
 export class Database {
 	private backend = new DatabaseBackend<DatabaseData, keyof DatabaseData>();
 
-	async setSplatfestEventCreated(name: string) {
+	public async setSplatfestEventCreated(name: string) {
 		await this.backend.set("createdSplatfestEvent", name);
 	}
-	async isSplatfestEventCreated(name: string) {
+	public async isSplatfestEventCreated(name: string) {
 		return (await this.backend.get("createdSplatfestEvent")) === name;
 	}
 
-	async setNextMapRotation(endTime: Date) {
-		await this.backend.set("nextMapRotation", endTime.getTime());
+	public async setCachedMapRotation(endTime: Date, response: SchedulesAPI.Response) {
+		await parallel(
+			this.backend.set("cachedMapRotation", response),
+			this.backend.set("cachedMapRotationExpiry", endTime.getTime()),
+		);
 	}
-	async setNextSalmonRunRotation(endTime: Date) {
+	public async getCachedMapRotation(): Promise<SchedulesAPI.Response | undefined> {
+		const expiry = await this.backend.get("cachedMapRotationExpiry", 0);
+		return expiry > new Date().getTime() ? await this.backend.get("cachedMapRotation") : undefined;
+	}
+	public async setSalmonRunEndTime(endTime: Date) {
 		await this.backend.set("nextSalmonRunRotation", endTime.getTime());
 	}
-	async activeMonthlySalmonRunGear(): Promise<DatabaseData["monthlySalmonRunGear"]> {
-		const [lastMonth, lastGear] = await parallel(
-			this.backend.get("monthlySalmonRunGearMonth"),
-			this.backend.get("monthlySalmonRunGear"),
+	public async getSalmonRunEndTime() {
+		return new Date(await this.backend.get("nextSalmonRunRotation", SMALLEST_DATE.getTime()));
+	}
+
+	public async getCachedSalmonRunGear() {
+		return await parallel(this.backend.get("monthlySalmonRunGearMonth"), this.backend.get("monthlySalmonRunGear"));
+	}
+	public async setCachedSalmonRunGear(gear: SalmonRunAPI.MonthlyGear) {
+		await parallel(
+			this.backend.set("monthlySalmonRunGearMonth", new Date().getMonth()),
+			this.backend.set("monthlySalmonRunGear", gear),
 		);
-		if (lastMonth === new Date().getMonth() && lastGear) return lastGear;
-		const { data: apiData } = await axios.get<SalmonRunAPIResponse>("https://splatoon3.ink/data/coop.json", {
-			headers: { "User-Agent": USER_AGENT },
-		});
-		const {
-			name,
-			image: { url: image },
-		} = apiData.data.coopResult.monthlyGear;
-		const data = { name, image };
-		await this.backend.set("monthlySalmonRunGear", data);
-		await this.backend.set("monthlySalmonRunGearMonth", new Date().getMonth());
-		return data;
-	}
-	async shouldSendSalmonRunRotation() {
-		return ((await this.backend.get("nextSalmonRunRotation")) ?? 0) < new Date().getTime();
-	}
-	async timeTillNextMapRotationSend() {
-		return ((await this.backend.get("nextMapRotation")) ?? 0) - new Date().getTime();
 	}
 }
 

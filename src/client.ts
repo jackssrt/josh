@@ -53,6 +53,32 @@ export default class Client<Ready extends boolean = false> extends DiscordClient
 				this.commandRegistry.set(alias, v);
 			});
 		});
+
+		// sanity checks
+		/* eslint-disable @typescript-eslint/no-unnecessary-condition */
+		this.commandRegistry.forEach((v, k) => {
+			function fail(reason: string) {
+				consola.error(`${k} command failed sanity check, ${reason} not defined`);
+			}
+			if (!v.data) fail("data");
+			if (!v.execute) fail("execute");
+		});
+		this.eventRegistry.forEach((v, k) => {
+			function fail(reason: string) {
+				consola.error(`${k} event failed sanity check, ${reason} not defined`);
+			}
+			if (!v.event) fail("event");
+			if (!v.on) fail("on()");
+		});
+		this.contextMenuItemsRegistry.forEach((v, k) => {
+			function fail(reason: string) {
+				consola.error(`${k} contextMenuItem failed sanity check, ${reason} not defined`);
+			}
+			if (!v.data) fail("data");
+			if (!v.execute) fail("execute()");
+			if (!v.type) fail("type");
+		});
+		/* eslint-enable @typescript-eslint/no-unnecessary-condition */
 		const end = new Date();
 		consola.success(`Loaded ${this.eventRegistry.size} ${pluralize("event", this.eventRegistry.size)}`);
 		consola.success(

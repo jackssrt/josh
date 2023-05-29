@@ -1,6 +1,7 @@
 import path from "node:path";
 
 export interface ProcessEnv {
+	NODE_ENV: "test" | "development" | "production";
 	TOKEN: string;
 	OWNER_ID: string;
 	CLIENT_ID: string;

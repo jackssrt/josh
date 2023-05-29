@@ -5,5 +5,12 @@
 		"allowJs": true
 	},
 	"extends": "./tsconfig.json",
-	"include": ["src/**/*.ts", "src/**/*.ts.disabled", "src/**/*.d.ts"]
+	"include": [
+		"src/**/*.ts",
+		"src/**/*.ts.disabled",
+		"src/**/*.d.ts",
+		"vitest.config.ts",
+		"tests/**/*.ts",
+		"tests/**/*.d.ts"
+	]
 }
