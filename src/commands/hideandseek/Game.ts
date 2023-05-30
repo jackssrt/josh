@@ -531,6 +531,7 @@ export default class Game<State extends GameState = GameState.WaitingForPlayers>
 				)),
 			}),
 			this.hostConfigInteraction.deleteReply(),
+			...this.players.map(async (v) => !v.host && (await v.interaction.deleteReply())),
 		);
 		return playAgain;
 	}
