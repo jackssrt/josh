@@ -563,28 +563,9 @@ export default class Game<State extends GameState = GameState.WaitingForPlayers>
 				)),
 				components: [],
 			}),
-			this.hostConfigInteraction?.editReply({
-				content: "",
-				...(await embeds((b) =>
-					b
-						.setTitle("The game has been aborted")
-						.setDescription("You can dismiss this message now.")
-						.setColor("Red"),
-				)),
-				components: [],
-			}),
+			this.hostConfigInteraction?.deleteReply(),
 			...this.players.toJSON().map(async (v) => {
-				if (v.isNotHost() && !this.playedAgain)
-					await v.interaction.editReply({
-						content: "",
-						...(await embeds((b) =>
-							b
-								.setTitle("The game has been aborted")
-								.setDescription("You can dismiss this message now.")
-								.setColor("Red"),
-						)),
-						components: [],
-					});
+				if (v.isNotHost() && !this.playedAgain) await v.interaction.deleteReply();
 			}),
 		);
 	}
