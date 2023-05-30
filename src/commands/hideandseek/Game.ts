@@ -230,10 +230,13 @@ export default class Game<State extends GameState = GameState.WaitingForPlayers>
 				try {
 					leaveConfirmationInteraction = await leaveConfirmation.awaitMessageComponent({
 						componentType: ComponentType.Button,
+						time: SECONDS_TO_CONFIRM_LEAVE * 1000,
 					});
 				} catch {
 					return;
 				}
+				if (leaveConfirmationInteraction.customId === "no") return await interaction.deleteReply();
+
 				const player = this.players.get(interaction.user) as Player<false>;
 				this.players.delete(interaction.user);
 				const leftEmbeds = await embeds((b) => b.setTitle("You have left the game").setColor("Red"));
