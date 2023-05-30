@@ -239,13 +239,9 @@ export default class Game<State extends GameState = GameState.WaitingForPlayers>
 
 				const player = this.players.get(interaction.user) as Player<false>;
 				this.players.delete(interaction.user);
-				const leftEmbeds = await embeds((b) => b.setTitle("You have left the game").setColor("Red"));
 				await parallel(
-					leaveConfirmationInteraction.update({
-						...leftEmbeds,
-						components: [],
-					}),
-					!this.playedAgain ? player.interaction.editReply(leftEmbeds) : undefined,
+					interaction.deleteReply(),
+					!this.playedAgain ? player.interaction.deleteReply() : undefined,
 					this.updateMainMessage(),
 				);
 				return;
