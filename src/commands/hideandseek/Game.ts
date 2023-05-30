@@ -530,15 +530,7 @@ export default class Game<State extends GameState = GameState.WaitingForPlayers>
 					b.setTitle(`Hide and seek game finished ${VEEMO_PEEK_EMOJI}`).addFields(this.playerListField()),
 				)),
 			}),
-			this.hostConfigInteraction.editReply({
-				...(await embeds((b) =>
-					b
-						.setTitle("Hide and seek game finished")
-						.setColor("Green")
-						.setDescription("You can dismiss this message now."),
-				)),
-				components: [],
-			}),
+			this.hostConfigInteraction.deleteReply(),
 		);
 		return playAgain;
 	}
