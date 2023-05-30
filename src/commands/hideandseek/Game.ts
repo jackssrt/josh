@@ -19,7 +19,7 @@ import {
 } from "discord.js";
 import { randomInt } from "node:crypto";
 import EventEmitter from "node:events";
-import { BOOYAH_EMOJI, DIVIDER_EMOJI, OUCH_EMOJI, SQUIDSHUFFLE_EMOJI, VEEMO_PEEK_EMOJI } from "../../emojis.js";
+import { BOOYAH_EMOJI, OUCH_EMOJI, SQUIDSHUFFLE_EMOJI, VEEMO_PEEK_EMOJI } from "../../emojis.js";
 import { IS_PROD } from "../../env.js";
 import {
 	SMALLEST_DATE,
@@ -124,7 +124,7 @@ export default class Game<State extends GameState = GameState.WaitingForPlayers>
 				value:
 					this.players
 						.toJSON()
-						.flatMap((v, i) => [v.playerListItem(), ...(i === 3 ? [DIVIDER_EMOJI.repeat(20)] : [])])
+						.map((v) => v.playerListItem())
 						.join("\n") || "no players",
 			};
 		}
