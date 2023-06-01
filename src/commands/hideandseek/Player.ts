@@ -1,4 +1,5 @@
 import type { ButtonInteraction, ChatInputCommandInteraction, GuildMember } from "discord.js";
+import { userMention } from "discord.js";
 import { SQUIDSHUFFLE_EMOJI } from "../../emojis.js";
 import { embeds } from "../../utils.js";
 import { HIDER_EXPLANATION, ROLE_ICON_MAP, SEEKER_EXPLANATION } from "./consts.js";
@@ -40,7 +41,9 @@ export default class Player<Host extends boolean = boolean> {
 	}
 
 	public playerListItem() {
-		return `${this.role !== undefined ? ROLE_ICON_MAP[this.role] : this.host ? "👑" : "👤"} - <@${this.member.id}>`;
+		return `${this.role !== undefined ? ROLE_ICON_MAP[this.role] : this.host ? "👑" : "👤"} - ${userMention(
+			this.member.id,
+		)}`;
 	}
 	public async roleEmbed() {
 		return await embeds((b) =>

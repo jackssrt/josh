@@ -463,7 +463,7 @@ export default class Game<State extends GameState = GameState.WaitingForPlayers>
 			`**The game has started! ${BOOYAH_EMOJI} Good luck everyone!** Hiding time ends ${futureTimestamp(
 				this.hideTimeSeconds,
 				this.startedTime,
-			)} ${messageHiddenText(this.players.map((v) => `<@${v.member.id}>`).join(""))}`,
+			)} ${messageHiddenText(this.players.map((v) => userMention(v.member.id)).join(""))}`,
 		);
 	}
 	private async hideTime(this: Game<GameState.HideTime>): Promise<void> {
@@ -475,7 +475,7 @@ export default class Game<State extends GameState = GameState.WaitingForPlayers>
 			content: `**⏰ Hiding time is up! The seekers will now go look for the hiders!** Match ends ${futureTimestamp(
 				this.hideTimeSeconds + this.seekTimeSeconds,
 				this.startedTime,
-			)} ${messageHiddenText(this.players.map((v) => `<@${v.member.id}>`).join(""))}`,
+			)} ${messageHiddenText(this.players.map((v) => userMention(v.member.id)).join(""))}`,
 		});
 	}
 	private async seekTime(this: Game<GameState.SeekTime>): Promise<void> {

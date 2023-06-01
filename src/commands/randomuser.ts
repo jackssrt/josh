@@ -1,3 +1,4 @@
+import { userMention } from "discord.js";
 import type Command from "../command.js";
 import { getRandomValues } from "../utils.js";
 
@@ -18,6 +19,6 @@ export default {
 		const users = new Array(25)
 			.fill(false)
 			.flatMap((_, i) => interaction.options.getUser(`user${i + 1 === 1 ? "" : i + 1}`, i < 2) ?? []);
-		await interaction.reply(`Your random user is: <@${getRandomValues(users, 1)[0]!.id}>`);
+		await interaction.reply(`Your random user is: ${userMention(getRandomValues(users, 1)[0]!.id)}`);
 	},
 } as Command;
