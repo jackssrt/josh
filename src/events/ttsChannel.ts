@@ -9,11 +9,15 @@ import { getAllAudioBase64 } from "google-tts-api";
 
 import { Readable } from "node:stream";
 import getEnv from "../env.js";
-import { awaitEvent, parallel } from "../utils.js";
+import { LINK_REGEX, awaitEvent, parallel } from "../utils.js";
 import type Event from "./../event.js";
 let lastName: string | undefined = undefined;
 const queue: string[] = [];
-const SPEAK_REGEX = /((https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([/\w .-]*))|<:|:\d+>|<id:\w+>|^--.*/g;
+const SPEAK_REGEX = /<a+:|:\d+>|<id:\w+>|^--.*/g;
+
+function clean(text: string): string {
+	return text.replace(LINK_REGEX, "").replace(SPEAK_REGEX, "").replace("_", " ");
+}
 
 export default [
 	{
@@ -26,9 +30,9 @@ export default [
 				!message.member?.voice.channel
 			)
 				return;
-			const memberName = message.member.displayName.replace(SPEAK_REGEX, "").replace("_", " ");
+			const memberName = clean(message.member.displayName);
 			const memberVoiceChannel = message.member.voice.channel;
-			const content = message.cleanContent.replace(SPEAK_REGEX, "").replace("_", " ");
+			const content = clean(message.cleanContent);
 			if (content === "") return;
 			const text = `${lastName !== memberName ? `${memberName} says ` : ""}${content}`;
 			queue.push(text);

@@ -27,6 +27,12 @@ export const SMALLEST_DATE = new Date(-8640000000000000);
 export const LARGEST_DATE = new Date(8640000000000000);
 
 /**
+ * @link https://urlregex.com/
+ */
+export const LINK_REGEX =
+	/((([A-Za-z]{3,9}:(?:\/\/)?)(?:[-;:&=+$,\w]+@)?[A-Za-z0-9.-]+|(?:www\.|[-;:&=+$,\w]+@)[A-Za-z0-9.-]+)((?:\/[+~%/.\w\-_]*)?\??(?:[-+=&;%@.\w_]*)#?(?:[.!/\\\w]*))?)/;
+
+/**
  * Pauses the program for the specified amount of time.
  * @param delay how many **seconds** (not milliseconds) it should wait
  */
