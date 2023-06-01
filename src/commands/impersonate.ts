@@ -14,12 +14,9 @@ export default {
 	async execute({ interaction, client }) {
 		if (!interaction.channel || interaction.channel.type !== ChannelType.GuildText)
 			return await interaction.reply({ content: "This command can't be run here.", ephemeral: false });
-		await impersonate(
-			client,
-			interaction.options.getUser("user", true),
-			interaction.channel,
-			interaction.options.getString("content", true),
-		);
+		const user = interaction.options.getUser("user", true);
+		const member = interaction.guild?.members.resolve(user) ?? user;
+		await impersonate(client, member, interaction.channel, interaction.options.getString("content", true));
 		await interaction.reply({ content: "✅", ephemeral: true });
 	},
 } as Command;
