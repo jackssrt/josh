@@ -2,10 +2,10 @@ import type {
 	APIEmbedField,
 	ButtonInteraction,
 	ChatInputCommandInteraction,
+	GuildMember,
 	InteractionReplyOptions,
 	Message,
 	StringSelectMenuInteraction,
-	User,
 } from "discord.js";
 import {
 	ActionRowBuilder,
@@ -63,7 +63,7 @@ const abortButton = new ButtonBuilder()
 	.setStyle(ButtonStyle.Danger);
 
 export default class Game<State extends GameState = GameState.WaitingForPlayers> {
-	public players = new Collection<User, Player>();
+	public players = new Collection<GuildMember, Player>();
 	public host: Player<true>;
 	public createdTime = SMALLEST_DATE;
 	public startedTime = SMALLEST_DATE;
@@ -87,21 +87,21 @@ export default class Game<State extends GameState = GameState.WaitingForPlayers>
 	);
 
 	constructor(
-		hostInteraction: ChatInputCommandInteraction,
+		hostInteraction: ChatInputCommandInteraction<"cached">,
 		private readonly mode: "turfwar" | "ranked",
 		private readonly maxPlayers: number,
 	) {
 		this.code = `${randomInt(0, 9)}${randomInt(0, 9)}${randomInt(0, 9)}${randomInt(0, 9)}`;
 		const host = new Player(hostInteraction, true as const, undefined, undefined, this.code);
-		this.players.set(hostInteraction.user, host);
+		this.players.set(hostInteraction.member, host);
 		this.host = host;
 		this.hideTimeSeconds = IS_PROD ? (this.mode === "turfwar" ? 1 : 2) * 60 : 5;
 		this.seekTimeSeconds = IS_PROD ? (this.mode === "turfwar" ? 2 : 3) * 60 : 10;
 	}
 
-	public addPlayer(interaction: ButtonInteraction) {
+	public addPlayer(interaction: ButtonInteraction<"cached">) {
 		const p = new Player(interaction, false as const, undefined, this.host, this.code);
-		this.players.set(interaction.user, p);
+		this.players.set(interaction.member, p);
 		return p;
 	}
 
@@ -198,14 +198,16 @@ export default class Game<State extends GameState = GameState.WaitingForPlayers>
 			componentType: ComponentType.Button,
 			time: SECONDS_TO_JOIN * 1000,
 			filter: async (x) =>
-				this.players.size >= this.maxPlayers && !this.players.has(x.user)
+				!x.inCachedGuild()
+					? false
+					: this.players.size >= this.maxPlayers && !this.players.has(x.member)
 					? !!void (await x.reply({ content: "Sorry, this game is full!", ephemeral: true }))
-					: x.user.id === this.host.user.id
+					: x.user.id === this.host.member.id
 					? !!void (await x.reply({ content: "You're the host!", ephemeral: true }))
 					: true,
 		});
-		joinCollector.on("collect", async (interaction) => {
-			if (this.players.has(interaction.user)) {
+		joinCollector.on("collect", async (interaction: ButtonInteraction<"cached">) => {
+			if (this.players.has(interaction.member)) {
 				// leave
 				const leaveConfirmation = await interaction.reply({
 					...(await embeds((b) =>
@@ -237,8 +239,8 @@ export default class Game<State extends GameState = GameState.WaitingForPlayers>
 				}
 				if (leaveConfirmationInteraction.customId === "no") return await interaction.deleteReply();
 
-				const player = this.players.get(interaction.user) as Player<false>;
-				this.players.delete(interaction.user);
+				const player = this.players.get(interaction.member) as Player<false>;
+				this.players.delete(interaction.member);
 				await parallel(
 					interaction.deleteReply(),
 					!this.playedAgain ? player.interaction.deleteReply() : undefined,
@@ -335,7 +337,9 @@ export default class Game<State extends GameState = GameState.WaitingForPlayers>
 						.setPlaceholder("*️⃣ Pick seekers manually...")
 						.addOptions(
 							this.players.map((v) =>
-								new StringSelectMenuOptionBuilder().setLabel(`${v.user.username}`).setValue(v.user.id),
+								new StringSelectMenuOptionBuilder()
+									.setLabel(`${v.member.displayName}`)
+									.setValue(v.member.id),
 							),
 						),
 				),
@@ -354,8 +358,8 @@ export default class Game<State extends GameState = GameState.WaitingForPlayers>
 
 			// takes the first player from the collection and inserts them at the end
 			const head = this.players.first()!;
-			this.players.delete(head.user);
-			this.players.set(head.user, head);
+			this.players.delete(head.member);
+			this.players.set(head.member, head);
 
 			const count = pickTeamsInteraction.isStringSelectMenu()
 				? parseInt(pickTeamsInteraction.values[0] ?? "-1")
@@ -459,7 +463,7 @@ export default class Game<State extends GameState = GameState.WaitingForPlayers>
 			`**The game has started! ${BOOYAH_EMOJI} Good luck everyone!** Hiding time ends ${futureTimestamp(
 				this.hideTimeSeconds,
 				this.startedTime,
-			)} ${messageHiddenText(this.players.map((v) => `<@${v.user.id}>`).join(""))}`,
+			)} ${messageHiddenText(this.players.map((v) => `<@${v.member.id}>`).join(""))}`,
 		);
 	}
 	private async hideTime(this: Game<GameState.HideTime>): Promise<void> {
@@ -471,7 +475,7 @@ export default class Game<State extends GameState = GameState.WaitingForPlayers>
 			content: `**⏰ Hiding time is up! The seekers will now go look for the hiders!** Match ends ${futureTimestamp(
 				this.hideTimeSeconds + this.seekTimeSeconds,
 				this.startedTime,
-			)} ${messageHiddenText(this.players.map((v) => `<@${v.user.id}>`).join(""))}`,
+			)} ${messageHiddenText(this.players.map((v) => `<@${v.member.id}>`).join(""))}`,
 		});
 	}
 	private async seekTime(this: Game<GameState.SeekTime>): Promise<void> {
@@ -576,7 +580,7 @@ export default class Game<State extends GameState = GameState.WaitingForPlayers>
 				parts.push(`Expires ${futureTimestamp(SECONDS_TO_JOIN, this.createdTime)}`);
 				break;
 			case GameState.DecidingTeams:
-				parts.push(`${SQUIDSHUFFLE_EMOJI} ${userMention(this.host.user.id)} is deciding teams...`);
+				parts.push(`${SQUIDSHUFFLE_EMOJI} ${userMention(this.host.member.id)} is deciding teams...`);
 				break;
 			case GameState.WaitingForMatchStart:
 				parts.push(`${SQUIDSHUFFLE_EMOJI} Waiting for the match to start...`);
@@ -590,7 +594,7 @@ export default class Game<State extends GameState = GameState.WaitingForPlayers>
 				);
 				break;
 			case GameState.PlayAgain:
-				parts.push(`Waiting for ${userMention(this.host.user.id)} to decide if we should play again...`);
+				parts.push(`Waiting for ${userMention(this.host.member.id)} to decide if we should play again...`);
 				break;
 		}
 		await this.mainMessage?.edit({

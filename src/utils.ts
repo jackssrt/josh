@@ -134,7 +134,7 @@ export async function impersonate(
 		}));
 	await webhook.send({
 		...(typeof message === "string" ? { content: message } : message),
-		username: `${user instanceof GuildMember ? user.nickname ?? user.user.username : user.username}`,
+		username: `${user instanceof GuildMember ? user.displayName : user.username}`,
 		avatarURL: user.displayAvatarURL({ size: 128 }),
 	} satisfies WebhookMessageCreateOptions);
 }

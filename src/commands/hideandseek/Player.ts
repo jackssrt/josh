@@ -1,4 +1,4 @@
-import type { ButtonInteraction, ChatInputCommandInteraction, User } from "discord.js";
+import type { ButtonInteraction, ChatInputCommandInteraction, GuildMember } from "discord.js";
 import { SQUIDSHUFFLE_EMOJI } from "../../emojis.js";
 import { embeds } from "../../utils.js";
 import { HIDER_EXPLANATION, ROLE_ICON_MAP, SEEKER_EXPLANATION } from "./consts.js";
@@ -8,17 +8,17 @@ export const enum PlayerRole {
 	Hider,
 }
 export default class Player<Host extends boolean = boolean> {
-	public user: User;
+	public member: GuildMember;
 	private gameHost: Player<true>;
 	constructor(
-		public interaction: Host extends true ? ChatInputCommandInteraction : ButtonInteraction,
+		public interaction: Host extends true ? ChatInputCommandInteraction<"cached"> : ButtonInteraction<"cached">,
 		public host: Host,
 		public role: PlayerRole | undefined,
 		gameHost: Host extends true ? undefined : Player<true>,
 		private gameCode: string,
 	) {
 		this.gameHost = gameHost ?? (this as Player<true>);
-		this.user = interaction.user;
+		this.member = interaction.member;
 	}
 	/**
 	 * This method should only be used as a typeguard,
@@ -40,7 +40,7 @@ export default class Player<Host extends boolean = boolean> {
 	}
 
 	public playerListItem() {
-		return `${this.role !== undefined ? ROLE_ICON_MAP[this.role] : this.host ? "👑" : "👤"} - <@${this.user.id}>`;
+		return `${this.role !== undefined ? ROLE_ICON_MAP[this.role] : this.host ? "👑" : "👤"} - <@${this.member.id}>`;
 	}
 	public async roleEmbed() {
 		return await embeds((b) =>
@@ -48,8 +48,8 @@ export default class Player<Host extends boolean = boolean> {
 				.setAuthor(
 					!this.host
 						? {
-								name: `Host: ${this.gameHost.user.username}・Room code: ${this.gameCode}`,
-								iconURL: this.gameHost.user.avatarURL() ?? "",
+								name: `Host: ${this.gameHost.member.displayName}・Room code: ${this.gameCode}`,
+								iconURL: this.gameHost.member.avatarURL() ?? "",
 						  }
 						: null,
 				)
