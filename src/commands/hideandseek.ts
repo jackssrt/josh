@@ -21,6 +21,7 @@ export default {
 					.setDescription("The max number of players for this game"),
 			),
 	async execute({ interaction }) {
+		if (!interaction.inCachedGuild()) return;
 		const mode = interaction.options.getString("mode", true) as "ranked" | "turfwar";
 		const maxPlayers = interaction.options.getInteger("maxplayers", false);
 		const game = new Game(interaction, mode, maxPlayers ?? 8);
