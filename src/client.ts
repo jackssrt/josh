@@ -4,6 +4,9 @@
 import consola from "consola";
 import type { ClientEvents, InteractionReplyOptions, MessageCreateOptions, PresenceData } from "discord.js";
 import { ActivityType, Client as DiscordClient, EmbedBuilder, GatewayIntentBits } from "discord.js";
+import { spawn } from "node:child_process";
+import path from "node:path";
+import { platform } from "node:process";
 import type Command from "./command.js";
 import type { ContextMenuItem } from "./contextMenuItem.js";
 import getEnv, { IS_BUILT, IS_DEV } from "./env.js";
@@ -177,6 +180,12 @@ export default class Client<Ready extends boolean = false> extends DiscordClient
 			await command?.autocomplete?.({ client: this as Client<true>, interaction });
 		});
 		await this.login(getEnv("TOKEN"));
-		if (IS_DEV) await (await this.users.fetch(getEnv("OWNER_ID"))).send("✅ Started");
+		if (IS_DEV && platform === "win32")
+			spawn(`powershell.exe`, [
+				"-c",
+				`$player = New-Object System.Media.SoundPlayer;$player.SoundLocation = '${path.resolve(
+					"./assets/startup.wav",
+				)}';$player.playsync();`,
+			]);
 	}
 }
