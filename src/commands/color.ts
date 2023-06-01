@@ -1,4 +1,3 @@
-import { GuildMember } from "discord.js";
 import type Command from "../command.js";
 import { BOOYAH_EMOJI } from "../emojis.js";
 import getEnv from "../env.js";
@@ -82,7 +81,7 @@ export default {
 		);
 	},
 	async execute({ interaction }) {
-		if (!interaction.guild || !(interaction.member instanceof GuildMember))
+		if (!interaction.guild || !interaction.inCachedGuild())
 			return await interaction.reply("You can't run this command in a dm!");
 		const colorInput = interaction.options.getString("color", true);
 		const colorData = COLOR_DATA.find((a) => a.name.toLowerCase().trim() === colorInput.toLowerCase().trim());
@@ -97,20 +96,20 @@ export default {
 					(v) => (v.hexColor.toLowerCase() as `#${string}`) === `#${colorData.value.toLowerCase()}`,
 				);
 				const otherColorRoles = colorRoles.filter(
-					(v) => v.members.has((interaction.member as GuildMember).id) && v.id !== alreadyExistingRole?.id,
+					(v) => v.members.has(interaction.member.id) && v.id !== alreadyExistingRole?.id,
 				);
 				if (otherColorRoles.length > 0)
-					await (interaction.member as GuildMember).roles.remove(
+					await interaction.member.roles.remove(
 						otherColorRoles,
 						"A user cannot have multiple color roles at once.",
 					);
-				if (alreadyExistingRole && !alreadyExistingRole.members.has((interaction.member as GuildMember).id))
-					await (interaction.member as GuildMember).roles.add(alreadyExistingRole, "Requested color");
+				if (alreadyExistingRole && !alreadyExistingRole.members.has(interaction.member.id))
+					await interaction.member.roles.add(alreadyExistingRole, "Requested color");
 				if (alreadyExistingRole) return;
 
 				// make a new role
 				// and give it to the user
-				const newRole = await interaction.guild!.roles.create({
+				const newRole = await interaction.guild.roles.create({
 					color: `#${colorData.value}`,
 					hoist: false,
 					mentionable: false,
@@ -118,7 +117,7 @@ export default {
 					position: colorsCategory.position,
 					name: `🎨・${colorData.name}`,
 				});
-				await (interaction.member as GuildMember).roles.add(newRole, "Requested color");
+				await interaction.member.roles.add(newRole, "Requested color");
 			});
 			const colorRoles = await getLowerRolesInSameCategory(colorsCategory);
 			await parallel(
