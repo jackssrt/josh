@@ -21,7 +21,13 @@ export class Stage {
 	}
 }
 export class CoopStage {
-	public name: "Spawning Grounds" | "Sockeye Station" | "Marooner's Bay" | "Gone Fission Hydroplant" | "???";
+	public name:
+		| "Spawning Grounds"
+		| "Sockeye Station"
+		| "Marooner's Bay"
+		| "Gone Fission Hydroplant"
+		| "Jammin' Salmon Junction"
+		| "???";
 	public image: string;
 	public id: string;
 	public emoji: string;
@@ -36,6 +42,7 @@ export class CoopStage {
 				"Gone Fission Hydroplant": "<:goneFissionHydroplant:1087077100294516750>",
 				"Marooner's Bay": "<:maroonersBay:1087077102559432894>",
 				"Sockeye Station": "<:sockeyeStation:1087077104274911292>",
+				"Jammin' Salmon Junction": "<:jamminSalmonJunction:1114180647129456693>",
 				"???": BULLET_EMOJI,
 			} as const satisfies Record<CoopStage["name"], string>
 		)[this.name];

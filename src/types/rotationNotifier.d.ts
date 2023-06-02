@@ -43,7 +43,13 @@ export namespace SchedulesAPI {
 		weapons: [CoopWeapon, CoopWeapon, CoopWeapon, CoopWeapon];
 	}
 	export interface CoopRegularStage {
-		name: "Spawning Grounds" | "Sockeye Station" | "Marooner's Bay" | "Gone Fission Hydroplant" | "";
+		name:
+			| "Spawning Grounds"
+			| "Sockeye Station"
+			| "Marooner's Bay"
+			| "Gone Fission Hydroplant"
+			| "Jammin' Salmon Junction"
+			| "";
 		thumbnailImage: {
 			url: string;
 		};
