@@ -15,7 +15,7 @@ let lastName: string | undefined = undefined;
 const queue: string[] = [];
 const SPEAK_REGEX = /<a+:|:\d+>|<id:\w+>|^--.*/g;
 
-function clean(text: string): string {
+export function clean(text: string): string {
 	return text.replace(LINK_REGEX, "").replace(SPEAK_REGEX, "").replace("_", " ");
 }
 
