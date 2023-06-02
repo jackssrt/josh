@@ -7,6 +7,14 @@
 			"program": "${workspaceFolder}/src/index.ts",
 			"preLaunchTask": "tsc: debug build - tsconfig.json",
 			"outFiles": ["${workspaceFolder}/build/**/*.js"]
-		}
+		},
+		{
+			"type": "node",
+			"request": "launch",
+			"name": "Deploy",
+			"program": "${workspaceFolder}/src/deploy.ts",
+			"preLaunchTask": "tsc: debug build - tsconfig.json",
+			"outFiles": ["${workspaceFolder}/build/**/*.js"]
+		},
 	]
 }
