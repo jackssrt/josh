@@ -13,10 +13,10 @@ import { LINK_REGEX, awaitEvent, parallel } from "../utils.js";
 import type Event from "./../event.js";
 let lastName: string | undefined = undefined;
 const queue: string[] = [];
-const SPEAK_REGEX = /<a+:|:\d+>|<id:\w+>|^--.*/g;
+const SPEAK_REGEX = /<a?:|:\d+>|<id:\w+>|^--.*/g;
 
 export function clean(text: string): string {
-	return text.replace(LINK_REGEX, "").replace(SPEAK_REGEX, "").replace("_", " ");
+	return text.replace(SPEAK_REGEX, "").replace(LINK_REGEX, "").replace("_", " ");
 }
 
 export default [
