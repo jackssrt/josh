@@ -14,6 +14,7 @@ import sharp from "sharp";
 import { USER_AGENT } from "../client.js";
 import type Command from "../command";
 import getEnv from "../env.js";
+import { makeChallengeEvents } from "../events/challengeEvent.js";
 import { onMemberJoin, onMemberLeave } from "../events/joinLeave.js";
 import { updateMemberCount } from "../events/memberCount.js";
 import { updateRoleCategories } from "../events/roleCategories.js";
@@ -31,7 +32,9 @@ type Subcommand =
 	| "memberjoin"
 	| "memberleave"
 	| "splatfest"
-	| "membercount";
+	| "membercount"
+	| "challenges"
+	| "cancelallevents";
 
 async function makeColorRolesImage() {
 	const CELL_SIZE = [200, 100] as const;
@@ -108,11 +111,22 @@ export default {
 			)
 			.addSubcommand((b) => b.setName("membercount").setDescription("Rerun member count"))
 			.addSubcommand((b) => b.setName("splatfest").setDescription("Rerun splatfest"))
+			.addSubcommand((b) =>
+				b
+					.setName("challenges")
+					.setDescription("Rerun challenges")
+					.addBooleanOption((b) =>
+						b.setName("overridedatabase").setDescription("Override database?").setRequired(false),
+					),
+			)
+			.addSubcommand((b) => b.setName("cancelallevents").setDescription("Cancel all events"))
+			.setDescription("developer only command")
 			.setDMPermission(false)
 			.setDefaultMemberPermissions(PermissionsBitField.Flags.Administrator),
 	ownerOnly: true,
 	defer: "ephemeral",
 	async execute({ interaction, client }) {
+		if (!interaction.inCachedGuild()) return;
 		const subcommand = interaction.options.getSubcommand() as Subcommand;
 		if (subcommand === "forcerotations") {
 			await rotations.forceUpdate();
@@ -158,7 +172,6 @@ export default {
 			consola.log("membercount");
 			const count = await updateMemberCount(await client.guilds.fetch(getEnv("GUILD_ID")));
 			await interaction.editReply(`done, ${count} members`);
-			// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
 		} else if (subcommand === "splatfest") {
 			const {
 				data: {
@@ -205,6 +218,18 @@ export default {
 						});
 					}
 				},
+			);
+			await interaction.editReply("done");
+		} else if (subcommand === "challenges") {
+			await makeChallengeEvents(
+				interaction.guild,
+				interaction.options.getBoolean("overridedatabase", false) ?? false,
+			);
+			await interaction.editReply("done");
+			// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+		} else if (subcommand === "cancelallevents") {
+			await parallel(
+				interaction.guild.scheduledEvents.cache.map((v) => interaction.guild.scheduledEvents.delete(v)),
 			);
 			await interaction.editReply("done");
 		} else {

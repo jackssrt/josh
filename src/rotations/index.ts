@@ -7,6 +7,7 @@ import getEnv from "../env.js";
 import type { SalmonRunAPI, SchedulesAPI } from "../types/rotationNotifier.js";
 import { LARGEST_DATE, formatTime, parallel } from "../utils.js";
 import {
+	ChallengeNode,
 	CurrentFest,
 	EggstraWorkNode,
 	RankedOpenNode,
@@ -23,6 +24,7 @@ export interface FetchedRotations {
 	rankedOpen: (RankedOpenNode | undefined)[];
 	rankedSeries: (RankedSeriesNode | undefined)[];
 	xBattle: (XBattleNode | undefined)[];
+	challenges: (ChallengeNode | undefined)[];
 	salmonRun: SalmonRunNode[];
 	eggstraWork: EggstraWorkNode[];
 	startTime: Date;
@@ -38,6 +40,7 @@ export class Rotations {
 	private hooks = new Set<() => Awaitable<void>>();
 	private salmonHooks = new Set<() => Awaitable<void>>();
 	private constructor(
+		public challenges: (ChallengeNode | undefined)[],
 		public turfWar: (TurfWarNode | undefined)[],
 		public rankedOpen: (RankedOpenNode | undefined)[],
 		public rankedSeries: (RankedSeriesNode | undefined)[],
@@ -57,6 +60,7 @@ export class Rotations {
 	public static async new(): Promise<Rotations> {
 		const fetched = await this.fetch();
 		const rotations = new this(
+			fetched.challenges,
 			fetched.turfWar,
 			fetched.rankedOpen,
 			fetched.rankedSeries,
@@ -72,23 +76,17 @@ export class Rotations {
 			!fetched.wasCached,
 			fetched.salmonRunChanged,
 		);
-		consola.log("rotations instantiated, cached:", fetched.wasCached);
+		consola.info("rotations instantiated, cached:", fetched.wasCached);
 		consola.info(
 			"Time until next rotation fetch",
 			formatTime((rotations.endTime.getTime() - new Date().getTime()) / 1000),
 		);
-		let lastSalmonEndTime = rotations.salmonEndTime;
 		setTimeout(function timeout() {
 			void (async () => {
 				const fetched = await Rotations.fetch();
-				consola.log("rotations fetched, cached:", fetched.wasCached);
+				consola.info("rotations fetched, cached:", fetched.wasCached);
 				rotations.applyRotations(fetched);
-				await parallel(
-					rotations.notifyChanged(),
-					rotations.salmonEndTime.getTime() !== lastSalmonEndTime.getTime() &&
-						rotations.notifySalmonChanged(),
-				);
-				lastSalmonEndTime = rotations.salmonEndTime;
+				await parallel(rotations.notifyChanged(), fetched.salmonRunChanged && rotations.notifySalmonChanged());
 				setTimeout(timeout, rotations.endTime.getTime() - new Date().getTime());
 			})();
 		}, fetched.endTime.getTime() - new Date().getTime());
@@ -121,7 +119,7 @@ export class Rotations {
 	}
 	public static async fetchSalmonRunGear(): Promise<SalmonRunAPI.MonthlyGear> {
 		const [cachedGearMonth, cachedGear] = await database.getCachedSalmonRunGear();
-		consola.log("salmon run gear fetched, cached:", cachedGearMonth === new Date().getMonth() && cachedGear);
+		consola.info("salmon run gear fetched, cached:", cachedGearMonth === new Date().getMonth() && cachedGear);
 		if (cachedGearMonth === new Date().getMonth() && cachedGear) return cachedGear;
 		const response = await axios.get<SalmonRunAPI.Response>("https://splatoon3.ink/data/coop.json", {
 			headers: { "User-Agent": USER_AGENT },
@@ -135,6 +133,7 @@ export class Rotations {
 		if (getEnv("NODE_ENV") === "test")
 			return {
 				splatfest: [],
+				challenges: [],
 				turfWar: [],
 				rankedOpen: [],
 				rankedSeries: [],
@@ -165,6 +164,7 @@ export class Rotations {
 				regularSchedules: { nodes: rawTurfWar },
 				bankaraSchedules: { nodes: rawRanked },
 				xSchedules: { nodes: rawXBattle },
+				eventSchedules: { nodes: rawChallenges },
 				coopGroupingSchedule: {
 					regularSchedules: { nodes: rawSalmonRun },
 					teamContestSchedules: { nodes: rawEggstraWork },
@@ -174,6 +174,9 @@ export class Rotations {
 			},
 		} = response;
 
+		const challenges = rawChallenges.map((x) =>
+			x.leagueMatchSetting && x.timePeriods.length > 0 ? new ChallengeNode(x, x.leagueMatchSetting) : undefined,
+		);
 		const turfWar = rawTurfWar.map((x) =>
 			x.regularMatchSetting ? new TurfWarNode(x, x.regularMatchSetting) : undefined,
 		);
@@ -190,15 +193,15 @@ export class Rotations {
 			x.festMatchSetting ? new SplatfestNode(x, x.festMatchSetting) : undefined,
 		);
 		const currentFest = rawCurrentFest ? new CurrentFest(rawCurrentFest) : undefined;
-		// gets the earliest normal rotation endTime
-		[turfWar, rankedOpen, rankedSeries, xBattle, salmonRun, splatfest, eggstraWork].forEach((v) => {
+		[turfWar, rankedOpen, rankedSeries, xBattle, challenges, salmonRun, splatfest, eggstraWork].forEach((v) => {
 			if (v.length === 0 || v[0] === undefined) return;
-			while (v[0].endTime.getTime() < new Date().getTime()) {
+			while (v[0].ended) {
 				// first node has ended, remove it from the array
 				v.shift();
 				if (v.length === 0) return;
 			}
 		});
+		// gets the earliest normal rotation endTime
 		const startTime = new Date(Math.min(...[turfWar, splatfest].flatMap((x) => x[0]?.startTime.getTime() ?? [])));
 		const endTime = new Date(Math.min(...[turfWar, splatfest].flatMap((x) => x[0]?.endTime.getTime() ?? [])));
 		const salmonStartTime = new Date(
@@ -215,6 +218,7 @@ export class Rotations {
 			);
 		return {
 			splatfest,
+			challenges,
 			turfWar,
 			rankedOpen,
 			rankedSeries,
@@ -230,19 +234,19 @@ export class Rotations {
 			salmonRunChanged: lastSalmonEndTime.getTime() !== salmonEndTime.getTime(),
 		} as const;
 	}
-	private applyRotations(rotations: Awaited<ReturnType<(typeof Rotations)["fetch"]>>) {
-		this.turfWar = rotations.turfWar;
-		this.rankedOpen = rotations.rankedOpen;
-		this.rankedSeries = rotations.rankedSeries;
-		this.xBattle = rotations.xBattle;
-		this.salmonRun = rotations.salmonRun;
-		this.splatfest = rotations.splatfest;
-		this.eggstraWork = rotations.eggstraWork;
-		this.currentFest = rotations.currentFest;
-		this.startTime = rotations.startTime;
-		this.endTime = rotations.endTime;
-		this.salmonStartTime = rotations.salmonStartTime;
-		this.salmonEndTime = rotations.salmonEndTime;
+	private applyRotations(this: Rotations, rotations: FetchedRotations) {
+		Object.entries(rotations).forEach((<T extends keyof FetchedRotations & keyof Rotations>([k, v]: [
+			T,
+			FetchedRotations[T],
+		]) => {
+			if (
+				!new Set<string>(["wasCached", "salmonRunChanged"] as Exclude<
+					keyof FetchedRotations,
+					keyof Rotations
+				>[]).has(k)
+			)
+				this[k] = v as Rotations[T];
+		}) as (param: [string, unknown]) => void);
 		this.catchingUp = false;
 	}
 }

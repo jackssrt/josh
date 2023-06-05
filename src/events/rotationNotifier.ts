@@ -45,7 +45,7 @@ export async function sendSalmonRunRotation(client: Client<true>) {
 			(b) => rotations.eggstraWork[0]?.embed(b),
 		)),
 		files: (
-			await parallel(rotations.salmonRun[0]?.images(), rotations.eggstraWork[0]?.images())
+			await parallel(rotations.salmonRun[0]?.attachments(), rotations.eggstraWork[0]?.attachments())
 		).flatMap((x) => x ?? []),
 	});
 
@@ -79,6 +79,7 @@ export async function sendRegularRotations(client: Client<true>) {
 							),
 					(b) => rotations.splatfest[0]?.embed(b, rotations.splatfest.slice(1, FUTURE_ROTATIONS_COUNT + 1)),
 					(b) => rotations.currentFest?.state === "SECOND_HALF" && rotations.currentFest.embed(b, []),
+					(b) => rotations.challenges[0]?.embed(b, []),
 					(b) => rotations.turfWar[0]?.embed(b, rotations.turfWar.slice(1, FUTURE_ROTATIONS_COUNT + 1)),
 					(b) =>
 						rotations.rankedSeries[0]?.embed(
@@ -90,12 +91,13 @@ export async function sendRegularRotations(client: Client<true>) {
 				)),
 				files: (
 					await parallel(
-						rotations.splatfest[0]?.images(),
-						rotations.currentFest?.images(),
-						rotations.turfWar[0]?.images(),
-						rotations.rankedOpen[0]?.images(),
-						rotations.rankedSeries[0]?.images(),
-						rotations.xBattle[0]?.images(),
+						rotations.splatfest[0]?.attachments(),
+						rotations.currentFest?.attachments(),
+						rotations.challenges[0]?.attachments(),
+						rotations.turfWar[0]?.attachments(),
+						rotations.rankedOpen[0]?.attachments(),
+						rotations.rankedSeries[0]?.attachments(),
+						rotations.xBattle[0]?.attachments(),
 					)
 				).flatMap((x) => x ?? []),
 			});

@@ -3,10 +3,12 @@
 import axios from "axios";
 import type { EmbedBuilder, HexColorString } from "discord.js";
 import { AttachmentBuilder, TimestampStyles, time } from "discord.js";
+import type { Sharp } from "sharp";
 import sharp from "sharp";
 import { USER_AGENT } from "../client.js";
 import {
 	ANARCHY_BATTLE_EMOJI,
+	CHALLENGES_EMOJI,
 	COHOZUNA_EMOJI,
 	HORRORBOROS_EMOJI,
 	REGULAR_BATTLE_EMOJI,
@@ -19,26 +21,46 @@ import { Rotations } from "./index.js";
 import type { APIRuleToRule, Rule } from "./rules.js";
 import { RULE_MAP, turfWarRule } from "./rules.js";
 import { CoopStage, Stage } from "./stages.js";
+
+interface Shortable {
+	short(): string;
+}
+
 interface BaseNodeShortOptions {
 	showDate: boolean;
 }
 
-export abstract class BaseNode {
+export abstract class TimeRange {
 	public startTime: Date;
 	public endTime: Date;
+	public get started() {
+		return this.startTime.getTime() < new Date().getTime();
+	}
+	public get ended() {
+		return this.endTime.getTime() < new Date().getTime();
+	}
+	public get active() {
+		return this.started && !this.ended;
+	}
+	public get future() {
+		return !this.started && !this.ended;
+	}
+	constructor(startTime: string | Date, endTime: string | Date) {
+		this.startTime = startTime instanceof Date ? startTime : new Date(Date.parse(startTime));
+		this.endTime = endTime instanceof Date ? endTime : new Date(Date.parse(endTime));
+	}
+}
+
+export abstract class BaseNode extends TimeRange implements Shortable {
 	public abstract color: HexColorString;
 	public abstract emoji: string;
 	public abstract name: string;
 	public get imageName() {
 		return this.name.toLowerCase().replace(" ", "_").replace("&", "and");
 	}
-	public get started() {
-		return this.startTime.getTime() < new Date().getTime();
-	}
 
 	constructor(data: SchedulesAPI.BaseNode) {
-		this.startTime = new Date(Date.parse(data.startTime));
-		this.endTime = new Date(Date.parse(data.endTime));
+		super(data.startTime, data.endTime);
 	}
 	public short(options?: BaseNodeShortOptions | undefined) {
 		const parts: string[] = [
@@ -50,7 +72,8 @@ export abstract class BaseNode {
 		return parts.join(" ");
 	}
 	public abstract embed(b: EmbedBuilder, future: (this | undefined)[]): Promise<EmbedBuilder>;
-	public abstract images(): Promise<AttachmentBuilder[]>;
+	public abstract images(width: number, height: number): Promise<Sharp[]>;
+	public abstract attachments(): Promise<AttachmentBuilder[]>;
 }
 
 export abstract class DisplayableMatchNode extends BaseNode {
@@ -78,12 +101,17 @@ export abstract class DisplayableMatchNode extends BaseNode {
 	public async embed(b: EmbedBuilder, future: (this | undefined)[]): Promise<EmbedBuilder> {
 		return b
 			.setTitle(`${this.emoji} ${this.name}`)
-			.setDescription(future.flatMap((v) => (v ? v.short() : [])).join("\n"))
+			.setDescription(this.embedDescription(future))
 			.setThumbnail(this.rule.rule === "TURF_WAR" ? null : this.rule.image)
 			.setColor(this.color)
 			.setImage(`attachment://${this.imageName}.png`);
 	}
-	public async images(): Promise<AttachmentBuilder[]> {
+	public embedDescription(future: (this | undefined)[]): string {
+		return future.flatMap((v) => (v ? v.short() : [])).join("\n");
+	}
+
+	public async images(width: number, height: number, showText = true): Promise<[Sharp]> {
+		const stageWidth = Math.ceil(width / this.stages.length);
 		const images = await parallel(
 			this.stages.map(
 				async (v) =>
@@ -100,66 +128,74 @@ export abstract class DisplayableMatchNode extends BaseNode {
 									})
 								).data,
 							),
-						).resize(400, 200 - 8, { fit: sharp.fit.cover }),
+						).resize(stageWidth, height, { fit: sharp.fit.cover }),
 					] as const,
 			),
 		);
 		return [
-			new AttachmentBuilder(
-				await sharp({
-					create: {
-						width: 400 * images.length,
-						height: 200 - 8,
-						background: "#00000000",
-						channels: 4,
-					},
-				})
-					.composite([
-						...(
-							await parallel(
-								images.map<Promise<sharp.OverlayOptions[]>>(async (v, i) => {
-									const [text, shadowText] = await parallel(
-										textImage(v[0].name, "white", 3),
-										textImage(v[0].name, "black", 3),
-									);
-									return [
-										{
-											input: await v[1].toBuffer(),
-											left: 400 * i,
-											top: 0,
-										},
-										{
-											top: 0,
-											left: 400 * i,
-											input: await sharp({
-												create: {
-													background: "#000000AA",
-													width: 400,
-													height: 8 + ((await text.metadata()).height ?? 20) + 4,
-													channels: 4,
+			sharp({
+				create: {
+					width, // :400 * images.length,
+					height, //: 200 - 8,
+					background: "#00000000",
+					channels: 4,
+				},
+			})
+				.composite([
+					...(
+						await parallel(
+							images.map<Promise<sharp.OverlayOptions[]>>(async (v, i) => {
+								const [text, shadowText] = await parallel(
+									textImage(v[0].name, "white", 3),
+									textImage(v[0].name, "black", 3),
+								);
+								return [
+									{
+										input: await v[1].toBuffer(),
+										left: stageWidth * i,
+										top: 0,
+									},
+									...(showText
+										? [
+												{
+													top: 0,
+													left: stageWidth * i,
+													input: await sharp({
+														create: {
+															background: "#000000AA",
+															width: stageWidth,
+															height: 8 + ((await text.metadata()).height ?? 20) + 4,
+															channels: 4,
+														},
+													})
+														.png()
+														.toBuffer(),
 												},
-											})
-												.png()
-												.toBuffer(),
-										},
-										{
-											left: 400 * i + 8 + 2,
-											top: 8 + 2,
-											input: await shadowText.toBuffer(),
-										},
-										{
-											left: 400 * i + 8,
-											top: 8,
-											input: await text.toBuffer(),
-										},
-									];
-								}),
-							)
-						).flat(),
-					])
-					.png({ force: true })
-					.toBuffer(),
-			).setName(`${this.imageName}.png`),
+												{
+													left: stageWidth * i + 8 + 2,
+													top: 8 + 2,
+													input: await shadowText.toBuffer(),
+												},
+												{
+													left: stageWidth * i + 8,
+													top: 8,
+													input: await text.toBuffer(),
+												},
+										  ]
+										: []),
+								];
+							}),
+						)
+					).flat(),
+				])
+				.png({ force: true }),
+		];
+	}
+	public async attachments(): Promise<AttachmentBuilder[]> {
+		return [
+			new AttachmentBuilder((await this.images(this.stages.length * 400, 200 - 8))[0]).setName(
+				`${this.imageName}.png`,
+			),
 		];
 	}
 }
@@ -222,6 +258,72 @@ export class XBattleNode extends BaseMatchNode<
 	public emoji = X_BATTLE_EMOJI;
 	public name = "X Battle";
 }
+export class ChallengeNode extends BaseMatchNode<
+	SchedulesAPI.VsRule,
+	SchedulesAPI.ChallengeNode & SchedulesAPI.BaseNode,
+	SchedulesAPI.ChallengeSetting
+> {
+	public color = "#F02D7D" as const;
+	public emoji = CHALLENGES_EMOJI;
+	public name = "Challenges";
+	public timePeriods: ChallengeTimePeriod[];
+	/**
+	 * @example "NewSeasonCup"
+	 * @example "SpecialRush_UltraShot"
+	 */
+	public leagueId: string;
+	/**
+	 * @example "New Season Challenge"
+	 * @example "Too Many Trizookas!"
+	 */
+	public challengeName: string;
+	/**
+	 * @example "Celebrate the new season on a new stage!"
+	 */
+	public shortDescription: string;
+	/**
+	 * @example "Compete on a perfectly level playing field—everyone will be trying out a new stage together!\n\n・ Develop stage-specific strategies and tactics in real time.\n"
+	 */
+	public longDescription: string;
+	/**
+	 * @example "TGVhZ3VlTWF0Y2hFdmVudC1OZXdTZWFzb25DdXA="
+	 */
+	public id: string;
+	constructor(data: SchedulesAPI.ChallengeNode, setting: SchedulesAPI.ChallengeSetting) {
+		const timePeriods = data.timePeriods.map((v) => new ChallengeTimePeriod(v));
+		const startTime = timePeriods.map((v) => v.startTime).sort()[0]!;
+		const endTime = timePeriods
+			.map((v) => v.endTime)
+			.sort()
+			.at(-1)!;
+
+		super({ startTime: startTime.toISOString(), endTime: endTime.toISOString(), ...data }, setting);
+		this.timePeriods = timePeriods;
+		this.leagueId = setting.leagueMatchEvent.leagueMatchEventId;
+		this.challengeName = setting.leagueMatchEvent.name;
+		this.shortDescription = setting.leagueMatchEvent.desc;
+		this.longDescription = setting.leagueMatchEvent.regulation.replace(/<br \/>/g, "\n");
+		this.id = setting.leagueMatchEvent.id;
+	}
+	public override embedDescription(): string {
+		return this.timePeriods.flatMap((v) => (v.future ? v.short() : [])).join("\n");
+	}
+}
+export class ChallengeTimePeriod extends TimeRange implements Shortable {
+	constructor(data: SchedulesAPI.ChallengeTimePeriod) {
+		super(data.startTime, data.endTime);
+	}
+	public short(): string {
+		return `${time(this.startTime, TimestampStyles.RelativeTime)} ${time(
+			this.startTime,
+			TimestampStyles.ShortTime,
+		)} ${time(this.startTime, TimestampStyles.ShortDate)} → ${time(this.endTime, TimestampStyles.ShortTime)} ${time(
+			this.endTime,
+			TimestampStyles.ShortDate,
+		)}`;
+	}
+}
+
 // export class LeagueNode extends BaseMatchNode<
 // 	SchedulesAPI.RankedVsRule,
 // 	SchedulesAPI.LeagueNode,
@@ -298,110 +400,110 @@ abstract class BaseCoopNode<
 			.setImage(`attachment://${this.imageName}.png`);
 	}
 
-	public async images(): Promise<AttachmentBuilder[]> {
+	public async images(): Promise<[Sharp]> {
 		const WIDTH = 800;
 		const HEIGHT = 600;
 		const ICON_SIZE = HEIGHT - 450 - 16;
 		return [
-			new AttachmentBuilder(
-				await sharp({ create: { width: WIDTH, height: HEIGHT, background: "#00000000", channels: 4 } })
-					.composite([
-						...(
-							await parallel(
-								this.weapons.map<Promise<sharp.OverlayOptions[]>>(async (v, i) => {
-									// adding "Dg" forces the text image to be as tall as possible,
-									// thus making all weapon names align.
-									const nameImage = sharp({
-										text: {
-											text: `<span foreground="white">Dg ${v.name} Dg</span>`,
-											font: "Splatoon2",
-											dpi: 72 * 2,
-											rgba: true,
-										},
-									});
-									const nameImageWidth = ((await nameImage.metadata()).width ?? 28 * 2) - 28 * 2;
+			sharp({ create: { width: WIDTH, height: HEIGHT, background: "#00000000", channels: 4 } })
+				.composite([
+					...(
+						await parallel(
+							this.weapons.map<Promise<sharp.OverlayOptions[]>>(async (v, i) => {
+								// adding "Dg" forces the text image to be as tall as possible,
+								// thus making all weapon names align.
+								const nameImage = sharp({
+									text: {
+										text: `<span foreground="white">Dg ${v.name} Dg</span>`,
+										font: "Splatoon2",
+										dpi: 72 * 2,
+										rgba: true,
+									},
+								});
+								const nameImageWidth = ((await nameImage.metadata()).width ?? 28 * 2) - 28 * 2;
 
-									const nameImageHeight = (await nameImage.metadata()).height ?? 0;
-									// cuts off the "Dg" text while keeping the height
-									// and extra horizontal space for the blur to look good
-									nameImage.resize(nameImageWidth, nameImageHeight);
+								const nameImageHeight = (await nameImage.metadata()).height ?? 0;
+								// cuts off the "Dg" text while keeping the height
+								// and extra horizontal space for the blur to look good
+								nameImage.resize(nameImageWidth, nameImageHeight);
 
-									return [
-										{
-											input: await sharp(
-												Buffer.from(
-													(
-														await axios.get<ArrayBuffer>(v.image.url, {
-															responseType: "arraybuffer",
-															headers: { "User-Agent": USER_AGENT },
-														})
-													).data,
-												),
-											)
-												.resize(ICON_SIZE, ICON_SIZE)
-												.toBuffer(),
-											left: (WIDTH / 4) * i + WIDTH / 4 / 2 - ICON_SIZE / 2,
-											top: (HEIGHT - 450) / 2 + 450 - 10 - ICON_SIZE / 2,
-										},
-										{
-											input: await nameImage.blur(TEXT_BLUR_SIGMA).png().toBuffer(),
+								return [
+									{
+										input: await sharp(
+											Buffer.from(
+												(
+													await axios.get<ArrayBuffer>(v.image.url, {
+														responseType: "arraybuffer",
+														headers: { "User-Agent": USER_AGENT },
+													})
+												).data,
+											),
+										)
+											.resize(ICON_SIZE, ICON_SIZE)
+											.toBuffer(),
+										left: (WIDTH / 4) * i + WIDTH / 4 / 2 - ICON_SIZE / 2,
+										top: (HEIGHT - 450) / 2 + 450 - 10 - ICON_SIZE / 2,
+									},
+									{
+										input: await nameImage.blur(TEXT_BLUR_SIGMA).png().toBuffer(),
 
-											top: Math.round(HEIGHT - nameImageHeight),
-											left: Math.round((WIDTH / 4) * i + WIDTH / 4 / 2 - nameImageWidth / 2),
-										},
-									];
-								}),
-							)
-						).flat(),
-						...(await parallel(
-							new Array(this.weapons.length - 1)
-								.fill(false)
-								.map<Promise<sharp.OverlayOptions>>(async (_, i) => ({
-									input: await sharp({
-										create: {
-											background: "#ffffff80",
-											channels: 4,
-											height: HEIGHT - 450 - 16 - 32 - 16,
-											width: 2,
+										top: Math.round(HEIGHT - nameImageHeight),
+										left: Math.round((WIDTH / 4) * i + WIDTH / 4 / 2 - nameImageWidth / 2),
+									},
+								];
+							}),
+						)
+					).flat(),
+					...(await parallel(
+						new Array(this.weapons.length - 1)
+							.fill(false)
+							.map<Promise<sharp.OverlayOptions>>(async (_, i) => ({
+								input: await sharp({
+									create: {
+										background: "#ffffff80",
+										channels: 4,
+										height: HEIGHT - 450 - 16 - 32 - 16,
+										width: 2,
+									},
+								})
+									.png()
+									.toBuffer(),
+								top: 450 + 16 + 16 + 8,
+								left: (WIDTH / 4) * (i + 1) - 1,
+							})),
+					)),
+					{
+						input: await sharp(
+							Buffer.from(
+								(
+									await axios.get<ArrayBuffer>(this.stage.image, {
+										responseType: "arraybuffer",
+										headers: {
+											"User-Agent": USER_AGENT,
 										},
 									})
-										.png()
-										.toBuffer(),
-									top: 450 + 16 + 16 + 8,
-									left: (WIDTH / 4) * (i + 1) - 1,
-								})),
-						)),
-						{
-							input: await sharp(
-								Buffer.from(
-									(
-										await axios.get<ArrayBuffer>(this.stage.image, {
-											responseType: "arraybuffer",
-											headers: {
-												"User-Agent": USER_AGENT,
-											},
-										})
-									).data,
-								),
-							)
-								.composite([
-									{
-										input: Buffer.from(
-											`<svg><rect x="0" y="0" width="800" height="450" rx="8" ry="8"/></svg>`,
-										),
-										blend: "dest-in",
-									},
-								])
-								.png()
-								.toBuffer(),
-							left: 0,
-							top: 0,
-						},
-					])
-					.png()
-					.toBuffer(),
-			).setName(`${this.imageName}.png`),
+								).data,
+							),
+						)
+							.composite([
+								{
+									input: Buffer.from(
+										`<svg><rect x="0" y="0" width="800" height="450" rx="8" ry="8"/></svg>`,
+									),
+									blend: "dest-in",
+								},
+							])
+							.png()
+							.toBuffer(),
+						left: 0,
+						top: 0,
+					},
+				])
+				.png(),
 		];
+	}
+	public async attachments(): Promise<AttachmentBuilder[]> {
+		return [new AttachmentBuilder((await this.images())[0]).setName(`${this.imageName}.png`)];
 	}
 }
 

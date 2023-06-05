@@ -1,6 +1,7 @@
 import { expect, test } from "vitest";
-import { RankedOpenNode, TurfWarNode } from "../../src/rotations/nodes.js";
+import { RankedOpenNode, TimeRange, TurfWarNode } from "../../src/rotations/nodes.js";
 import type { SchedulesAPI } from "../../src/types/rotationNotifier.js";
+import { LARGEST_DATE, SMALLEST_DATE } from "../../src/utils.js";
 
 const turfWar = new TurfWarNode(
 	{
@@ -45,4 +46,23 @@ test("TurfWarNode", () => {
 });
 test("RankedOpenNode", () => {
 	expect(ranked.short()).includes(ranked.rule.emoji);
+});
+class TimeRangeImpl extends TimeRange {}
+const timeRangePast = new TimeRangeImpl(SMALLEST_DATE, SMALLEST_DATE);
+const timeRangeActive = new TimeRangeImpl(SMALLEST_DATE, LARGEST_DATE);
+const timeRangeFuture = new TimeRangeImpl(LARGEST_DATE, LARGEST_DATE);
+
+test("TimeRange", () => {
+	expect(timeRangePast.started).toBe(true);
+	expect(timeRangePast.ended).toBe(true);
+	expect(timeRangePast.active).toBe(false);
+	expect(timeRangePast.future).toBe(false);
+	expect(timeRangeActive.started).toBe(true);
+	expect(timeRangeActive.ended).toBe(false);
+	expect(timeRangeActive.active).toBe(true);
+	expect(timeRangeActive.future).toBe(false);
+	expect(timeRangeFuture.started).toBe(false);
+	expect(timeRangeFuture.ended).toBe(false);
+	expect(timeRangeFuture.active).toBe(false);
+	expect(timeRangeFuture.future).toBe(true);
 });

@@ -2,6 +2,7 @@ import axios from "axios";
 import { existsSync } from "fs";
 import { readFile, writeFile } from "fs/promises";
 import getEnv from "./env.js";
+import Lock from "./lock.js";
 import type { SalmonRunAPI, SchedulesAPI } from "./types/rotationNotifier.js";
 import { SMALLEST_DATE, parallel } from "./utils.js";
 
@@ -12,6 +13,7 @@ export interface DatabaseData {
 	nextSalmonRunRotation: number;
 	monthlySalmonRunGearMonth: number;
 	monthlySalmonRunGear: SalmonRunAPI.MonthlyGear;
+	madeChallengeEvents: string[];
 }
 
 class DatabaseBackend<T extends Record<K, unknown>, K extends string> {
@@ -37,7 +39,7 @@ class DatabaseBackend<T extends Record<K, unknown>, K extends string> {
 			}
 		else {
 			if (this.data === undefined) await this.load();
-			return this.data![key];
+			return this.data![key] ?? defaultValue;
 		}
 	}
 	public async set<K extends keyof T>(key: K, value: T[K]): Promise<void> {
@@ -55,7 +57,7 @@ class DatabaseBackend<T extends Record<K, unknown>, K extends string> {
 		}
 	}
 }
-
+const madeChallengeEventsLock = new Lock();
 export class Database {
 	private backend = new DatabaseBackend<DatabaseData, keyof DatabaseData>();
 
@@ -91,6 +93,18 @@ export class Database {
 			this.backend.set("monthlySalmonRunGearMonth", new Date().getMonth()),
 			this.backend.set("monthlySalmonRunGear", gear),
 		);
+	}
+	// TODO serialize a set and use that
+	public async shouldMakeChallengeEvent(id: string): Promise<boolean> {
+		return !(await this.backend.get("madeChallengeEvents", [] as string[])).includes(id);
+	}
+	public async setMadeChallengeEvent(id: string) {
+		const key = await madeChallengeEventsLock.lock();
+		await this.backend.set("madeChallengeEvents", [
+			...(await this.backend.get("madeChallengeEvents", [] as string[])),
+			id,
+		]);
+		madeChallengeEventsLock.unlock(key);
 	}
 }
 

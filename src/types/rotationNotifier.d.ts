@@ -4,7 +4,7 @@ export namespace SchedulesAPI {
 			regularSchedules: { nodes: TurfWarNode[] };
 			bankaraSchedules: { nodes: RankedNode[] };
 			xSchedules: { nodes: XBattleNode[] };
-			leagueSchedules: { nodes: LeagueNode[] };
+			eventSchedules: { nodes: ChallengeNode[] };
 			coopGroupingSchedule: {
 				bannerImage: null;
 				regularSchedules: { nodes: CoopGroupingRegularNode[] };
@@ -31,8 +31,13 @@ export namespace SchedulesAPI {
 	export interface XBattleNode extends BaseNode {
 		xMatchSetting: XBattleSetting | null;
 	}
-	export interface LeagueNode extends BaseNode {
-		leagueMatchSetting: LeagueSetting | null;
+	export interface ChallengeNode {
+		leagueMatchSetting: ChallengeSetting | null;
+		timePeriods: ChallengeTimePeriod[];
+	}
+	export interface ChallengeTimePeriod {
+		startTime: string;
+		endTime: string;
 	}
 	export interface CoopGroupingRegularNode extends BaseNode {
 		setting: BaseCoopRegularSetting;
@@ -92,9 +97,9 @@ export namespace SchedulesAPI {
 		};
 	}
 
-	export interface BaseMatchSetting<Rule extends VsRule> {
+	export interface BaseMatchSetting<Rule extends VsRule, HasFestMatchSettings extends boolean = true> {
 		vsStages: [Stage, Stage];
-		festMatchSettings: null;
+		festMatchSettings: HasFestMatchSettings extends true ? null : never;
 		vsRule: Rule;
 	}
 	export interface TurfWarVsRule {
@@ -139,7 +144,18 @@ export namespace SchedulesAPI {
 	export interface XBattleSetting extends BaseMatchSetting<RankedVsRule> {
 		__typename: "XMatchSetting";
 	}
-	type LeagueSetting = BaseMatchSetting<RankedVsRule>;
+	export interface ChallengeSetting extends BaseMatchSetting<TurfWarVsRule, false> {
+		leagueMatchEvent: {
+			leagueMatchEventId: string;
+			name: string;
+			desc: string;
+			regulationUrl: null;
+			regulation: string;
+			id: string;
+		};
+		__isVsSetting: "LeagueMatchSetting";
+		__typename: "LeagueMatchSetting";
+	}
 	export type FestSetting = BaseMatchSetting<TurfWarVsRule>;
 	export interface Stage {
 		vsStageId: number;
