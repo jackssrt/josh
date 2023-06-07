@@ -101,7 +101,7 @@ export abstract class DisplayableMatchNode extends BaseNode {
 	public async embed(b: EmbedBuilder, future: (this | undefined)[]): Promise<EmbedBuilder> {
 		return b
 			.setTitle(`${this.emoji} ${this.name}`)
-			.setDescription(this.embedDescription(future))
+			.setDescription(this.embedDescription(future) || null)
 			.setThumbnail(this.rule.rule === "TURF_WAR" ? null : this.rule.image)
 			.setColor(this.color)
 			.setImage(`attachment://${this.imageName}.png`);
