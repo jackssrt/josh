@@ -19,6 +19,7 @@ export async function deploy(guildId: string) {
 			.data(
 				new SlashCommandBuilder()
 					.setName(key)
+					.setDescription("This command does something...")
 					.setDefaultMemberPermissions(command.ownerOnly ? PermissionFlagsBits.Administrator : undefined),
 			)
 			.toJSON(),
