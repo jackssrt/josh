@@ -68,6 +68,14 @@ export async function generatorToArray<T>(gen: AsyncGenerator<T>): Promise<T[]> 
 	}
 	return out;
 }
+export function iteratorToArray<T>(iter: IterableIterator<T>): T[] {
+	const out: T[] = [];
+	for (const x of iter) {
+		out.push(x);
+	}
+	return out;
+}
+
 export type EmbedFactory = (b: EmbedBuilder) => Awaitable<EmbedBuilder>;
 export type OptionalEmbedFactory = (b: EmbedBuilder) => Awaitable<EmbedBuilder | false | undefined>;
 

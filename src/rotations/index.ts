@@ -5,7 +5,7 @@ import { USER_AGENT } from "../client.js";
 import database from "../database.js";
 import getEnv from "../env.js";
 import type { SalmonRunAPI, SchedulesAPI } from "../types/rotationNotifier.js";
-import { LARGEST_DATE, formatTime, parallel } from "../utils.js";
+import { LARGEST_DATE, formatTime, iteratorToArray, parallel } from "../utils.js";
 import {
 	ChallengeNode,
 	CurrentFest,
@@ -93,10 +93,10 @@ export class Rotations {
 		return rotations;
 	}
 	public async notifyChanged() {
-		await parallel(...this.hooks);
+		await parallel(...iteratorToArray(this.hooks.values()).map(async (v) => await v()));
 	}
 	public async notifySalmonChanged() {
-		await parallel(...this.salmonHooks);
+		await parallel(...iteratorToArray(this.salmonHooks.values()).map(async (v) => await v()));
 	}
 	public async forceUpdate() {
 		const fetched = await Rotations.fetch(true);
