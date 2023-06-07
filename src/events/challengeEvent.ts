@@ -17,7 +17,9 @@ export async function makeChallengeEvents(guild: Guild, overrideDatabase = false
 				entityMetadata: {
 					location: challenge.stages.map((v) => v.name).join(", "),
 				},
-				name: challenge.challengeName,
+				name: challenge.challengeName.toLowerCase().includes("challenge")
+					? challenge.challengeName
+					: `${challenge.challengeName} (Challenge)`,
 				privacyLevel: GuildScheduledEventPrivacyLevel.GuildOnly,
 				scheduledStartTime:
 					challenge.startTime > new Date() ? challenge.startTime : new Date(new Date().getTime() + 60 * 1000),
