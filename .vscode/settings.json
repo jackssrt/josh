@@ -3,6 +3,7 @@
 	"typescript.preferences.importModuleSpecifierEnding": "js",
 	"typescript.tsdk": "node_modules/typescript/lib",
 	"testing.automaticallyOpenPeekView": "never",
+	"eslint.format.enable": true,
 	"[typescript]": {
 		"editor.defaultFormatter": "dbaeumer.vscode-eslint"
 	}
