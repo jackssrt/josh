@@ -36,7 +36,7 @@ const ranked = new RankedOpenNode(
 		],
 	},
 );
-test("DisplayableMatchNode", () => {
+test.concurrent("DisplayableMatchNode", () => {
 	expect(turfWar.short()).includes("Test");
 	expect(turfWar.short()).includes("Wahoo World");
 });
@@ -52,7 +52,7 @@ const timeRangePast = new TimeRangeImpl(SMALLEST_DATE, SMALLEST_DATE);
 const timeRangeActive = new TimeRangeImpl(SMALLEST_DATE, LARGEST_DATE);
 const timeRangeFuture = new TimeRangeImpl(LARGEST_DATE, LARGEST_DATE);
 
-test("TimeRange", () => {
+test.concurrent("TimeRange", () => {
 	expect(timeRangePast.started).toBe(true);
 	expect(timeRangePast.ended).toBe(true);
 	expect(timeRangePast.active).toBe(false);

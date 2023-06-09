@@ -1,7 +1,7 @@
 import { describe, expect, test } from "vitest";
 import { Stage } from "../../src/rotations/stages.js";
 
-describe("Stage", () => {
+describe.concurrent("Stage", () => {
 	test("short", () => {
 		expect(new Stage({ id: "", image: { url: "" }, name: "Inkblot Art Academy", vsStageId: 0 }).short()).toBe(
 			"Inkblot",
