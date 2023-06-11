@@ -6,6 +6,7 @@ import database from "../database.js";
 import getEnv from "../env.js";
 import type { SalmonRunAPI, SchedulesAPI } from "../types/rotationNotifier.js";
 import { LARGEST_DATE, formatTime, iteratorToArray, parallel } from "../utils.js";
+import { PoppingTimeRangeCollection } from "./TimeRangeCollection.js";
 import {
 	ChallengeNode,
 	CurrentFest,
@@ -19,14 +20,14 @@ import {
 } from "./nodes.js";
 
 export interface FetchedRotations {
-	splatfest: (SplatfestNode | undefined)[];
-	turfWar: (TurfWarNode | undefined)[];
-	rankedOpen: (RankedOpenNode | undefined)[];
-	rankedSeries: (RankedSeriesNode | undefined)[];
-	xBattle: (XBattleNode | undefined)[];
-	challenges: (ChallengeNode | undefined)[];
-	salmonRun: SalmonRunNode[];
-	eggstraWork: EggstraWorkNode[];
+	splatfest: PoppingTimeRangeCollection<SplatfestNode | undefined>;
+	turfWar: PoppingTimeRangeCollection<TurfWarNode | undefined>;
+	rankedOpen: PoppingTimeRangeCollection<RankedOpenNode | undefined>;
+	rankedSeries: PoppingTimeRangeCollection<RankedSeriesNode | undefined>;
+	xBattle: PoppingTimeRangeCollection<XBattleNode | undefined>;
+	challenges: PoppingTimeRangeCollection<ChallengeNode | undefined>;
+	salmonRun: PoppingTimeRangeCollection<SalmonRunNode>;
+	eggstraWork: PoppingTimeRangeCollection<EggstraWorkNode>;
 	startTime: Date;
 	endTime: Date;
 	salmonStartTime: Date;
@@ -40,14 +41,14 @@ export class Rotations {
 	private hooks = new Set<() => Awaitable<void>>();
 	private salmonHooks = new Set<() => Awaitable<void>>();
 	private constructor(
-		public challenges: (ChallengeNode | undefined)[],
-		public turfWar: (TurfWarNode | undefined)[],
-		public rankedOpen: (RankedOpenNode | undefined)[],
-		public rankedSeries: (RankedSeriesNode | undefined)[],
-		public xBattle: (XBattleNode | undefined)[],
-		public salmonRun: SalmonRunNode[],
-		public splatfest: (SplatfestNode | undefined)[],
-		public eggstraWork: (EggstraWorkNode | undefined)[],
+		public challenges: PoppingTimeRangeCollection<ChallengeNode | undefined>,
+		public turfWar: PoppingTimeRangeCollection<TurfWarNode | undefined>,
+		public rankedOpen: PoppingTimeRangeCollection<RankedOpenNode | undefined>,
+		public rankedSeries: PoppingTimeRangeCollection<RankedSeriesNode | undefined>,
+		public xBattle: PoppingTimeRangeCollection<XBattleNode | undefined>,
+		public salmonRun: PoppingTimeRangeCollection<SalmonRunNode>,
+		public splatfest: PoppingTimeRangeCollection<SplatfestNode | undefined>,
+		public eggstraWork: PoppingTimeRangeCollection<EggstraWorkNode | undefined>,
 		public currentFest: CurrentFest<"FIRST_HALF" | "SECOND_HALF"> | undefined,
 		public startTime: Date,
 		public endTime: Date,
@@ -132,14 +133,14 @@ export class Rotations {
 	private static async fetch(ignoreCache = false): Promise<FetchedRotations> {
 		if (getEnv("NODE_ENV") === "test")
 			return {
-				splatfest: [],
-				challenges: [],
-				turfWar: [],
-				rankedOpen: [],
-				rankedSeries: [],
-				xBattle: [],
-				salmonRun: [],
-				eggstraWork: [],
+				splatfest: new PoppingTimeRangeCollection([]),
+				challenges: new PoppingTimeRangeCollection([]),
+				turfWar: new PoppingTimeRangeCollection([]),
+				rankedOpen: new PoppingTimeRangeCollection([]),
+				rankedSeries: new PoppingTimeRangeCollection([]),
+				xBattle: new PoppingTimeRangeCollection([]),
+				salmonRun: new PoppingTimeRangeCollection([]),
+				eggstraWork: new PoppingTimeRangeCollection([]),
 				startTime: LARGEST_DATE,
 				endTime: LARGEST_DATE,
 				salmonStartTime: LARGEST_DATE,
@@ -174,41 +175,47 @@ export class Rotations {
 			},
 		} = response;
 
-		const challenges = rawChallenges.map((x) =>
-			x.leagueMatchSetting && x.timePeriods.length > 0 ? new ChallengeNode(x, x.leagueMatchSetting) : undefined,
+		const challenges = new PoppingTimeRangeCollection(
+			rawChallenges.map((x) =>
+				x.leagueMatchSetting && x.timePeriods.length > 0
+					? new ChallengeNode(x, x.leagueMatchSetting)
+					: undefined,
+			),
 		);
-		const turfWar = rawTurfWar.map((x) =>
-			x.regularMatchSetting ? new TurfWarNode(x, x.regularMatchSetting) : undefined,
+		const turfWar = new PoppingTimeRangeCollection(
+			rawTurfWar.map((x) => (x.regularMatchSetting ? new TurfWarNode(x, x.regularMatchSetting) : undefined)),
 		);
-		const rankedOpen = rawRanked.map((x) =>
-			x.bankaraMatchSettings ? new RankedOpenNode(x, x.bankaraMatchSettings[1]) : undefined,
+		const rankedOpen = new PoppingTimeRangeCollection(
+			rawRanked.map((x) =>
+				x.bankaraMatchSettings ? new RankedOpenNode(x, x.bankaraMatchSettings[1]) : undefined,
+			),
 		);
-		const rankedSeries = rawRanked.map((x) =>
-			x.bankaraMatchSettings ? new RankedSeriesNode(x, x.bankaraMatchSettings[0]) : undefined,
+		const rankedSeries = new PoppingTimeRangeCollection(
+			rawRanked.map((x) =>
+				x.bankaraMatchSettings ? new RankedSeriesNode(x, x.bankaraMatchSettings[0]) : undefined,
+			),
 		);
-		const xBattle = rawXBattle.map((x) => (x.xMatchSetting ? new XBattleNode(x, x.xMatchSetting) : undefined));
-		const salmonRun = rawSalmonRun.map((x) => new SalmonRunNode(x, x.setting));
-		const eggstraWork = rawEggstraWork.map((x) => new EggstraWorkNode(x, x.setting));
-		const splatfest = rawSplatfest.map((x) =>
-			x.festMatchSetting ? new SplatfestNode(x, x.festMatchSetting) : undefined,
+		const xBattle = new PoppingTimeRangeCollection(
+			rawXBattle.map((x) => (x.xMatchSetting ? new XBattleNode(x, x.xMatchSetting) : undefined)),
+		);
+		const salmonRun = new PoppingTimeRangeCollection(rawSalmonRun.map((x) => new SalmonRunNode(x, x.setting)));
+		const eggstraWork = new PoppingTimeRangeCollection(
+			rawEggstraWork.map((x) => new EggstraWorkNode(x, x.setting)),
+		);
+		const splatfest = new PoppingTimeRangeCollection(
+			rawSplatfest.map((x) => (x.festMatchSetting ? new SplatfestNode(x, x.festMatchSetting) : undefined)),
 		);
 		const currentFest = rawCurrentFest ? new CurrentFest(rawCurrentFest) : undefined;
-		[turfWar, rankedOpen, rankedSeries, xBattle, challenges, salmonRun, splatfest, eggstraWork].forEach((v) => {
-			if (v.length === 0 || v[0] === undefined) return;
-			while (v[0].ended) {
-				// first node has ended, remove it from the array
-				v.shift();
-				if (v.length === 0) return;
-			}
-		});
 		// gets the earliest normal rotation endTime
-		const startTime = new Date(Math.min(...[turfWar, splatfest].flatMap((x) => x[0]?.startTime.getTime() ?? [])));
-		const endTime = new Date(Math.min(...[turfWar, splatfest].flatMap((x) => x[0]?.endTime.getTime() ?? [])));
+		const startTime = new Date(
+			Math.min(...[turfWar, splatfest].flatMap((x) => x.active?.startTime.getTime() ?? [])),
+		);
+		const endTime = new Date(Math.min(...[turfWar, splatfest].flatMap((x) => x.active?.endTime.getTime() ?? [])));
 		const salmonStartTime = new Date(
-			Math.min(...[salmonRun, eggstraWork].flatMap((x) => x[0]?.endTime.getTime() ?? [])),
+			Math.min(...[salmonRun, eggstraWork].flatMap((x) => x.active?.endTime.getTime() ?? [])),
 		);
 		const salmonEndTime = new Date(
-			Math.min(...[salmonRun, eggstraWork].flatMap((x) => x[0]?.endTime.getTime() ?? [])),
+			Math.min(...[salmonRun, eggstraWork].flatMap((x) => x.active?.endTime.getTime() ?? [])),
 		);
 		const lastSalmonEndTime = await database.getSalmonRunEndTime();
 		if (!cached)

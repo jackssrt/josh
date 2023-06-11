@@ -9,7 +9,7 @@ import { dedent } from "../utils.js";
 
 export async function makeChallengeEvents(guild: Guild, overrideDatabase = false) {
 	await Promise.all(
-		rotations.challenges.map(async (challenge) => {
+		rotations.challenges.ranges.map(async (challenge) => {
 			if (challenge === undefined) return;
 			if (!(await database.shouldMakeChallengeEvent(challenge.id)) && !overrideDatabase) return;
 			await guild.scheduledEvents.create({
@@ -26,7 +26,7 @@ export async function makeChallengeEvents(guild: Guild, overrideDatabase = false
 				scheduledEndTime: challenge.endTime,
 				image: await (await challenge.images(600, 180, false))[0].toBuffer(),
 				description: dedent`**Time Periods**
-									${challenge.timePeriods.map((v) => v.short()).join("\n")}
+									${challenge.timePeriods.ranges.map((v) => v.short()).join("\n")}
 									
 									**Game Mode**
 									${challenge.rule.emoji} ${challenge.rule.name}

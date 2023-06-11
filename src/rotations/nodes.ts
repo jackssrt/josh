@@ -18,6 +18,7 @@ import {
 import type { SchedulesAPI } from "../types/rotationNotifier.js";
 import { dedent, parallel, textImage } from "../utils.js";
 import TimeRange from "./TimeRange.js";
+import TimeRangeCollection from "./TimeRangeCollection.js";
 import { Rotations } from "./index.js";
 import type { APIRuleToRule, Rule } from "./rules.js";
 import { RULE_MAP, turfWarRule } from "./rules.js";
@@ -246,7 +247,7 @@ export class ChallengeNode extends BaseMatchNode<
 	public color = "#F02D7D" as const;
 	public emoji = CHALLENGES_EMOJI;
 	public name = "Challenges";
-	public timePeriods: ChallengeTimePeriod[];
+	public timePeriods: TimeRangeCollection<ChallengeTimePeriod>;
 	/**
 	 * @example "NewSeasonCup"
 	 * @example "SpecialRush_UltraShot"
@@ -278,7 +279,7 @@ export class ChallengeNode extends BaseMatchNode<
 			.at(-1)!;
 
 		super({ startTime: startTime.toISOString(), endTime: endTime.toISOString(), ...data }, setting);
-		this.timePeriods = timePeriods;
+		this.timePeriods = new TimeRangeCollection(timePeriods);
 		this.leagueId = setting.leagueMatchEvent.leagueMatchEventId;
 		this.challengeName = setting.leagueMatchEvent.name;
 		this.shortDescription = setting.leagueMatchEvent.desc;
@@ -286,7 +287,10 @@ export class ChallengeNode extends BaseMatchNode<
 		this.id = setting.leagueMatchEvent.id;
 	}
 	public override embedDescription(): string {
-		return this.timePeriods.flatMap((v) => (v.future ? v.short() : [])).join("\n");
+		return this.timePeriods
+			.future(3)
+			.flatMap((v) => (v.future ? v.short() : []))
+			.join("\n");
 	}
 }
 export class ChallengeTimePeriod extends TimeRange implements Shortable {

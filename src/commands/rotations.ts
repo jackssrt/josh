@@ -1,4 +1,5 @@
 import type Command from "../command.js";
+import type { PoppingTimeRangeCollection } from "../rotations/TimeRangeCollection.js";
 import rotations from "../rotations/index.js";
 import type { BaseNode } from "../rotations/nodes.js";
 import type { RankedRule } from "../rotations/rules.js";
@@ -46,7 +47,7 @@ export default {
 					await embeds((b) =>
 						b
 							.setTitle("Future Salmon Run rotations")
-							.setDescription(rotations.salmonRun.map((v) => v.short()).join("\n"))
+							.setDescription(rotations.salmonRun.ranges.map((v) => v.short()).join("\n"))
 							.setColor("#ff5033"),
 					),
 				);
@@ -58,9 +59,9 @@ export default {
 					turfwar: rotations.turfWar,
 					xbattle: rotations.xBattle,
 					salmonrun: rotations.salmonRun,
-				} as const satisfies Record<ListSubcommand, (BaseNode | undefined)[]>;
+				} as const satisfies Record<ListSubcommand, PoppingTimeRangeCollection<BaseNode | undefined>>;
 				const nodes = subcommandMap[interaction.options.getSubcommand(true) as ListSubcommand];
-				const displayNode = (nodes as (BaseNode | undefined)[]).find((v) => !!v);
+				const displayNode = (nodes as PoppingTimeRangeCollection<BaseNode | undefined>).ranges.find((v) => !!v);
 				if (!displayNode)
 					return await interaction.editReply(
 						await errorEmbeds({ title: "Couldn't find rotation type", description: "Try again later..." }),
@@ -69,7 +70,9 @@ export default {
 					await embeds((b) =>
 						b
 							.setTitle(`${displayNode.emoji} Future ${displayNode.name} rotations`)
-							.setDescription(nodes.flatMap((v) => (v ? v.short({ showDate: true }) : [])).join("\n"))
+							.setDescription(
+								nodes.ranges.flatMap((v) => (v ? v.short({ showDate: true }) : [])).join("\n"),
+							)
 							.setColor(displayNode.color),
 					),
 				);
@@ -78,9 +81,9 @@ export default {
 			const subcommand = interaction.options.getSubcommand() as SearchSubcommand;
 			const gamemode = SUBCOMMAND_GAMEMODE_MAP[subcommand];
 			const matched = [
-				rotations.rankedSeries.filter((v) => v?.rule.rule === gamemode),
-				rotations.rankedOpen.filter((v) => v?.rule.rule === gamemode),
-				rotations.xBattle.filter((v) => v?.rule.rule === gamemode),
+				rotations.rankedSeries.ranges.filter((v) => v?.rule.rule === gamemode),
+				rotations.rankedOpen.ranges.filter((v) => v?.rule.rule === gamemode),
+				rotations.xBattle.ranges.filter((v) => v?.rule.rule === gamemode),
 			] as const;
 			if (matched.every((v) => v.length === 0))
 				return await interaction.editReply(
