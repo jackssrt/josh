@@ -17,6 +17,7 @@ import {
 } from "../emojis.js";
 import type { SchedulesAPI } from "../types/rotationNotifier.js";
 import { dedent, parallel, textImage } from "../utils.js";
+import TimeRange from "./TimeRange.js";
 import { Rotations } from "./index.js";
 import type { APIRuleToRule, Rule } from "./rules.js";
 import { RULE_MAP, turfWarRule } from "./rules.js";
@@ -28,27 +29,6 @@ interface Shortable {
 
 interface BaseNodeShortOptions {
 	showDate: boolean;
-}
-
-export abstract class TimeRange {
-	public startTime: Date;
-	public endTime: Date;
-	public get started() {
-		return this.startTime.getTime() < new Date().getTime();
-	}
-	public get ended() {
-		return this.endTime.getTime() < new Date().getTime();
-	}
-	public get active() {
-		return this.started && !this.ended;
-	}
-	public get future() {
-		return !this.started && !this.ended;
-	}
-	constructor(startTime: string | Date, endTime: string | Date) {
-		this.startTime = startTime instanceof Date ? startTime : new Date(Date.parse(startTime));
-		this.endTime = endTime instanceof Date ? endTime : new Date(Date.parse(endTime));
-	}
 }
 
 export abstract class BaseNode extends TimeRange implements Shortable {
