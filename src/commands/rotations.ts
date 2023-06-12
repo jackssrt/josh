@@ -28,20 +28,20 @@ type SearchSubcommand = keyof typeof SUBCOMMAND_GAMEMODE_MAP;
 export default {
 	data: (b) => {
 		b.addSubcommandGroup((b) => {
-			b.setName("list").setDescription("Lists future rotations");
+			b.setName("list").setDescription("Lists rotations");
 			listSubcommands.forEach((key) =>
-				b.addSubcommand((b) => b.setName(key).setDescription(`Shows future ${key} rotations`)),
+				b.addSubcommand((b) => b.setName(key).setDescription(`Shows ${key} rotations`)),
 			);
 			return b;
 		});
 		b.addSubcommandGroup((b) => {
-			b.setName("search").setDescription("Searches through future rotations for a specific gamemode.");
+			b.setName("search").setDescription("Searches through rotations for a specific gamemode.");
 			Object.keys(SUBCOMMAND_GAMEMODE_MAP).forEach((key) =>
-				b.addSubcommand((b) => b.setName(key).setDescription(`Searches through future ${key} rotations`)),
+				b.addSubcommand((b) => b.setName(key).setDescription(`Searches through ${key} rotations`)),
 			);
 			return b;
 		});
-		return b.setDescription("Shows future rotations");
+		return b.setDescription("Shows rotations");
 	},
 	defer: "standard",
 
@@ -54,7 +54,7 @@ export default {
 				await interaction.editReply(
 					await embeds((b) =>
 						b
-							.setTitle("Future Salmon Run rotations")
+							.setTitle("Salmon Run rotations")
 							.setDescription(rotations.salmonRun.ranges.map((v) => v.short()).join("\n"))
 							.setColor("#ff5033"),
 					),
@@ -78,7 +78,7 @@ export default {
 				await interaction.editReply(
 					await embeds((b) =>
 						b
-							.setTitle(`${displayNode.emoji} Future ${displayNode.name} rotations`)
+							.setTitle(`${displayNode.emoji} ${displayNode.name} rotations`)
 							.setDescription(
 								nodes.ranges.flatMap((v) => (v ? v.short({ showDate: true }) : [])).join("\n"),
 							)
@@ -104,7 +104,7 @@ export default {
 			await interaction.editReply(
 				await embeds((b) =>
 					b
-						.setTitle(`Future ${rule.name} rotations`)
+						.setTitle(`${rule.name} rotations`)
 						.setColor(rule.color)
 						.addFields(
 							matched.flatMap((v) =>
