@@ -5,7 +5,15 @@ import type { BaseNode } from "../rotations/nodes.js";
 import type { RankedRule } from "../rotations/rules.js";
 import { RULE_MAP } from "../rotations/rules.js";
 import { embeds, errorEmbeds } from "../utils.js";
-const listSubcommands = ["turfwar", "anarchyseries", "anarchyopen", "xbattle", "splatfest", "salmonrun"] as const;
+const listSubcommands = [
+	"challenges",
+	"turfwar",
+	"anarchyseries",
+	"anarchyopen",
+	"xbattle",
+	"splatfest",
+	"salmonrun",
+] as const;
 type ListSubcommand = (typeof listSubcommands)[number];
 
 const SUBCOMMAND_GAMEMODE_MAP = {
@@ -57,6 +65,7 @@ export default {
 					anarchyseries: rotations.rankedSeries,
 					splatfest: rotations.splatfest,
 					turfwar: rotations.turfWar,
+					challenges: rotations.challenges,
 					xbattle: rotations.xBattle,
 					salmonrun: rotations.salmonRun,
 				} as const satisfies Record<ListSubcommand, PoppingTimeRangeCollection<BaseNode | undefined>>;
@@ -81,6 +90,7 @@ export default {
 			const subcommand = interaction.options.getSubcommand() as SearchSubcommand;
 			const gamemode = SUBCOMMAND_GAMEMODE_MAP[subcommand];
 			const matched = [
+				rotations.challenges.ranges.filter((v) => v?.rule.rule === gamemode),
 				rotations.rankedSeries.ranges.filter((v) => v?.rule.rule === gamemode),
 				rotations.rankedOpen.ranges.filter((v) => v?.rule.rule === gamemode),
 				rotations.xBattle.ranges.filter((v) => v?.rule.rule === gamemode),
