@@ -9,15 +9,17 @@ import {
 	PermissionsBitField,
 	Role,
 	TimestampStyles,
+	userMention,
 } from "discord.js";
 import sharp from "sharp";
 import { USER_AGENT } from "../client.js";
 import type Command from "../command";
+import database from "../database.js";
 import getEnv from "../env.js";
 import { makeChallengeEvents } from "../events/challengeEvent.js";
 import { onMemberJoin, onMemberLeave } from "../events/joinLeave.js";
-import { updateMemberCount } from "../events/memberCount.js";
 import { updateRoleCategories } from "../events/roleCategories.js";
+import { updateStatsMessage } from "../events/statsMessage.js";
 import rotations from "../rotations/index.js";
 import type { FestivalsAPI } from "../types/rotationNotifier.js";
 import { colorLuminance, hexToRGB, parallel, textImage } from "../utils.js";
@@ -32,9 +34,10 @@ type Subcommand =
 	| "memberjoin"
 	| "memberleave"
 	| "splatfest"
-	| "membercount"
+	| "stats"
 	| "challenges"
-	| "cancelallevents";
+	| "cancelallevents"
+	| "setinvite";
 
 async function makeColorRolesImage() {
 	const CELL_SIZE = [200, 100] as const;
@@ -109,7 +112,18 @@ export default {
 					.setDescription("Rerun member leave")
 					.addUserOption((b) => b.setName("member").setDescription("member").setRequired(true)),
 			)
-			.addSubcommand((b) => b.setName("membercount").setDescription("Rerun member count"))
+			.addSubcommand((b) => b.setName("stats").setDescription("Rerun stats"))
+			.addSubcommand((b) =>
+				b
+					.setName("setinvite")
+					.setDescription("Sets who invited someone")
+					.addUserOption((b) =>
+						b.setName("inviter").setDescription("The person who invited someone").setRequired(true),
+					)
+					.addUserOption((b) =>
+						b.setName("invitee").setDescription("The person who got invited").setRequired(true),
+					),
+			)
 			.addSubcommand((b) => b.setName("splatfest").setDescription("Rerun splatfest"))
 			.addSubcommand((b) =>
 				b
@@ -168,10 +182,14 @@ export default {
 			if (subcommand === "memberjoin") await onMemberJoin(client, member);
 			else await onMemberLeave(client, member);
 			await interaction.editReply("done");
-		} else if (subcommand === "membercount") {
-			consola.log("membercount");
-			const count = await updateMemberCount(await client.guilds.fetch(getEnv("GUILD_ID")));
-			await interaction.editReply(`done, ${count} members`);
+		} else if (subcommand === "stats") {
+			await updateStatsMessage(client);
+			await interaction.editReply("done");
+		} else if (subcommand === "setinvite") {
+			const inviter = interaction.options.getUser("inviter", true).id;
+			const invitee = interaction.options.getUser("invitee", true).id;
+			await database.setInviteRecord(inviter, invitee);
+			await interaction.editReply(`done, ${userMention(inviter)} => ${userMention(invitee)}`);
 		} else if (subcommand === "splatfest") {
 			const {
 				data: {

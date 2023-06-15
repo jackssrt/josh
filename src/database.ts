@@ -1,4 +1,5 @@
 import axios from "axios";
+import type { Snowflake } from "discord.js";
 import { existsSync } from "fs";
 import { readFile, writeFile } from "fs/promises";
 import getEnv from "./env.js";
@@ -14,6 +15,8 @@ export interface DatabaseData {
 	monthlySalmonRunGearMonth: number;
 	monthlySalmonRunGear: SalmonRunAPI.MonthlyGear;
 	madeChallengeEvents: string[];
+	staticMessageIds: Record<string, Snowflake>;
+	inviteRecords: Record<Snowflake, Snowflake>;
 }
 
 class DatabaseBackend<T extends Record<K, unknown>, K extends string> {
@@ -105,6 +108,21 @@ export class Database {
 			id,
 		]);
 		madeChallengeEventsLock.unlock(key);
+	}
+	public async getStaticMessageId(id: string): Promise<Snowflake | undefined> {
+		return (await this.backend.get("staticMessageIds", {} as Record<string, Snowflake>))[id];
+	}
+	public async setStaticMessageId(id: string, messageId: Snowflake) {
+		await this.backend.set("staticMessageIds", {
+			...(await this.backend.get("staticMessageIds", {} as Record<string, Snowflake>)),
+			[id]: messageId,
+		});
+	}
+	public async setInviteRecord(inviter: Snowflake, invitee: Snowflake) {
+		await this.backend.set("inviteRecords", { ...(await this.backend.get("inviteRecords")), [inviter]: invitee });
+	}
+	public async getInviteRecord(): Promise<Record<Snowflake, Snowflake>> {
+		return await this.backend.get("inviteRecords", {});
 	}
 }
 

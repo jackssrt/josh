@@ -1,6 +1,9 @@
 import type {
 	Awaitable,
 	InteractionReplyOptions,
+	Message,
+	MessageCreateOptions,
+	MessageEditOptions,
 	RestOrArray,
 	Role,
 	TextChannel,
@@ -15,6 +18,7 @@ import { readFile } from "node:fs/promises";
 import type { Sharp } from "sharp";
 import sharp from "sharp";
 import type Client from "./client.js";
+import database from "./database.js";
 
 export type StrictOmit<T extends Record<string, unknown>, K extends keyof T> = Omit<T, K>;
 
@@ -130,6 +134,28 @@ export function getRandomValues<T extends unknown[]>(arr: T, count: number): T[n
 		[arr[i], arr[j]] = [arr[j], arr[i]];
 	}
 	return arr.slice(0, count);
+}
+
+export async function updateStaticMessage(
+	channel: TextChannel,
+	id: string,
+	content: string | (MessageEditOptions & MessageCreateOptions),
+): Promise<Message<true>> {
+	const messageId = await database.getStaticMessageId(id);
+	const message = messageId && await (channel.messages.fetch(messageId).catch(() => undefined));
+	if (message) {
+		return await message.edit(content);
+	} else {
+		const message = await channel.send(content);
+		await database.setStaticMessageId(id, message.id);
+		return message;
+	}
+}
+/**
+ * @link https://stackoverflow.com/questions/4154969/how-to-map-numbers-in-range-099-to-range-1-01-0/4155197#4155197
+ */
+export function scaleNumber(val: number, src: [number, number], dst: [number, number]): number {
+	return ((val - src[0]) / (src[1] - src[0])) * (dst[1] - dst[0]) + dst[0];
 }
 
 const WEBHOOK_NAME = "splatsquad-bot impersonation webhook";
