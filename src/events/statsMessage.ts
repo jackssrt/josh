@@ -22,7 +22,7 @@ import type Event from "./../event.js";
 async function makeInviteGraph(guild: Guild): Promise<Buffer> {
 	const graph = createGraph<string>();
 	await parallel(
-		Object.entries(await database.getInviteRecord()).map(async ([inviter, invitee]) => {
+		Object.entries(await database.getInviteRecord()).map(async ([invitee, inviter]) => {
 			const [inviterMember, inviteeMember] = await parallel(
 				guild.members.fetch(inviter).catch(() => undefined),
 				guild.members.fetch(invitee).catch(() => undefined),

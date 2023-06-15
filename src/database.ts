@@ -119,7 +119,7 @@ export class Database {
 		});
 	}
 	public async setInviteRecord(inviter: Snowflake, invitee: Snowflake) {
-		await this.backend.set("inviteRecords", { ...(await this.backend.get("inviteRecords")), [inviter]: invitee });
+		await this.backend.set("inviteRecords", { ...(await this.backend.get("inviteRecords")), [invitee]: inviter });
 	}
 	public async getInviteRecord(): Promise<Record<Snowflake, Snowflake>> {
 		return await this.backend.get("inviteRecords", {});
