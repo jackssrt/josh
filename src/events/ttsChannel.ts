@@ -49,6 +49,7 @@ export default [
 									channelId: memberVoiceChannel.id,
 									guildId: message.guildId,
 									adapterCreator: message.channel.guild.voiceAdapterCreator,
+									selfDeaf: false,
 								});
 							const player = createAudioPlayer();
 							connection.subscribe(player);
