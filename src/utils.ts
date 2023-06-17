@@ -4,7 +4,6 @@ import type {
 	Message,
 	MessageCreateOptions,
 	MessageEditOptions,
-	RestOrArray,
 	Role,
 	TextChannel,
 	User,
@@ -142,7 +141,7 @@ export async function updateStaticMessage(
 	content: string | (MessageEditOptions & MessageCreateOptions),
 ): Promise<Message<true>> {
 	const messageId = await database.getStaticMessageId(id);
-	const message = messageId && await (channel.messages.fetch(messageId).catch(() => undefined));
+	const message = messageId && (await channel.messages.fetch(messageId).catch(() => undefined));
 	if (message) {
 		return await message.edit(content);
 	} else {
@@ -328,12 +327,11 @@ export function formatNumberIntoNth(num: number): string {
 	}
 	return `${num}th`;
 }
+export type Mutable<T> = { -readonly [K in keyof T]: T[K] };
 export async function parallel<T extends ((() => Promise<unknown>) | Promise<unknown> | undefined | false)[]>(
 	...funcs: T | [T]
 ) {
-	return (await Promise.all(
-		normalizeArray(funcs as RestOrArray<T[number]>).map((v) => (typeof v === "function" ? v() : v)),
-	)) as {
+	return (await Promise.all(normalizeArray(funcs).map((v) => (typeof v === "function" ? v() : v)))) as {
 		-readonly [i in keyof T]: Awaited<T[i] extends (...args: unknown[]) => unknown ? ReturnType<T[i]> : T[i]>;
 	};
 }

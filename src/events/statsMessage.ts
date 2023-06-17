@@ -1,6 +1,6 @@
 import consola from "consola";
 import type { Guild } from "discord.js";
-import { AttachmentBuilder, TimestampStyles, roleMention, time, type Client, type TextChannel } from "discord.js";
+import { AttachmentBuilder, TimestampStyles, roleMention, time, type TextChannel } from "discord.js";
 import type { Vector } from "ngraph.forcelayout";
 import createLayout from "ngraph.forcelayout";
 import createGraph from "ngraph.graph";
@@ -17,6 +17,7 @@ import {
 	scaleNumber,
 	updateStaticMessage,
 } from "../utils.js";
+import type Client from "./../client.js";
 import type Event from "./../event.js";
 
 async function makeInviteGraph(guild: Guild): Promise<Buffer> {
@@ -83,11 +84,12 @@ async function makeInviteGraph(guild: Guild): Promise<Buffer> {
 }
 
 export async function updateStatsMessage(client: Client<true>) {
-	const guild = await client.guilds.fetch(getEnv("GUILD_ID"));
-	const channel = (await guild.channels.fetch(getEnv("STATS_CHANNEL_ID"))!) as TextChannel;
+	const channel = (await client.guild.channels.fetch(getEnv("STATS_CHANNEL_ID"))!) as TextChannel;
 
-	const members = membersWithRoles([(await guild.roles.fetch(getEnv("MEMBER_ROLE_ID")))!]);
-	const colorRoles = await getLowerRolesInSameCategory((await guild.roles.fetch(getEnv("COLORS_ROLE_CATEGORY_ID")))!);
+	const members = membersWithRoles([(await client.guild.roles.fetch(getEnv("MEMBER_ROLE_ID")))!]);
+	const colorRoles = await getLowerRolesInSameCategory(
+		(await client.guild.roles.fetch(getEnv("COLORS_ROLE_CATEGORY_ID")))!,
+	);
 	await updateStaticMessage(channel, "stats-message", {
 		...(await embeds(
 			(b) =>
@@ -99,14 +101,14 @@ export async function updateStatsMessage(client: Client<true>) {
 			async (b) =>
 				b.setTitle("Roles").setDescription(
 					(
-						await guild.roles.fetch()
+						await client.guild.roles.fetch()
 					)
 						.filter((v) => v.members.size > 0 && v.name !== "@everyone" && !colorRoles.includes(v))
 						.sort((a, b) => b.position - a.position)
 						.map(
 							(v) =>
 								`${roleMention(v.id)} - ${v.members.size} (${Math.round(
-									(v.members.size / guild.memberCount) * 100,
+									(v.members.size / client.guild.memberCount) * 100,
 								)}%)`,
 						)
 						.join("\n"),
@@ -121,7 +123,7 @@ export async function updateStatsMessage(client: Client<true>) {
 					})
 					.setImage("attachment://invites.png"),
 		)),
-		files: [new AttachmentBuilder(await makeInviteGraph(guild)).setName("invites.png")],
+		files: [new AttachmentBuilder(await makeInviteGraph(client.guild)).setName("invites.png")],
 	});
 }
 
@@ -130,7 +132,7 @@ export default [
 		event: "guildMemberUpdate",
 		async on({ client }, oldMember, newMember) {
 			if (
-				newMember.guild.id !== getEnv("GUILD_ID") &&
+				newMember.guild !== client.guild &&
 				// oldMemberHasRole xor newMemberHasRole
 				oldMember.roles.cache.has(getEnv("MEMBER_ROLE_ID")) !==
 					newMember.roles.cache.has(getEnv("MEMBER_ROLE_ID"))

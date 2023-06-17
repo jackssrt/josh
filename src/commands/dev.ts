@@ -206,10 +206,9 @@ export default {
 			});
 			const fest = fests.find((v) => v.state !== "CLOSED");
 			if (!fest) return await interaction.editReply("No active splatfest");
-			const guild = await client.guilds.fetch(getEnv("GUILD_ID"));
 			await parallel(
 				async () => {
-					await guild.scheduledEvents.create({
+					await client.guild.scheduledEvents.create({
 						entityType: GuildScheduledEventEntityType.External,
 						name: fest.title,
 						privacyLevel: GuildScheduledEventPrivacyLevel.GuildOnly,
@@ -223,11 +222,12 @@ export default {
 					});
 				},
 				async () => {
-					const categoryRolePosition = (await guild.roles.fetch(getEnv("SPLATFEST_TEAM_CATEGORY_ROLE_ID")))
-						?.position;
+					const categoryRolePosition = (
+						await client.guild.roles.fetch(getEnv("SPLATFEST_TEAM_CATEGORY_ROLE_ID"))
+					)?.position;
 					if (!categoryRolePosition) return consola.error("Splatfest team role category role not found");
 					for (const [i, team] of Object.entries(fest.teams)) {
-						await guild.roles.create({
+						await client.guild.roles.create({
 							name: `⚽・${team.teamName}`,
 							color: [team.color.r * 255, team.color.g * 255, team.color.b * 255],
 							permissions: [],

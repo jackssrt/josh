@@ -80,14 +80,14 @@ export default {
 				.map((v) => ({ name: v, value: v })),
 		);
 	},
-	async execute({ interaction }) {
-		if (!interaction.guild || !interaction.inCachedGuild())
-			return await interaction.reply("You can't run this command in a dm!");
+	async execute({ client, interaction }) {
+		if (!interaction.inCachedGuild() || interaction.guild !== client.guild)
+			return await interaction.reply("You can't run this command here!");
 		const colorInput = interaction.options.getString("color", true);
 		const colorData = COLOR_DATA.find((a) => a.name.toLowerCase().trim() === colorInput.toLowerCase().trim());
 		if (!colorData) return await interaction.reply({ content: "That color doesn't exist!", ephemeral: true });
 		let key = "color-command-emoji-lock";
-		const colorsCategory = (await interaction.guild.roles.fetch(getEnv("COLORS_ROLE_CATEGORY_ID")))!;
+		const colorsCategory = (await client.guild.roles.fetch(getEnv("COLORS_ROLE_CATEGORY_ID")))!;
 		try {
 			await parallel(interaction.deferReply(), async () => {
 				key = await colorEmojiLock.lock();
@@ -109,7 +109,7 @@ export default {
 
 				// make a new role
 				// and give it to the user
-				const newRole = await interaction.guild.roles.create({
+				const newRole = await client.guild.roles.create({
 					color: `#${colorData.value}`,
 					hoist: false,
 					mentionable: false,

@@ -2,7 +2,14 @@
 /// <reference path="./src/types/env.d.ts"></reference>
 
 import consola from "consola";
-import type { ClientEvents, InteractionReplyOptions, MessageCreateOptions, PresenceData } from "discord.js";
+import type {
+	ClientEvents,
+	Guild,
+	GuildMember,
+	InteractionReplyOptions,
+	MessageCreateOptions,
+	PresenceData,
+} from "discord.js";
 import { ActivityType, Client as DiscordClient, EmbedBuilder, GatewayIntentBits } from "discord.js";
 import { spawn } from "node:child_process";
 import path from "node:path";
@@ -16,10 +23,12 @@ import { errorEmbeds, formatTime, parallel, pluralize } from "./utils.js";
 consola.wrapAll();
 export const USER_AGENT =
 	"Splat Squad Bot (source code: https://github.com/jackssrt/splatsquad-bot , make an issue if it's misbehaving)";
-export default class Client<Ready extends boolean = false> extends DiscordClient<Ready> {
+export default class Client<Ready extends boolean = false, Loaded extends boolean = true> extends DiscordClient<Ready> {
 	public commandRegistry = new Registry<Command>();
 	public eventRegistry = new Registry<Event<keyof ClientEvents>>();
 	public contextMenuItemsRegistry = new Registry<ContextMenuItem<"User" | "Message">>();
+	public guild = undefined as Loaded extends true ? Guild : undefined;
+	public owner = undefined as Loaded extends true ? GuildMember : undefined;
 	private static readonly defaultPresence: PresenceData = {
 		status: "online",
 		activities: [{ type: ActivityType.Competing, name: "Splatoon 3" }],
@@ -42,9 +51,11 @@ export default class Client<Ready extends boolean = false> extends DiscordClient
 	public resetPresence() {
 		this.user?.setPresence(Client.defaultPresence);
 	}
-	public async load() {
+	public async load(this: Client) {
 		const dirName = IS_BUILT ? "build" : "src";
 		const start = new Date();
+		this.guild = await this.guilds.fetch(getEnv("GUILD_ID"));
+		this.owner = await this.guild.members.fetch(getEnv("OWNER_ID"));
 		await parallel(
 			this.commandRegistry.loadFromDirectory(`./${dirName}/commands`),
 			this.eventRegistry.loadFromDirectory(`./${dirName}/events`),
@@ -92,17 +103,16 @@ export default class Client<Ready extends boolean = false> extends DiscordClient
 		);
 		consola.success(`Loading took ${formatTime((end.getTime() - start.getTime()) / 1000)}`);
 	}
-	public async start() {
+	public async start(this: Client<true>) {
 		for (const event of this.eventRegistry.values()) {
 			this[event.isOnetime ? "once" : "on"](event.event, (...params: ClientEvents[typeof event.event]) =>
-				event.on({ client: this as Client<true> }, ...params),
+				event.on({ client: this }, ...params),
 			);
 		}
 		consola.success(`Hooked ${this.eventRegistry.size} event${this.eventRegistry.size === 1 ? "" : "s"}`);
 
 		this.on("error", async (error) => {
-			const owner = await this.users.fetch(getEnv("OWNER_ID"));
-			await owner.send(
+			await this.owner.send(
 				await errorEmbeds({
 					title: "Generic Error",
 					description: `${error.name} ${error.message}\n${error.stack ?? "no stack"}`,
@@ -115,14 +125,14 @@ export default class Client<Ready extends boolean = false> extends DiscordClient
 
 			const command = this.commandRegistry.get(interaction.commandName);
 			if (!command) return;
-			if (command.ownerOnly && interaction.user.id !== getEnv("OWNER_ID"))
+			if (command.ownerOnly && interaction.user !== this.owner.user)
 				return void (await interaction.reply({
 					content: "This command can only be used by the owner.",
 					ephemeral: true,
 				}));
 			if (command.defer) await interaction.deferReply({ ephemeral: command.defer === "ephemeral" });
 			try {
-				await command.execute({ client: this as Client<true>, interaction });
+				await command.execute({ client: this, interaction });
 			} catch (e) {
 				consola.error(e);
 				const data = {
@@ -149,7 +159,7 @@ export default class Client<Ready extends boolean = false> extends DiscordClient
 						await interaction.editReply(data);
 					} catch {
 						try {
-							const owner = await this.users.fetch(getEnv("OWNER_ID"));
+							const owner = this.owner.user;
 							await owner.send(data as MessageCreateOptions);
 							await interaction.user.send(data as MessageCreateOptions);
 						} catch {
@@ -163,21 +173,21 @@ export default class Client<Ready extends boolean = false> extends DiscordClient
 			if (!interaction.isContextMenuCommand()) return;
 			const item = this.contextMenuItemsRegistry.get(interaction.commandName);
 			if (!item) return;
-			if (item.ownerOnly && interaction.user.id !== getEnv("OWNER_ID"))
+			if (item.ownerOnly && interaction.user !== this.owner.user)
 				return void (await interaction.reply({
 					content: "This context menu item can only be used by the owner.",
 					ephemeral: true,
 				}));
 			if (item.type === "Message" && interaction.isMessageContextMenuCommand())
-				await item.execute({ client: this as Client<true>, interaction });
+				await item.execute({ client: this, interaction });
 			else if (item.type === "User" && interaction.isUserContextMenuCommand())
-				await item.execute({ client: this as Client<true>, interaction });
+				await item.execute({ client: this, interaction });
 		});
 		this.on("interactionCreate", async (interaction) => {
 			if (!interaction.isAutocomplete()) return;
 			const command = this.commandRegistry.get(interaction.commandName);
 
-			await command?.autocomplete?.({ client: this as Client<true>, interaction });
+			await command?.autocomplete?.({ client: this, interaction });
 		});
 		await this.login(getEnv("TOKEN"));
 		if (IS_DEV && platform === "win32")

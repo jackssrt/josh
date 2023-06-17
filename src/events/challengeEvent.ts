@@ -2,7 +2,6 @@ import type { Guild } from "discord.js";
 import { GuildScheduledEventEntityType, GuildScheduledEventPrivacyLevel } from "discord.js";
 import database from "../database.js";
 import { CHALLENGES_EMOJI, EMPTY_EMOJI, SUB_EMOJI } from "../emojis.js";
-import getEnv from "../env.js";
 import type Event from "../event.js";
 import rotations from "../rotations/index.js";
 import { dedent } from "../utils.js";
@@ -44,10 +43,9 @@ export async function makeChallengeEvents(guild: Guild, overrideDatabase = false
 
 export default {
 	event: "ready",
-	async on({ client }) {
-		const guild = await client.guilds.fetch(getEnv("GUILD_ID"));
+	on({ client }) {
 		rotations.hook(async () => {
-			await makeChallengeEvents(guild);
+			await makeChallengeEvents(client.guild);
 		});
 	},
 } as Event<"ready">;

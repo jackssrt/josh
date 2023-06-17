@@ -62,14 +62,14 @@ export default [
 	{
 		event: "guildMemberAdd",
 		async on({ client }, member) {
-			if (member.user.bot || member.guild.id !== getEnv("GUILD_ID")) return;
+			if (member.user.bot || member.guild !== client.guild) return;
 			await onMemberJoin(client, member);
 		},
 	} as Event<"guildMemberAdd">,
 	{
 		event: "guildMemberRemove",
 		async on({ client }, member) {
-			if (member.user.bot || member.guild.id !== getEnv("GUILD_ID")) return;
+			if (member.user.bot || member.guild !== client.guild) return;
 			await onMemberLeave(client, member);
 		},
 	} as Event<"guildMemberRemove">,
