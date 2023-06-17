@@ -6,10 +6,10 @@ import getEnv from "./env.js";
 import Lock from "./lock.js";
 import type { SalmonRunAPI, SchedulesAPI } from "./types/rotationNotifier.js";
 import { SMALLEST_DATE, parallel } from "./utils.js";
-
-export interface FeatureFlags {
-	_: string;
-}
+export const FEATURE_FLAGS = {
+	_: "default value",
+} satisfies Record<string, string>;
+export type FeatureFlag = keyof typeof FEATURE_FLAGS;
 export interface DatabaseData {
 	createdSplatfestEvent: string;
 	cachedMapRotation: SchedulesAPI.Response;
@@ -20,7 +20,7 @@ export interface DatabaseData {
 	madeChallengeEvents: string[];
 	staticMessageIds: Record<string, Snowflake>;
 	inviteRecords: Record<Snowflake, Snowflake>;
-	featureFlags: Partial<FeatureFlags>;
+	featureFlags: Partial<typeof FEATURE_FLAGS>;
 }
 class DatabaseBackend<T extends Record<K, unknown>, K extends string> {
 	private replitDatabaseUrl = getEnv("REPLIT_DB_URL");
@@ -127,19 +127,12 @@ export class Database {
 	public async getInviteRecord(): Promise<Record<Snowflake, Snowflake>> {
 		return await this.backend.get("inviteRecords", {});
 	}
-	public async setFeatureFlag<T extends keyof FeatureFlags>(flag: T, value: FeatureFlags[T]) {
+	public async setFeatureFlag<T extends FeatureFlag>(flag: T, value: (typeof FEATURE_FLAGS)[T]) {
 		return await this.backend.set("featureFlags", { ...(await this.backend.get("featureFlags")), [flag]: value });
 	}
-	public async getFeatureFlag<T extends keyof FeatureFlags>(flag: T): Promise<FeatureFlags[T] | undefined>;
-	public async getFeatureFlag<T extends keyof FeatureFlags, D extends FeatureFlags[T]>(
-		flag: T,
-		defaultValue: D,
-	): Promise<FeatureFlags[T] | D>;
-	public async getFeatureFlag<T extends keyof FeatureFlags, D extends FeatureFlags[T] | undefined>(
-		flag: T,
-		defaultValue?: D | undefined,
-	): Promise<FeatureFlags[T] | D | undefined> {
-		return (await this.backend.get("featureFlags", {} as Partial<FeatureFlags>))[flag] ?? defaultValue;
+	public async getFeatureFlag<T extends FeatureFlag>(flag: T): Promise<(typeof FEATURE_FLAGS)[T]> {
+		const overrides = await this.backend.get("featureFlags", {} as Partial<typeof FEATURE_FLAGS>);
+		return overrides[flag] ?? FEATURE_FLAGS[flag];
 	}
 }
 
