@@ -327,7 +327,6 @@ export function formatNumberIntoNth(num: number): string {
 	}
 	return `${num}th`;
 }
-export type Mutable<T> = { -readonly [K in keyof T]: T[K] };
 export async function parallel<T extends ((() => Promise<unknown>) | Promise<unknown> | undefined | false)[]>(
 	...funcs: T | [T]
 ) {

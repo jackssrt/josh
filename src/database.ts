@@ -7,6 +7,9 @@ import Lock from "./lock.js";
 import type { SalmonRunAPI, SchedulesAPI } from "./types/rotationNotifier.js";
 import { SMALLEST_DATE, parallel } from "./utils.js";
 
+export interface FeatureFlags {
+	_: string;
+}
 export interface DatabaseData {
 	createdSplatfestEvent: string;
 	cachedMapRotation: SchedulesAPI.Response;
@@ -17,8 +20,8 @@ export interface DatabaseData {
 	madeChallengeEvents: string[];
 	staticMessageIds: Record<string, Snowflake>;
 	inviteRecords: Record<Snowflake, Snowflake>;
+	featureFlags: Partial<FeatureFlags>;
 }
-
 class DatabaseBackend<T extends Record<K, unknown>, K extends string> {
 	private replitDatabaseUrl = getEnv("REPLIT_DB_URL");
 	private data: T | undefined = undefined;
@@ -123,6 +126,20 @@ export class Database {
 	}
 	public async getInviteRecord(): Promise<Record<Snowflake, Snowflake>> {
 		return await this.backend.get("inviteRecords", {});
+	}
+	public async setFeatureFlag<T extends keyof FeatureFlags>(flag: T, value: FeatureFlags[T]) {
+		return await this.backend.set("featureFlags", { ...(await this.backend.get("featureFlags")), [flag]: value });
+	}
+	public async getFeatureFlag<T extends keyof FeatureFlags>(flag: T): Promise<FeatureFlags[T] | undefined>;
+	public async getFeatureFlag<T extends keyof FeatureFlags, D extends FeatureFlags[T]>(
+		flag: T,
+		defaultValue: D,
+	): Promise<FeatureFlags[T] | D>;
+	public async getFeatureFlag<T extends keyof FeatureFlags, D extends FeatureFlags[T] | undefined>(
+		flag: T,
+		defaultValue?: D | undefined,
+	): Promise<FeatureFlags[T] | D | undefined> {
+		return (await this.backend.get("featureFlags", {} as Partial<FeatureFlags>))[flag] ?? defaultValue;
 	}
 }
 
