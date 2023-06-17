@@ -7,7 +7,7 @@ import Lock from "./lock.js";
 import type { SalmonRunAPI, SchedulesAPI } from "./types/rotationNotifier.js";
 import { SMALLEST_DATE, parallel } from "./utils.js";
 export const FEATURE_FLAGS = {
-	_: "default value",
+	"tts.voice": "gtts",
 } satisfies Record<string, string>;
 export type FeatureFlag = keyof typeof FEATURE_FLAGS;
 export interface DatabaseData {

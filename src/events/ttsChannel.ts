@@ -7,7 +7,9 @@ import {
 } from "@discordjs/voice";
 import { getAllAudioBase64 } from "google-tts-api";
 
+import axios from "axios";
 import { Readable } from "node:stream";
+import database from "../database.js";
 import getEnv from "../env.js";
 import { LINK_REGEX, awaitEvent, parallel } from "../utils.js";
 import type Event from "./../event.js";
@@ -17,6 +19,33 @@ const SPEAK_REGEX = /<a?:|:\d+>|<id:\w+>|^--.*/g;
 
 export function clean(text: string): string {
 	return text.replace(SPEAK_REGEX, "").replace(LINK_REGEX, "").replace("_", " ");
+}
+async function getSound(text: string) {
+	const voice = await database.getFeatureFlag("tts.voice");
+	return Buffer.concat(
+		voice === "tiktok"
+			? await parallel(
+					text.match(/.{1,300}/g)?.map(async (subtext) =>
+						Buffer.from(
+							(
+								await axios.post<{ data: string }>(
+									"https://tiktok-tts.weilnet.workers.dev/api/generation",
+									{
+										text: subtext,
+										voice: "en_us_001",
+									},
+								)
+							).data.data,
+							"base64",
+						),
+					) ?? [],
+			  )
+			: (
+					await getAllAudioBase64(text, {
+						lang: "en",
+					})
+			  ).map((result) => Buffer.from(result.base64, "base64")),
+	);
 }
 
 export default [
@@ -56,13 +85,7 @@ export default [
 							return player;
 						},
 						async () => {
-							const tts = Buffer.concat(
-								(
-									await getAllAudioBase64(x, {
-										lang: "en",
-									})
-								).map((result) => Buffer.from(result.base64, "base64")),
-							);
+							const tts = await getSound(x);
 							lastName = memberName;
 							const resource = createAudioResource(Readable.from(tts), { inlineVolume: true });
 							resource.volume?.setVolume(0.2);
