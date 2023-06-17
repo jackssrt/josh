@@ -14,7 +14,7 @@ import getEnv from "../env.js";
 import { LINK_REGEX, awaitEvent, parallel } from "../utils.js";
 import type Event from "./../event.js";
 let lastName: string | undefined = undefined;
-const queue: string[] = [];
+const queue: Buffer[] = [];
 const SPEAK_REGEX = /<a?:|:\d+>|<id:\w+>|^--.*/g;
 
 export function clean(text: string): string {
@@ -59,39 +59,44 @@ export default [
 				!message.member?.voice.channel
 			)
 				return;
-			const memberName = clean(message.member.displayName);
+			const filesToPlay = message.attachments.filter(
+				(v) => !!v.contentType && (v.contentType.startsWith("video") || v.contentType.startsWith("audio")),
+			);
+			if (filesToPlay.size > 0) {
+				queue.push(
+					...(await parallel(
+						filesToPlay.map(async (v) =>
+							Buffer.from((await axios.get<ArrayBuffer>(v.url, { responseType: "arraybuffer" })).data),
+						),
+					)),
+				);
+			} else {
+				const memberName = clean(message.member.displayName);
+				const content = clean(message.cleanContent);
+				if (content === "") return;
+				const text = `${lastName !== memberName ? `${memberName} says ` : ""}${content}`;
+				lastName = memberName;
+				const sound = await getSound(text);
+				queue.push(sound);
+			}
 			const memberVoiceChannel = message.member.voice.channel;
-			const content = clean(message.cleanContent);
-			if (content === "") return;
-			const text = `${lastName !== memberName ? `${memberName} says ` : ""}${content}`;
-			queue.push(text);
 			if (queue.length > 1) return;
 			while (queue[0]) {
 				const x = queue[0]!;
 				try {
-					const [player, resource] = await parallel(
-						async () => {
-							const connection =
-								(memberVoiceChannel.id === (await message.guild.members.fetchMe()).voice.channelId &&
-									getVoiceConnection(message.guildId)) ||
-								joinVoiceChannel({
-									channelId: memberVoiceChannel.id,
-									guildId: message.guildId,
-									adapterCreator: message.channel.guild.voiceAdapterCreator,
-									selfDeaf: false,
-								});
-							const player = createAudioPlayer();
-							connection.subscribe(player);
-							return player;
-						},
-						async () => {
-							const tts = await getSound(x);
-							lastName = memberName;
-							const resource = createAudioResource(Readable.from(tts), { inlineVolume: true });
-							resource.volume?.setVolume(0.2);
-							return resource;
-						},
-					);
+					const connection =
+						(memberVoiceChannel.id === (await message.guild.members.fetchMe()).voice.channelId &&
+							getVoiceConnection(message.guildId)) ||
+						joinVoiceChannel({
+							channelId: memberVoiceChannel.id,
+							guildId: message.guildId,
+							adapterCreator: message.channel.guild.voiceAdapterCreator,
+							selfDeaf: false,
+						});
+					const player = createAudioPlayer();
+					connection.subscribe(player);
+					const resource = createAudioResource(Readable.from(x), { inlineVolume: true });
+					resource.volume?.setVolume(0.2);
 					player.play(resource);
 					await awaitEvent(player, AudioPlayerStatus.Idle, 30);
 				} finally {
