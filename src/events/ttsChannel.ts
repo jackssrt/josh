@@ -8,12 +8,14 @@ import {
 import { getAllAudioBase64 } from "google-tts-api";
 
 import axios from "axios";
+import type { Snowflake } from "discord.js";
+import { Collection } from "discord.js";
 import { Readable } from "node:stream";
 import database from "../database.js";
 import getEnv from "../env.js";
 import { LINK_REGEX, awaitEvent, parallel } from "../utils.js";
 import type Event from "./../event.js";
-let lastName: string | undefined = undefined;
+const lastNames = new Collection<Snowflake, string>();
 const queue: Buffer[] = [];
 const SPEAK_REGEX = /<a?:|:\d+>|<id:\w+>|^--.*/g;
 
@@ -62,6 +64,7 @@ export default [
 			const filesToPlay = message.attachments.filter(
 				(v) => !!v.contentType && (v.contentType.startsWith("video") || v.contentType.startsWith("audio")),
 			);
+			const memberVoiceChannel = message.member.voice.channel;
 			if (filesToPlay.size > 0) {
 				queue.push(
 					...(await parallel(
@@ -74,12 +77,13 @@ export default [
 				const memberName = clean(message.member.displayName);
 				const content = clean(message.cleanContent);
 				if (content === "") return;
-				const text = `${lastName !== memberName ? `${memberName} says ` : ""}${content}`;
-				lastName = memberName;
+				const text = `${
+					lastNames.get(memberVoiceChannel.id) !== memberName ? `${memberName} says ` : ""
+				}${content}`;
+				lastNames.set(memberVoiceChannel.id, memberName);
 				const sound = await getSound(text);
 				queue.push(sound);
 			}
-			const memberVoiceChannel = message.member.voice.channel;
 			if (queue.length > 1) return;
 			while (queue[0]) {
 				const x = queue[0]!;
