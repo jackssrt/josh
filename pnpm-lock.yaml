@@ -1,9 +1,5 @@
 lockfileVersion: '6.0'
 
-settings:
-  autoInstallPeers: true
-  excludeLinksFromLockfile: false
-
 dependencies:
   '@discordjs/opus':
     specifier: ^0.9.0
@@ -45,8 +41,8 @@ dependencies:
     specifier: ^0.32.1
     version: 0.32.1
   sodium-native:
-    specifier: ^4.0.3
-    version: 4.0.3
+    specifier: ^4.0.4
+    version: 4.0.4
 
 devDependencies:
   '@types/d3':
@@ -3394,8 +3390,8 @@ packages:
       smart-buffer: 4.2.0
     dev: false
 
-  /sodium-native@4.0.3:
-    resolution: {integrity: sha512-0zOjNag+0gIRe56O1TkTfltT+b+JhOpGV6u69MVoKy+BTH95viPPJ0exHHnmgRliWKDGyYsyNeyBamfcU7ZlgQ==}
+  /sodium-native@4.0.4:
+    resolution: {integrity: sha512-faqOKw4WQKK7r/ybn6Lqo1F9+L5T6NlBJJYvpxbZPetpWylUVqz449mvlwIBKBqxEHbWakWuOlUt8J3Qpc4sWw==}
     requiresBuild: true
     dependencies:
       node-gyp-build: 4.6.0
@@ -4030,3 +4026,7 @@ packages:
     resolution: {integrity: sha512-9bnSc/HEW2uRy67wc+T8UwauLuPJVn28jb+GtJY16iiKWyvmYJRXVT4UamsAEGQfPohgr2q4Tq0sQbQlxTfi1g==}
     engines: {node: '>=12.20'}
     dev: true
+
+settings:
+  autoInstallPeers: true
+  excludeLinksFromLockfile: false
