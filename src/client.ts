@@ -14,6 +14,7 @@ import { ActivityType, Client as DiscordClient, EmbedBuilder, GatewayIntentBits 
 import { spawn } from "node:child_process";
 import path from "node:path";
 import { platform } from "node:process";
+import SyncSignal from "./SyncSignal.js";
 import type Command from "./command.js";
 import type { ContextMenuItem } from "./contextMenuItem.js";
 import getEnv, { IS_BUILT, IS_DEV } from "./env.js";
@@ -29,6 +30,7 @@ export default class Client<Ready extends boolean = false, Loaded extends boolea
 	public contextMenuItemsRegistry = new Registry<ContextMenuItem<"User" | "Message">>();
 	public guild = undefined as Loaded extends true ? Guild : undefined;
 	public owner = undefined as Loaded extends true ? GuildMember : undefined;
+	public loadedSyncSignal = new SyncSignal();
 	private static readonly defaultPresence: PresenceData = {
 		status: "online",
 		activities: [{ type: ActivityType.Competing, name: "Splatoon 3" }],
@@ -54,8 +56,7 @@ export default class Client<Ready extends boolean = false, Loaded extends boolea
 	public async load(this: Client) {
 		const dirName = IS_BUILT ? "build" : "src";
 		const start = new Date();
-		this.guild = await this.guilds.fetch(getEnv("GUILD_ID"));
-		this.owner = await this.guild.members.fetch(getEnv("OWNER_ID"));
+
 		await parallel(
 			this.commandRegistry.loadFromDirectory(`./${dirName}/commands`),
 			this.eventRegistry.loadFromDirectory(`./${dirName}/events`),
@@ -104,14 +105,22 @@ export default class Client<Ready extends boolean = false, Loaded extends boolea
 		consola.success(`Loading took ${formatTime((end.getTime() - start.getTime()) / 1000)}`);
 	}
 	public async start(this: Client<true>) {
+		this.on("ready", async () => {
+			this.guild = await this.guilds.fetch(getEnv("GUILD_ID"));
+			this.owner = await this.guild.members.fetch(getEnv("OWNER_ID"));
+			this.loadedSyncSignal.fire();
+		});
+
 		for (const event of this.eventRegistry.values()) {
-			this[event.isOnetime ? "once" : "on"](event.event, (...params: ClientEvents[typeof event.event]) =>
-				event.on({ client: this }, ...params),
-			);
+			this[event.isOnetime ? "once" : "on"](event.event, async (...params: ClientEvents[typeof event.event]) => {
+				await this.loadedSyncSignal.await();
+				await event.on({ client: this }, ...params);
+			});
 		}
 		consola.success(`Hooked ${this.eventRegistry.size} event${this.eventRegistry.size === 1 ? "" : "s"}`);
 
 		this.on("error", async (error) => {
+			await this.loadedSyncSignal.await();
 			await this.owner.send(
 				await errorEmbeds({
 					title: "Generic Error",
@@ -125,6 +134,7 @@ export default class Client<Ready extends boolean = false, Loaded extends boolea
 
 			const command = this.commandRegistry.get(interaction.commandName);
 			if (!command) return;
+			await this.loadedSyncSignal.await();
 			if (command.ownerOnly && interaction.user !== this.owner.user)
 				return void (await interaction.reply({
 					content: "This command can only be used by the owner.",
@@ -173,6 +183,7 @@ export default class Client<Ready extends boolean = false, Loaded extends boolea
 			if (!interaction.isContextMenuCommand()) return;
 			const item = this.contextMenuItemsRegistry.get(interaction.commandName);
 			if (!item) return;
+			await this.loadedSyncSignal.await();
 			if (item.ownerOnly && interaction.user !== this.owner.user)
 				return void (await interaction.reply({
 					content: "This context menu item can only be used by the owner.",
@@ -185,8 +196,9 @@ export default class Client<Ready extends boolean = false, Loaded extends boolea
 		});
 		this.on("interactionCreate", async (interaction) => {
 			if (!interaction.isAutocomplete()) return;
-			const command = this.commandRegistry.get(interaction.commandName);
 
+			const command = this.commandRegistry.get(interaction.commandName);
+			await this.loadedSyncSignal.await();
 			await command?.autocomplete?.({ client: this, interaction });
 		});
 		await this.login(getEnv("TOKEN"));
