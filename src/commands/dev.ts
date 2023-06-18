@@ -1,8 +1,9 @@
 import axios from "axios";
 import consola from "consola";
-import type { CategoryChannel } from "discord.js";
+import type { CategoryChannel, VoiceChannel } from "discord.js";
 import {
 	AttachmentBuilder,
+	ChannelType,
 	Collection,
 	GuildMember,
 	GuildScheduledEventEntityType,
@@ -18,13 +19,13 @@ import type Command from "../command";
 import database from "../database.js";
 import getEnv from "../env.js";
 import { makeChallengeEvents } from "../events/challengeEvent.js";
-import { updateChannels } from "../events/expandingVoiceChannels.js";
+import { updateChannelName, updateChannels } from "../events/expandingVoiceChannels.js";
 import { onMemberJoin, onMemberLeave } from "../events/joinLeave.js";
 import { updateRoleCategories } from "../events/roleCategories.js";
 import { updateStatsMessage } from "../events/statsMessage.js";
 import rotations from "../rotations/index.js";
 import type { FestivalsAPI } from "../types/rotationNotifier.js";
-import { colorLuminance, hexToRGB, parallel, textImage } from "../utils.js";
+import { colorLuminance, hexToRGB, iteratorToArray, parallel, pluralize, textImage } from "../utils.js";
 import { COLOR_DATA } from "./color.js";
 
 type Subcommand =
@@ -40,7 +41,8 @@ type Subcommand =
 	| "challenges"
 	| "cancelallevents"
 	| "setinvite"
-	| "expandingvoicechannels";
+	| "expandingvoicechannels"
+	| "renamevoicechannels";
 
 async function makeColorRolesImage() {
 	const CELL_SIZE = [200, 100] as const;
@@ -138,6 +140,7 @@ export default {
 			)
 			.addSubcommand((b) => b.setName("cancelallevents").setDescription("Cancel all events"))
 			.addSubcommand((b) => b.setName("expandingvoicechannels").setDescription("Reruns expanding voice channels"))
+			.addSubcommand((b) => b.setName("renamevoicechannels").setDescription("Rename voice channels"))
 			.setDescription("developer only command")
 			.setDMPermission(false)
 			.setDefaultMemberPermissions(PermissionsBitField.Flags.Administrator),
@@ -253,7 +256,6 @@ export default {
 				interaction.guild.scheduledEvents.cache.map((v) => interaction.guild.scheduledEvents.delete(v)),
 			);
 			await interaction.editReply("done");
-			// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
 		} else if (subcommand === "expandingvoicechannels") {
 			const [used, unused] = await parallel(
 				client.guild.channels.fetch(getEnv("VOICE_CATEGORY_ID")) as Promise<CategoryChannel>,
@@ -261,6 +263,31 @@ export default {
 			);
 			await updateChannels(used, unused);
 			await interaction.editReply("done");
+			// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+		} else if (subcommand === "renamevoicechannels") {
+			const [used, unused] = await parallel(
+				client.guild.channels.fetch(getEnv("VOICE_CATEGORY_ID")) as Promise<CategoryChannel>,
+				client.guild.channels.fetch(getEnv("UNUSED_VOICE_CATEGORY_ID")) as Promise<CategoryChannel>,
+			);
+			const result = await parallel(
+				...iteratorToArray(
+					used.children.cache
+						.filter((v): v is VoiceChannel => v.type === ChannelType.GuildVoice)
+						.sort((a, b) => b.position - a.position)
+						.values(),
+				).map(async (v, i) => {
+					await updateChannelName(v, i + 1);
+				}),
+				...iteratorToArray(
+					unused.children.cache
+						.filter((v): v is VoiceChannel => v.type === ChannelType.GuildVoice)
+						.sort((a, b) => b.position - a.position)
+						.values(),
+				).map(async (v, i) => {
+					await updateChannelName(v, i + 1 + used.children.cache.size);
+				}),
+			);
+			await interaction.editReply(`done, renamed ${result.length} ${pluralize("channel", result.length)}`);
 		} else {
 			await interaction.editReply("unimplemented");
 		}
