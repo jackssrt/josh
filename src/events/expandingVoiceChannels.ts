@@ -51,7 +51,7 @@ export async function updateChannelName(channel: VoiceBasedChannel, num: number)
 	if (channel.name !== newName) await channel.setName(newName);
 }
 
-async function updateChannels(category: CategoryChannel, unusedCategory: CategoryChannel) {
+export async function updateChannels(category: CategoryChannel, unusedCategory: CategoryChannel) {
 	// save last channel from being moved
 	let willRemove: ChannelData[] = [];
 	let savedChannel = false;

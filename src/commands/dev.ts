@@ -1,5 +1,6 @@
 import axios from "axios";
 import consola from "consola";
+import type { CategoryChannel } from "discord.js";
 import {
 	AttachmentBuilder,
 	Collection,
@@ -17,6 +18,7 @@ import type Command from "../command";
 import database from "../database.js";
 import getEnv from "../env.js";
 import { makeChallengeEvents } from "../events/challengeEvent.js";
+import { updateChannels } from "../events/expandingVoiceChannels.js";
 import { onMemberJoin, onMemberLeave } from "../events/joinLeave.js";
 import { updateRoleCategories } from "../events/roleCategories.js";
 import { updateStatsMessage } from "../events/statsMessage.js";
@@ -37,7 +39,8 @@ type Subcommand =
 	| "stats"
 	| "challenges"
 	| "cancelallevents"
-	| "setinvite";
+	| "setinvite"
+	| "expandingvoicechannels";
 
 async function makeColorRolesImage() {
 	const CELL_SIZE = [200, 100] as const;
@@ -134,6 +137,7 @@ export default {
 					),
 			)
 			.addSubcommand((b) => b.setName("cancelallevents").setDescription("Cancel all events"))
+			.addSubcommand((b) => b.setName("expandingvoicechannels").setDescription("Reruns expanding voice channels"))
 			.setDescription("developer only command")
 			.setDMPermission(false)
 			.setDefaultMemberPermissions(PermissionsBitField.Flags.Administrator),
@@ -244,11 +248,18 @@ export default {
 				interaction.options.getBoolean("overridedatabase", false) ?? false,
 			);
 			await interaction.editReply("done");
-			// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
 		} else if (subcommand === "cancelallevents") {
 			await parallel(
 				interaction.guild.scheduledEvents.cache.map((v) => interaction.guild.scheduledEvents.delete(v)),
 			);
+			await interaction.editReply("done");
+			// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+		} else if (subcommand === "expandingvoicechannels") {
+			const [used, unused] = await parallel(
+				client.guild.channels.fetch(getEnv("VOICE_CATEGORY_ID")) as Promise<CategoryChannel>,
+				client.guild.channels.fetch(getEnv("UNUSED_VOICE_CATEGORY_ID")) as Promise<CategoryChannel>,
+			);
+			await updateChannels(used, unused);
 			await interaction.editReply("done");
 		} else {
 			await interaction.editReply("unimplemented");
