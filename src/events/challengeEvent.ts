@@ -47,6 +47,5 @@ export default {
 		rotations.hook(async () => {
 			await makeChallengeEvents(client.guild);
 		});
-		throw new Error("real");
 	},
 } as Event<"ready">;
