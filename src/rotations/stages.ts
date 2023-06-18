@@ -7,10 +7,13 @@ export class Stage {
 
 	public image: string;
 	public id: string;
-	constructor(data: SchedulesAPI.Stage) {
+	constructor(data: SchedulesAPI.Stage, vsStages: SchedulesAPI.Stage<"high">[]) {
 		this.name = data.name;
 		this.vsStageId = data.vsStageId;
-		this.image = data.image.url;
+		this.image =
+			vsStages[data.vsStageId - 1]?.originalImage.url ??
+			vsStages.find((v) => v.vsStageId === data.vsStageId)?.originalImage.url ??
+			data.image.url;
 		this.id = data.id;
 	}
 

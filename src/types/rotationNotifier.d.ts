@@ -13,6 +13,7 @@ export namespace SchedulesAPI {
 			};
 			festSchedules: { nodes: FestNode[] };
 			currentFest: CurrentFest<"FIRST_HALF" | "SECOND_HALF"> | null;
+			vsStages: { nodes: Stage<"high">[] };
 		};
 	}
 
@@ -157,12 +158,19 @@ export namespace SchedulesAPI {
 		__typename: "LeagueMatchSetting";
 	}
 	export type FestSetting = BaseMatchSetting<TurfWarVsRule>;
-	export interface Stage {
+	export interface Stage<Quality extends "high" | "low" = "low"> {
 		vsStageId: number;
 		name: string;
-		image: {
-			url: string;
-		};
+		image: Quality extends "low"
+			? {
+					url: string;
+			  }
+			: never;
+		originalImage: Quality extends "high"
+			? {
+					url: string;
+			  }
+			: never;
 		id: string;
 	}
 }

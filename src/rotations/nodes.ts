@@ -127,8 +127,8 @@ export abstract class DisplayableMatchNode extends BaseNode {
 						await parallel(
 							images.map<Promise<sharp.OverlayOptions[]>>(async (v, i) => {
 								const [text, shadowText] = await parallel(
-									textImage(v[0].name, "white", 3),
-									textImage(v[0].name, "black", 3),
+									textImage(v[0].name, "white", 6),
+									textImage(v[0].name, "black", 6),
 								);
 								return [
 									{
@@ -145,7 +145,7 @@ export abstract class DisplayableMatchNode extends BaseNode {
 														create: {
 															background: "#000000AA",
 															width: stageWidth,
-															height: 8 + ((await text.metadata()).height ?? 20) + 4,
+															height: 16 + ((await text.metadata()).height ?? 20) + 8,
 															channels: 4,
 														},
 													})
@@ -153,13 +153,13 @@ export abstract class DisplayableMatchNode extends BaseNode {
 														.toBuffer(),
 												},
 												{
-													left: stageWidth * i + 8 + 2,
-													top: 8 + 2,
+													left: stageWidth * i + 16 + 4,
+													top: 16 + 4,
 													input: await shadowText.toBuffer(),
 												},
 												{
-													left: stageWidth * i + 8,
-													top: 8,
+													left: stageWidth * i + 16,
+													top: 16,
 													input: await text.toBuffer(),
 												},
 										  ]
@@ -174,7 +174,7 @@ export abstract class DisplayableMatchNode extends BaseNode {
 	}
 	public async attachments(): Promise<AttachmentBuilder[]> {
 		return [
-			new AttachmentBuilder((await this.images(this.stages.length * 400, 200 - 8))[0]).setName(
+			new AttachmentBuilder((await this.images(this.stages.length * 800, 450))[0]).setName(
 				`${this.imageName}.png`,
 			),
 		];
@@ -189,9 +189,9 @@ export abstract class BaseMatchNode<
 	public rule: APIRuleToRule<VsRule>;
 	public stages: [Stage, Stage];
 
-	constructor(data: NodeType, setting: SettingType) {
+	constructor(data: NodeType, setting: SettingType, vsStages: SchedulesAPI.Stage<"high">[]) {
 		super(data);
-		this.stages = setting.vsStages.map((v) => new Stage(v)) as [Stage, Stage];
+		this.stages = setting.vsStages.map((v) => new Stage(v, vsStages)) as [Stage, Stage];
 		this.rule = RULE_MAP[setting.vsRule.rule] as APIRuleToRule<VsRule>;
 	}
 }
@@ -270,7 +270,11 @@ export class ChallengeNode extends BaseMatchNode<
 	 * @example "TGVhZ3VlTWF0Y2hFdmVudC1OZXdTZWFzb25DdXA="
 	 */
 	public id: string;
-	constructor(data: SchedulesAPI.ChallengeNode, setting: SchedulesAPI.ChallengeSetting) {
+	constructor(
+		data: SchedulesAPI.ChallengeNode,
+		setting: SchedulesAPI.ChallengeSetting,
+		vsStages: SchedulesAPI.Stage<"high">[],
+	) {
 		const timePeriods = data.timePeriods.map((v) => new ChallengeTimePeriod(v));
 		const startTime = timePeriods.map((v) => v.startTime).sort()[0]!;
 		const endTime = timePeriods
@@ -278,7 +282,7 @@ export class ChallengeNode extends BaseMatchNode<
 			.sort()
 			.at(-1)!;
 
-		super({ startTime: startTime.toISOString(), endTime: endTime.toISOString(), ...data }, setting);
+		super({ startTime: startTime.toISOString(), endTime: endTime.toISOString(), ...data }, setting, vsStages);
 		this.timePeriods = new TimeRangeCollection(timePeriods);
 		this.leagueId = setting.leagueMatchEvent.leagueMatchEventId;
 		this.challengeName = setting.leagueMatchEvent.name;
@@ -336,14 +340,14 @@ export class CurrentFest<State extends "FIRST_HALF" | "SECOND_HALF"> extends Dis
 	public emoji = SPLATFEST_EMOJI;
 	public name = "Tricolor";
 	public stages: [Stage];
-	constructor(data: SchedulesAPI.CurrentFest<State>) {
+	constructor(data: SchedulesAPI.CurrentFest<State>, vsStages: SchedulesAPI.Stage<"high">[]) {
 		super(data);
 		this.id = data.id;
 		this.title = data.title;
 		this.midtermTime = new Date(Date.parse(data.midtermTime));
 		this.state = data.state;
 		this.teams = data.teams;
-		this.tricolorStage = new Stage(data.tricolorStage);
+		this.tricolorStage = new Stage(data.tricolorStage, vsStages);
 		this.stages = [this.tricolorStage];
 	}
 }

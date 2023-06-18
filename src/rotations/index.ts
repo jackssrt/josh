@@ -171,6 +171,7 @@ export class Rotations {
 					teamContestSchedules: { nodes: rawEggstraWork },
 				},
 				festSchedules: { nodes: rawSplatfest },
+				vsStages: { nodes: vsStages },
 				currentFest: rawCurrentFest,
 			},
 		} = response;
@@ -178,34 +179,38 @@ export class Rotations {
 		const challenges = new PoppingTimeRangeCollection(
 			rawChallenges.map((x) =>
 				x.leagueMatchSetting && x.timePeriods.length > 0
-					? new ChallengeNode(x, x.leagueMatchSetting)
+					? new ChallengeNode(x, x.leagueMatchSetting, vsStages)
 					: undefined,
 			),
 		);
 		const turfWar = new PoppingTimeRangeCollection(
-			rawTurfWar.map((x) => (x.regularMatchSetting ? new TurfWarNode(x, x.regularMatchSetting) : undefined)),
+			rawTurfWar.map((x) =>
+				x.regularMatchSetting ? new TurfWarNode(x, x.regularMatchSetting, vsStages) : undefined,
+			),
 		);
 		const rankedOpen = new PoppingTimeRangeCollection(
 			rawRanked.map((x) =>
-				x.bankaraMatchSettings ? new RankedOpenNode(x, x.bankaraMatchSettings[1]) : undefined,
+				x.bankaraMatchSettings ? new RankedOpenNode(x, x.bankaraMatchSettings[1], vsStages) : undefined,
 			),
 		);
 		const rankedSeries = new PoppingTimeRangeCollection(
 			rawRanked.map((x) =>
-				x.bankaraMatchSettings ? new RankedSeriesNode(x, x.bankaraMatchSettings[0]) : undefined,
+				x.bankaraMatchSettings ? new RankedSeriesNode(x, x.bankaraMatchSettings[0], vsStages) : undefined,
 			),
 		);
 		const xBattle = new PoppingTimeRangeCollection(
-			rawXBattle.map((x) => (x.xMatchSetting ? new XBattleNode(x, x.xMatchSetting) : undefined)),
+			rawXBattle.map((x) => (x.xMatchSetting ? new XBattleNode(x, x.xMatchSetting, vsStages) : undefined)),
 		);
 		const salmonRun = new PoppingTimeRangeCollection(rawSalmonRun.map((x) => new SalmonRunNode(x, x.setting)));
 		const eggstraWork = new PoppingTimeRangeCollection(
 			rawEggstraWork.map((x) => new EggstraWorkNode(x, x.setting)),
 		);
 		const splatfest = new PoppingTimeRangeCollection(
-			rawSplatfest.map((x) => (x.festMatchSetting ? new SplatfestNode(x, x.festMatchSetting) : undefined)),
+			rawSplatfest.map((x) =>
+				x.festMatchSetting ? new SplatfestNode(x, x.festMatchSetting, vsStages) : undefined,
+			),
 		);
-		const currentFest = rawCurrentFest ? new CurrentFest(rawCurrentFest) : undefined;
+		const currentFest = rawCurrentFest ? new CurrentFest(rawCurrentFest, vsStages) : undefined;
 		// gets the earliest normal rotation endTime
 		const startTime = new Date(
 			Math.min(...[turfWar, splatfest].flatMap((x) => x.active?.startTime.getTime() ?? [])),
