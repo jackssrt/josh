@@ -24,8 +24,9 @@ export function clean(text: string): string {
 }
 async function getSound(text: string) {
 	const voice = await database.getFeatureFlag("tts.voice");
+	const subVoice = voice.split("-")[1];
 	return Buffer.concat(
-		voice === "tiktok"
+		voice.startsWith("tiktok")
 			? await parallel(
 					text.match(/.{1,300}/g)?.map(async (subtext) =>
 						Buffer.from(
@@ -34,7 +35,7 @@ async function getSound(text: string) {
 									"https://tiktok-tts.weilnet.workers.dev/api/generation",
 									{
 										text: subtext,
-										voice: "en_us_001",
+										voice: subVoice ?? "en_us_001",
 									},
 								)
 							).data.data,
