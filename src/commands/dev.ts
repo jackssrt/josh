@@ -177,7 +177,7 @@ export default {
 					) => Promise<void>[]
 				)(async (v) => await updateRoleCategories(v)),
 			);
-			await interaction.editReply(`done, affected ${users.size} members`);
+			await interaction.editReply(`done, affected ${users.size} ${pluralize("member", users.size)}`);
 		} else if (subcommand === "colorrolesimage") {
 			await interaction.editReply({
 				content: `done:`,
