@@ -13,7 +13,7 @@ import { Collection } from "discord.js";
 import { Readable } from "node:stream";
 import database from "../database.js";
 import getEnv from "../env.js";
-import { LINK_REGEX, awaitEvent, parallel } from "../utils.js";
+import { LINK_REGEX, awaitEvent, errorEmbeds, parallel, pawait } from "../utils.js";
 import type Event from "./../event.js";
 const lastNames = new Collection<Snowflake, string>();
 const queue: Buffer[] = [];
@@ -54,7 +54,7 @@ async function getSound(text: string) {
 export default [
 	{
 		event: "messageCreate",
-		async on(_, message) {
+		async on({ client }, message) {
 			if (
 				message.channelId !== getEnv("TTS_CHANNEL_ID") ||
 				message.author.bot ||
@@ -66,25 +66,46 @@ export default [
 				(v) => !!v.contentType && (v.contentType.startsWith("video") || v.contentType.startsWith("audio")),
 			);
 			const memberVoiceChannel = message.member.voice.channel;
-			if (filesToPlay.size > 0) {
-				queue.push(
-					...(await parallel(
-						filesToPlay.map(async (v) =>
-							Buffer.from((await axios.get<ArrayBuffer>(v.url, { responseType: "arraybuffer" })).data),
-						),
-					)),
+
+			// eslint-disable-next-line @typescript-eslint/no-unused-vars
+			const [_, error] = await pawait(
+				(async () => {
+					if (filesToPlay.size > 0) {
+						queue.push(
+							...(await parallel(
+								filesToPlay.map(async (v) =>
+									Buffer.from(
+										(
+											await axios.get<ArrayBuffer>(v.url, { responseType: "arraybuffer" })
+										).data,
+									),
+								),
+							)),
+						);
+					} else {
+						const memberName = clean(message.member!.displayName);
+						const content = clean(message.cleanContent);
+						if (content === "") return;
+						const text = `${
+							lastNames.get(memberVoiceChannel.id) !== memberName ? `${memberName} says ` : ""
+						}${content}`;
+						lastNames.set(memberVoiceChannel.id, memberName);
+						const sound = await getSound(text);
+
+						queue.push(sound);
+					}
+				})(),
+			);
+			if (error)
+				await parallel(
+					message.react("❌"),
+					client.owner.send(
+						await errorEmbeds({
+							title: "TTS error",
+							description: `${error.name} ${error.message}\n${error.stack ?? "no stack"}`,
+						}),
+					),
 				);
-			} else {
-				const memberName = clean(message.member.displayName);
-				const content = clean(message.cleanContent);
-				if (content === "") return;
-				const text = `${
-					lastNames.get(memberVoiceChannel.id) !== memberName ? `${memberName} says ` : ""
-				}${content}`;
-				lastNames.set(memberVoiceChannel.id, memberName);
-				const sound = await getSound(text);
-				queue.push(sound);
-			}
 			if (queue.length > 1) return;
 			while (queue[0]) {
 				const x = queue[0]!;
