@@ -273,7 +273,7 @@ export default {
 				...iteratorToArray(
 					used.children.cache
 						.filter((v): v is VoiceChannel => v.type === ChannelType.GuildVoice)
-						.sort((a, b) => b.position - a.position)
+						.sort((a, b) => a.position - b.position)
 						.values(),
 				).map(async (v, i) => {
 					await updateChannelName(v, i + 1);
@@ -281,7 +281,7 @@ export default {
 				...iteratorToArray(
 					unused.children.cache
 						.filter((v): v is VoiceChannel => v.type === ChannelType.GuildVoice)
-						.sort((a, b) => b.position - a.position)
+						.sort((a, b) => a.position - b.position)
 						.values(),
 				).map(async (v, i) => {
 					await updateChannelName(v, i + 1 + used.children.cache.size);
