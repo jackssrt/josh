@@ -312,11 +312,6 @@ export class ChallengeTimePeriod extends TimeRange implements Shortable {
 	}
 }
 
-// export class LeagueNode extends BaseMatchNode<
-// 	SchedulesAPI.RankedVsRule,
-// 	SchedulesAPI.LeagueNode,
-// 	SchedulesAPI.LeagueSetting
-// > {}
 export class SplatfestNode extends BaseMatchNode<
 	SchedulesAPI.TurfWarVsRule,
 	SchedulesAPI.FestNode,
