@@ -9,7 +9,7 @@ import type {
 	User,
 	WebhookMessageCreateOptions,
 } from "discord.js";
-import { Collection, EmbedBuilder, GuildMember, TimestampStyles, normalizeArray, time } from "discord.js";
+import { Collection, EmbedBuilder, GuildMember, TimestampStyles, codeBlock, normalizeArray, time } from "discord.js";
 import levenshtein from "js-levenshtein";
 import type EventEmitter from "node:events";
 import { existsSync } from "node:fs";
@@ -100,7 +100,14 @@ export function errorEmbeds(...data: { title: string; description: string }[]) {
 	// I guess it got a little too much for ts to imply the types
 	return embeds(
 		...data.map<EmbedFactory>(
-			(v) => (b) => b.setTitle(`Error: ${v.title}`).setDescription(v.description).setColor("Red"),
+			(v) => (b) =>
+				b
+					.setTitle(`An error occurred 😭`)
+					.setDescription(
+						`### ${v.title}\n${codeBlock(v.description.replace(/(?<=\().*(?=splatsquad-bot)/gm, ""))}`,
+					)
+					.setColor("Red")
+					.setTimestamp(new Date()),
 		),
 	);
 }
