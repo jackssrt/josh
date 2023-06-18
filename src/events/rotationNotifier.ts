@@ -1,10 +1,9 @@
-import type { Client, NewsChannel, TextChannel } from "discord.js";
 import { TimestampStyles, time } from "discord.js";
-import getEnv from "../env.js";
 import type Event from "../event.js";
 import rotations from "../rotations/index.js";
 import type { OptionalEmbedFactory } from "../utils.js";
 import { embeds, parallel } from "../utils.js";
+import type Client from "./../client.js";
 
 const FUTURE_ROTATIONS_COUNT = 3;
 function generateChannelTopic(): string {
@@ -22,15 +21,12 @@ function generateChannelTopic(): string {
 }
 
 export async function sendSalmonRunRotation(client: Client<true>) {
-	// get channel
-	const salmonRunChannel = (await client.channels.fetch(getEnv("SALMON_RUN_CHANNEL_ID"))) as NewsChannel;
-
 	// delete previous message
-	await (await salmonRunChannel.messages.fetch({ limit: 1 })).first()?.delete();
+	await (await client.salmonRunChannel.messages.fetch({ limit: 1 })).first()?.delete();
 	//const gear = await database.activeMonthlySalmonRunGear();
 
 	// send message
-	const message = await salmonRunChannel.send({
+	const message = await client.salmonRunChannel.send({
 		...(await embeds(
 			(b) => rotations.eggstraWork.active?.embed(b),
 			(b) =>
@@ -54,19 +50,15 @@ export async function sendSalmonRunRotation(client: Client<true>) {
 }
 
 export async function sendRegularRotations(client: Client<true>) {
-	// get channels
-	const mapsChannel = (await client.channels.fetch(getEnv("MAPS_CHANNEL_ID"))) as NewsChannel;
-	const generalChannel = (await client.channels.fetch(getEnv("GENERAL_CHANNEL_ID"))) as TextChannel;
-
-	// delete previous message
-	await (await mapsChannel.messages.fetch({ limit: 1 })).first()?.delete();
 	await parallel(
 		// set channel topic
-		generalChannel.setTopic(generateChannelTopic()),
+		client.generalChannel.setTopic(generateChannelTopic()),
 
 		async () => {
+			// delete previous message
+			await (await client.mapsChannel.messages.fetch({ limit: 1 })).first()?.delete();
 			// send message
-			const message = await mapsChannel.send({
+			const message = await client.mapsChannel.send({
 				...(await embeds(
 					(b) =>
 						b

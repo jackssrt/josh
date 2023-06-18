@@ -87,11 +87,10 @@ export default {
 		const colorData = COLOR_DATA.find((a) => a.name.toLowerCase().trim() === colorInput.toLowerCase().trim());
 		if (!colorData) return await interaction.reply({ content: "That color doesn't exist!", ephemeral: true });
 		let key = "color-command-emoji-lock";
-		const colorsCategory = (await client.guild.roles.fetch(getEnv("COLORS_ROLE_CATEGORY_ID")))!;
 		try {
 			await parallel(interaction.deferReply(), async () => {
 				key = await colorEmojiLock.lock();
-				const colorRoles = await getLowerRolesInSameCategory(colorsCategory);
+				const colorRoles = await getLowerRolesInSameCategory(client.colorsRoleCategory);
 				const alreadyExistingRole = colorRoles.find(
 					(v) => (v.hexColor.toLowerCase() as `#${string}`) === `#${colorData.value.toLowerCase()}`,
 				);
@@ -114,12 +113,12 @@ export default {
 					hoist: false,
 					mentionable: false,
 					permissions: [],
-					position: colorsCategory.position,
+					position: client.colorsRoleCategory.position,
 					name: `🎨・${colorData.name}`,
 				});
 				await interaction.member.roles.add(newRole, "Requested color");
 			});
-			const colorRoles = await getLowerRolesInSameCategory(colorsCategory);
+			const colorRoles = await getLowerRolesInSameCategory(client.colorsRoleCategory);
 			await parallel(
 				interaction.editReply(`All done! Enjoy your new name color! ${BOOYAH_EMOJI}`),
 

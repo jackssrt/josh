@@ -79,25 +79,20 @@ export default [
 				(v) => v?.id === getEnv("VOICE_CATEGORY_ID"),
 			);
 			if (!category) return;
-			await updateChannels(
-				category,
-				(await client.channels.fetch(getEnv("UNUSED_VOICE_CATEGORY_ID"))) as CategoryChannel,
-			);
+			await updateChannels(category, client.unusedVoiceCategory);
 		},
 	} as Event<"voiceStateUpdate">,
 	{
 		event: "ready",
 		async on({ client }) {
-			const used = (await client.channels.fetch(getEnv("VOICE_CATEGORY_ID"))) as CategoryChannel;
-			const unused = (await client.channels.fetch(getEnv("UNUSED_VOICE_CATEGORY_ID"))) as CategoryChannel;
 			function addChannels(v: CategoryChildChannel, used: boolean) {
 				if (v.type !== ChannelType.GuildVoice) return;
 				const i = superscriptToNumber(v.name.slice("🔊・general".length));
 				channels[(i ?? 1) - 1] = { channel: v, used };
 			}
-			used.children.cache.forEach((v) => addChannels(v, true));
-			unused.children.cache.forEach((v) => addChannels(v, false));
-			await updateChannels(used, unused);
+			client.voiceCategory.children.cache.forEach((v) => addChannels(v, true));
+			client.unusedVoiceCategory.children.cache.forEach((v) => addChannels(v, false));
+			await updateChannels(client.voiceCategory, client.unusedVoiceCategory);
 		},
 	} as Event<"ready">,
 ];

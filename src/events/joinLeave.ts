@@ -1,4 +1,4 @@
-import type { Collection, GuildMember, PartialGuildMember, TextChannel } from "discord.js";
+import type { Collection, GuildMember, PartialGuildMember } from "discord.js";
 import { Colors, channelMention, roleMention, userMention } from "discord.js";
 import type Client from "../client.js";
 import { BOOYAH_EMOJI } from "../emojis.js";
@@ -7,13 +7,12 @@ import type Event from "../event.js";
 import { dedent, embeds, formatNumberIntoNth, impersonate, membersWithRoles, parallel } from "../utils.js";
 
 export async function onMemberJoin(client: Client<true>, member: GuildMember) {
-	const allMembers = membersWithRoles([(await member.guild.roles.fetch(getEnv("MEMBER_ROLE_ID")))!]);
+	const allMembers = membersWithRoles([client.memberRole]);
 	// adds the new member to the collection if they aren't already in it
 	allMembers.set(member.id, member);
 	await parallel(
 		async () => {
-			const channel = (await client.channels.fetch(getEnv("GENERAL_CHANNEL_ID"))) as TextChannel;
-			await channel.send({
+			await client.generalChannel.send({
 				content: `${userMention(member.id)} ${roleMention(getEnv("GREETER_ROLE_ID"))}`,
 				...(await embeds((b) =>
 					b
@@ -31,11 +30,10 @@ export async function onMemberJoin(client: Client<true>, member: GuildMember) {
 			});
 		},
 		async () => {
-			const channel = (await client.channels.fetch(getEnv("JOIN_LEAVE_CHANNEL_ID"))) as TextChannel;
 			await impersonate(
 				client,
 				member,
-				channel,
+				client.joinLeaveChannel,
 				`🟢 ${userMention(member.user.id)} joined, member #${allMembers.size}`,
 			);
 		},
@@ -43,17 +41,14 @@ export async function onMemberJoin(client: Client<true>, member: GuildMember) {
 }
 
 export async function onMemberLeave(client: Client<true>, member: GuildMember | PartialGuildMember) {
-	const allMembers: Collection<string, GuildMember | PartialGuildMember> = membersWithRoles([
-		(await member.guild.roles.fetch(getEnv("MEMBER_ROLE_ID")))!,
-	]);
+	const allMembers: Collection<string, GuildMember | PartialGuildMember> = membersWithRoles([client.memberRole]);
 	// adds the new member to the collection if they aren't already in it
 	allMembers.set(member.id, member);
-	const channel = (await client.channels.fetch(getEnv("JOIN_LEAVE_CHANNEL_ID"))) as TextChannel;
 
 	await impersonate(
 		client,
 		member.user,
-		channel,
+		client.joinLeaveChannel,
 		`🔴 ${userMention(member.user.id)} left, member #${allMembers.size}`,
 	);
 }

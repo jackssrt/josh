@@ -3,12 +3,16 @@
 
 import consola from "consola";
 import type {
+	CategoryChannel,
 	ClientEvents,
 	Guild,
 	GuildMember,
 	InteractionReplyOptions,
 	MessageCreateOptions,
+	NewsChannel,
 	PresenceData,
+	Role,
+	TextChannel,
 } from "discord.js";
 import { ActivityType, Client as DiscordClient, EmbedBuilder, GatewayIntentBits } from "discord.js";
 import { spawn } from "node:child_process";
@@ -30,6 +34,16 @@ export default class Client<Ready extends boolean = false, Loaded extends boolea
 	public contextMenuItemsRegistry = new Registry<ContextMenuItem<"User" | "Message">>();
 	public guild = undefined as Loaded extends true ? Guild : undefined;
 	public owner = undefined as Loaded extends true ? GuildMember : undefined;
+	public voiceCategory = undefined as Loaded extends true ? CategoryChannel : undefined;
+	public unusedVoiceCategory = undefined as Loaded extends true ? CategoryChannel : undefined;
+	public generalChannel = undefined as Loaded extends true ? TextChannel : undefined;
+	public memberRole = undefined as Loaded extends true ? Role : undefined;
+	public joinLeaveChannel = undefined as Loaded extends true ? TextChannel : undefined;
+	public mapsChannel = undefined as Loaded extends true ? NewsChannel : undefined;
+	public salmonRunChannel = undefined as Loaded extends true ? NewsChannel : undefined;
+	public colorsRoleCategory = undefined as Loaded extends true ? Role : undefined;
+	public statsChannel = undefined as Loaded extends true ? TextChannel : undefined;
+	public splatfestTeamRoleCategory = undefined as Loaded extends true ? Role : undefined;
 	public loadedSyncSignal = new SyncSignal();
 	private static readonly defaultPresence: PresenceData = {
 		status: "online",
@@ -106,8 +120,36 @@ export default class Client<Ready extends boolean = false, Loaded extends boolea
 	}
 	public async start(this: Client<true>) {
 		this.on("ready", async () => {
+			consola.info("Fetching discord objects phase 1...");
+			const start = new Date();
 			this.guild = await this.guilds.fetch(getEnv("GUILD_ID"));
-			this.owner = await this.guild.members.fetch(getEnv("OWNER_ID"));
+			consola.info("Fetching discord objects phase 2...");
+			[
+				this.owner,
+				this.voiceCategory,
+				this.unusedVoiceCategory,
+				this.generalChannel,
+				this.memberRole,
+				this.joinLeaveChannel,
+				this.mapsChannel,
+				this.salmonRunChannel,
+				this.colorsRoleCategory,
+				this.statsChannel,
+				this.splatfestTeamRoleCategory,
+			] = await parallel(
+				this.guild.members.fetch(getEnv("OWNER_ID")),
+				this.guild.channels.fetch(getEnv("VOICE_CATEGORY_ID")) as Promise<CategoryChannel>,
+				this.guild.channels.fetch(getEnv("UNUSED_VOICE_CATEGORY_ID")) as Promise<CategoryChannel>,
+				this.guild.channels.fetch(getEnv("GENERAL_CHANNEL_ID")) as Promise<TextChannel>,
+				this.guild.roles.fetch(getEnv("MEMBER_ROLE_ID")) as Promise<Role>,
+				this.guild.channels.fetch(getEnv("JOIN_LEAVE_CHANNEL_ID")) as Promise<TextChannel>,
+				this.guild.channels.fetch(getEnv("MAPS_CHANNEL_ID")) as Promise<NewsChannel>,
+				this.guild.channels.fetch(getEnv("SALMON_RUN_CHANNEL_ID")) as Promise<NewsChannel>,
+				this.guild.roles.fetch(getEnv("COLORS_ROLE_CATEGORY_ID")) as Promise<Role>,
+				this.guild.channels.fetch(getEnv("STATS_CHANNEL_ID")) as Promise<TextChannel>,
+				this.guild.roles.fetch(getEnv("SPLATFEST_TEAM_CATEGORY_ROLE_ID")) as Promise<Role>,
+			);
+			consola.success(`Fetching discord objects took ${formatTime(new Date().getTime() - start.getTime())}`);
 			this.loadedSyncSignal.fire();
 		});
 

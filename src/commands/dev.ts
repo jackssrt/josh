@@ -1,6 +1,5 @@
 import axios from "axios";
-import consola from "consola";
-import type { CategoryChannel, VoiceChannel } from "discord.js";
+import type { VoiceChannel } from "discord.js";
 import {
 	AttachmentBuilder,
 	ChannelType,
@@ -17,7 +16,6 @@ import sharp from "sharp";
 import { USER_AGENT } from "../client.js";
 import type Command from "../command";
 import database from "../database.js";
-import getEnv from "../env.js";
 import { makeChallengeEvents } from "../events/challengeEvent.js";
 import { updateChannelName, updateChannels } from "../events/expandingVoiceChannels.js";
 import { onMemberJoin, onMemberLeave } from "../events/joinLeave.js";
@@ -229,17 +227,13 @@ export default {
 					});
 				},
 				async () => {
-					const categoryRolePosition = (
-						await client.guild.roles.fetch(getEnv("SPLATFEST_TEAM_CATEGORY_ROLE_ID"))
-					)?.position;
-					if (!categoryRolePosition) return consola.error("Splatfest team role category role not found");
 					for (const [i, team] of Object.entries(fest.teams)) {
 						await client.guild.roles.create({
 							name: `⚽・${team.teamName}`,
 							color: [team.color.r * 255, team.color.g * 255, team.color.b * 255],
 							permissions: [],
 							mentionable: false,
-							position: +i + categoryRolePosition,
+							position: +i + client.splatfestTeamRoleCategory.position,
 						});
 					}
 				},
@@ -257,21 +251,13 @@ export default {
 			);
 			await interaction.editReply("done");
 		} else if (subcommand === "expandingvoicechannels") {
-			const [used, unused] = await parallel(
-				client.guild.channels.fetch(getEnv("VOICE_CATEGORY_ID")) as Promise<CategoryChannel>,
-				client.guild.channels.fetch(getEnv("UNUSED_VOICE_CATEGORY_ID")) as Promise<CategoryChannel>,
-			);
-			await updateChannels(used, unused);
+			await updateChannels(client.voiceCategory, client.unusedVoiceCategory);
 			await interaction.editReply("done");
 			// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
 		} else if (subcommand === "renamevoicechannels") {
-			const [used, unused] = await parallel(
-				client.guild.channels.fetch(getEnv("VOICE_CATEGORY_ID")) as Promise<CategoryChannel>,
-				client.guild.channels.fetch(getEnv("UNUSED_VOICE_CATEGORY_ID")) as Promise<CategoryChannel>,
-			);
 			const result = await parallel(
 				...iteratorToArray(
-					used.children.cache
+					client.voiceCategory.children.cache
 						.filter((v): v is VoiceChannel => v.type === ChannelType.GuildVoice)
 						.sort((a, b) => a.position - b.position)
 						.values(),
@@ -279,12 +265,12 @@ export default {
 					await updateChannelName(v, i + 1);
 				}),
 				...iteratorToArray(
-					unused.children.cache
+					client.unusedVoiceCategory.children.cache
 						.filter((v): v is VoiceChannel => v.type === ChannelType.GuildVoice)
 						.sort((a, b) => a.position - b.position)
 						.values(),
 				).map(async (v, i) => {
-					await updateChannelName(v, i + 1 + used.children.cache.size);
+					await updateChannelName(v, i + 1 + client.voiceCategory.children.cache.size);
 				}),
 			);
 			await interaction.editReply(`done, renamed ${result.length} ${pluralize("channel", result.length)}`);

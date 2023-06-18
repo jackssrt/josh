@@ -1,6 +1,6 @@
 import consola from "consola";
 import type { Guild } from "discord.js";
-import { AttachmentBuilder, TimestampStyles, roleMention, time, type TextChannel } from "discord.js";
+import { AttachmentBuilder, TimestampStyles, roleMention, time } from "discord.js";
 import type { Vector } from "ngraph.forcelayout";
 import createLayout from "ngraph.forcelayout";
 import createGraph from "ngraph.graph";
@@ -84,13 +84,9 @@ async function makeInviteGraph(guild: Guild): Promise<Buffer> {
 }
 
 export async function updateStatsMessage(client: Client<true>) {
-	const channel = (await client.guild.channels.fetch(getEnv("STATS_CHANNEL_ID"))!) as TextChannel;
-
-	const members = membersWithRoles([(await client.guild.roles.fetch(getEnv("MEMBER_ROLE_ID")))!]);
-	const colorRoles = await getLowerRolesInSameCategory(
-		(await client.guild.roles.fetch(getEnv("COLORS_ROLE_CATEGORY_ID")))!,
-	);
-	await updateStaticMessage(channel, "stats-message", {
+	const members = membersWithRoles([client.memberRole]);
+	const colorRoles = await getLowerRolesInSameCategory(client.colorsRoleCategory);
+	await updateStaticMessage(client.statsChannel, "stats-message", {
 		...(await embeds(
 			(b) =>
 				b.setTitle("Server information").addFields({
