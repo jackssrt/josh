@@ -23,7 +23,7 @@ export async function makeChallengeEvents(guild: Guild, overrideDatabase = false
 				scheduledStartTime:
 					challenge.startTime > new Date() ? challenge.startTime : new Date(new Date().getTime() + 60 * 1000),
 				scheduledEndTime: challenge.endTime,
-				image: await (await challenge.images(600, 180, false))[0].toBuffer(),
+				image: await (await challenge.images(600, 180, "challengesEvent"))[0].toBuffer(),
 				description: dedent`**Time Periods**
 									${challenge.timePeriods.ranges.map((v) => v.short()).join("\n")}
 									

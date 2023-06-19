@@ -91,7 +91,11 @@ export abstract class DisplayableMatchNode extends BaseNode {
 		return future.flatMap((v) => (v ? v.short() : [])).join("\n");
 	}
 
-	public async images(width: number, height: number, showText = true): Promise<[Sharp]> {
+	public async images(
+		width: number,
+		height: number,
+		context: "challengesEvent" | "rotationNotifier" = "rotationNotifier",
+	): Promise<[Sharp]> {
 		const stageWidth = Math.ceil(width / this.stages.length);
 		const images = await parallel(
 			this.stages.map(
@@ -136,7 +140,7 @@ export abstract class DisplayableMatchNode extends BaseNode {
 										left: stageWidth * i,
 										top: 0,
 									},
-									...(showText
+									...(context !== "challengesEvent"
 										? [
 												{
 													top: 0,
@@ -161,6 +165,17 @@ export abstract class DisplayableMatchNode extends BaseNode {
 													left: stageWidth * i + 16,
 													top: 16,
 													input: await text.toBuffer(),
+												},
+										  ]
+										: []),
+									...(context === "challengesEvent"
+										? [
+												{
+													top: height / 2 - height / 2 / 2,
+													left: width / 2 - height / 2 / 2,
+													input: await sharp("./assets/challenges.png")
+														.resize({ width: height / 2, height: height / 2 })
+														.toBuffer(),
 												},
 										  ]
 										: []),
