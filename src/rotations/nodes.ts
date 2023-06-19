@@ -25,7 +25,7 @@ import { RULE_MAP, turfWarRule } from "./rules.js";
 import { CoopStage, Stage } from "./stages.js";
 
 interface Shortable {
-	short(): string;
+	short: () => string;
 }
 
 interface BaseNodeShortOptions {
@@ -276,11 +276,8 @@ export class ChallengeNode extends BaseMatchNode<
 		vsStages: SchedulesAPI.Stage<"high">[],
 	) {
 		const timePeriods = data.timePeriods.map((v) => new ChallengeTimePeriod(v));
-		const startTime = timePeriods.map((v) => v.startTime).sort()[0]!;
-		const endTime = timePeriods
-			.map((v) => v.endTime)
-			.sort()
-			.at(-1)!;
+		const startTime = timePeriods.map((v) => v.startTime).sort((a, b) => a.getTime() - b.getTime())[0]!;
+		const endTime = timePeriods.map((v) => v.endTime).sort((a, b) => b.getTime() - a.getTime())[0]!;
 
 		super({ startTime: startTime.toISOString(), endTime: endTime.toISOString(), ...data }, setting, vsStages);
 		this.timePeriods = new TimeRangeCollection(timePeriods);
@@ -417,6 +414,7 @@ abstract class BaseCoopNode<
 												(
 													await axios.get<ArrayBuffer>(v.image.url, {
 														responseType: "arraybuffer",
+
 														headers: { "User-Agent": USER_AGENT },
 													})
 												).data,

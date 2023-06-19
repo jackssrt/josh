@@ -86,7 +86,7 @@ export namespace SchedulesAPI {
 		midtermTime: string;
 		state: State;
 		teams: [CurrentFestTeam, CurrentFestTeam, CurrentFestTeam];
-		tricolorStage: SchedulesAPI.Stage;
+		tricolorStage: Stage;
 	}
 	export interface CurrentFestTeam {
 		id: string;

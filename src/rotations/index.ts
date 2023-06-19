@@ -38,8 +38,8 @@ export interface FetchedRotations {
 }
 
 export class Rotations {
-	private hooks = new Set<() => Awaitable<void>>();
-	private salmonHooks = new Set<() => Awaitable<void>>();
+	private readonly hooks = new Set<() => Awaitable<void>>();
+	private readonly salmonHooks = new Set<() => Awaitable<void>>();
 	private constructor(
 		public challenges: PoppingTimeRangeCollection<ChallengeNode | undefined>,
 		public turfWar: PoppingTimeRangeCollection<TurfWarNode | undefined>,
@@ -260,6 +260,7 @@ export class Rotations {
 				this[k] = v as Rotations[T];
 		}) as (param: [string, unknown]) => void);
 		this.catchingUp = false;
+		this.catchingUpSalmonRun = false;
 	}
 }
 const rotations = await Rotations.new();

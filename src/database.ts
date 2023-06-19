@@ -23,7 +23,7 @@ export interface DatabaseData {
 	featureFlags: Partial<typeof FEATURE_FLAGS>;
 }
 class DatabaseBackend<T extends Record<K, unknown>, K extends string> {
-	private replitDatabaseUrl = getEnv("REPLIT_DB_URL");
+	private readonly replitDatabaseUrl = getEnv("REPLIT_DB_URL");
 	private data: T | undefined = undefined;
 	private static readonly PATH = "./database.json";
 	private async load() {
@@ -65,7 +65,7 @@ class DatabaseBackend<T extends Record<K, unknown>, K extends string> {
 }
 const madeChallengeEventsLock = new Lock();
 export class Database {
-	private backend = new DatabaseBackend<DatabaseData, keyof DatabaseData>();
+	private readonly backend = new DatabaseBackend<DatabaseData, keyof DatabaseData>();
 
 	public async setSplatfestEventCreated(name: string) {
 		await this.backend.set("createdSplatfestEvent", name);

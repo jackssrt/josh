@@ -6,7 +6,7 @@ type Key = string;
 
 export default class Lock {
 	private lockKey: string | undefined = undefined;
-	private ee = new EventEmitter();
+	private readonly ee = new EventEmitter();
 	public unlock(key: Key) {
 		if (key !== this.lockKey) consola.warn(`Something tried to unlock a lock with "${key}", an incorrect key!`);
 		this.lockKey = undefined;

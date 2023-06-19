@@ -78,7 +78,7 @@ export default class Game<State extends GameState = GameState.WaitingForPlayers>
 	private readonly seekTimeSeconds: number;
 	private aborted = false;
 
-	private hostConfigEmbeds = constructEmbedsWrapper((b) =>
+	private readonly hostConfigEmbeds = constructEmbedsWrapper((b) =>
 		b.setFooter({
 			text: `Room type: ${this.mode === "turfwar" ? "Turf War" : "Ranked"}・Room code: ${
 				this.code

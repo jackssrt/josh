@@ -10,13 +10,13 @@ export const enum PlayerRole {
 }
 export default class Player<Host extends boolean = boolean> {
 	public member: GuildMember;
-	private gameHost: Player<true>;
+	private readonly gameHost: Player<true>;
 	constructor(
 		public interaction: Host extends true ? ChatInputCommandInteraction<"cached"> : ButtonInteraction<"cached">,
 		public host: Host,
 		public role: PlayerRole | undefined,
 		gameHost: Host extends true ? undefined : Player<true>,
-		private gameCode: string,
+		private readonly gameCode: string,
 	) {
 		this.gameHost = gameHost ?? (this as Player<true>);
 		this.member = interaction.member;
