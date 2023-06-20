@@ -83,7 +83,6 @@ export default {
 						.setColor(displayNode.color),
 				),
 			);
-			//}
 		} else {
 			const subcommand = interaction.options.getSubcommand() as SearchSubcommand;
 			const gamemode = SUBCOMMAND_GAMEMODE_MAP[subcommand];

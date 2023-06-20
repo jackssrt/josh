@@ -126,8 +126,8 @@ export abstract class DisplayableMatchNode extends BaseNode {
 		return [
 			sharp({
 				create: {
-					width, // :400 * images.length,
-					height, //: 200 - 8,
+					width,
+					height,
 					background: "#00000000",
 					channels: 4,
 				},

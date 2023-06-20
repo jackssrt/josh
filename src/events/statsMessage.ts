@@ -34,7 +34,7 @@ async function makeInviteGraph(guild: Guild): Promise<Buffer> {
 			graph.addLink(inviter, invitee);
 		}),
 	);
-	const layout = createLayout(graph); //, { springLength: 10 });
+	const layout = createLayout(graph);
 	for (let i = 0; i < 100 && !layout.step(); i++) {
 		// pass
 	}

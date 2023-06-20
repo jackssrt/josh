@@ -23,7 +23,6 @@ function generateChannelTopic(): string {
 export async function sendSalmonRunRotation(client: Client<true>) {
 	// delete previous message
 	await (await client.salmonRunChannel.messages.fetch({ limit: 1 })).first()?.delete();
-	//const gear = await database.activeMonthlySalmonRunGear();
 
 	// send message
 	const message = await client.salmonRunChannel.send({
