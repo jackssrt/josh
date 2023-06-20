@@ -25,7 +25,7 @@ import { RULE_MAP, turfWarRule } from "./rules.js";
 import { CoopStage, Stage } from "./stages.js";
 
 interface Shortable {
-	short: () => string;
+	short: () => string[][];
 }
 
 interface BaseNodeShortOptions {
@@ -44,13 +44,12 @@ export abstract class BaseNode extends TimeRange implements Shortable {
 		super(data.startTime, data.endTime);
 	}
 	public short(options?: BaseNodeShortOptions | undefined) {
-		const parts: string[] = [
-			time(this.startTime, TimestampStyles.RelativeTime),
-			time(this.startTime, TimestampStyles.ShortTime),
+		const parts: string[][] = [
+			[time(this.startTime, TimestampStyles.RelativeTime), time(this.startTime, TimestampStyles.ShortTime)],
 		];
 		if (this.startTime.getDay() !== new Date().getDay() && options?.showDate)
-			parts.push(time(this.startTime, TimestampStyles.ShortDate));
-		return parts.join(" ");
+			parts[0]!.push(time(this.startTime, TimestampStyles.ShortDate));
+		return parts;
 	}
 	public abstract embed(b: EmbedBuilder, future: (this | undefined)[]): Promise<EmbedBuilder>;
 	public abstract images(width: number, height: number): Promise<Sharp[]>;
@@ -61,9 +60,16 @@ export abstract class DisplayableMatchNode extends BaseNode {
 	public abstract rule: Rule;
 	public abstract stages: Stage[];
 	public override short(options?: BaseNodeShortOptions | undefined) {
-		return dedent`${this.started ? "**" : ""}${
-			!(this.rule.rule === "TURF_WAR") ? `${this.rule.emoji} ` : ""
-		}${this.stages.map((v) => v.short()).join(", ")}${this.started ? "**" : ""} ${super.short(options)}`;
+		return [
+			[
+				`${this.started ? "**" : ""}${
+					!(this.rule.rule === "TURF_WAR") ? `${this.rule.emoji} ` : ""
+				}${this.stages.map((v) => v.short()).join(", ")}${this.started ? "**" : ""} ${super
+					.short(options)
+					.map((v) => v.join(" "))
+					.join("\n")}`,
+			],
+		];
 	}
 	public channelTopicLabel: string | undefined = undefined;
 	public channelTopic(future: this | undefined) {
@@ -313,14 +319,17 @@ export class ChallengeTimePeriod extends TimeRange implements Shortable {
 	constructor(data: SchedulesAPI.ChallengeTimePeriod) {
 		super(data.startTime, data.endTime);
 	}
-	public short(): string {
-		return `${time(this.startTime, TimestampStyles.RelativeTime)} ${time(
-			this.startTime,
-			TimestampStyles.ShortTime,
-		)} ${time(this.startTime, TimestampStyles.ShortDate)} → ${time(this.endTime, TimestampStyles.ShortTime)} ${time(
-			this.endTime,
-			TimestampStyles.ShortDate,
-		)}`;
+	public short(): string[][] {
+		return [
+			[
+				time(this.startTime, TimestampStyles.RelativeTime),
+				time(this.startTime, TimestampStyles.ShortTime),
+				time(this.startTime, TimestampStyles.ShortDate),
+				"→",
+				time(this.endTime, TimestampStyles.ShortTime),
+				time(this.endTime, TimestampStyles.ShortDate),
+			],
+		];
 	}
 }
 
@@ -376,10 +385,17 @@ abstract class BaseCoopNode<
 		this.stage = new CoopStage(setting.coopStage);
 		this.weapons = setting.weapons;
 	}
-	public override short(): string {
-		return dedent`**${this.stage.emoji} ${this.stage.name}**
-		${this.weapons.map((v) => v.name).join(", ")}
-		${super.short({ showDate: true })}`;
+	public override short(): string[][] {
+		return [
+			[`**${this.stage.emoji}`, `${this.stage.name}**`],
+			[this.weapons.map((v) => v.name).join(", ")],
+			[
+				super
+					.short({ showDate: true })
+					.map((x) => x.join(" "))
+					.join("\n"),
+			],
+		];
 	}
 
 	public async embed(b: EmbedBuilder): Promise<EmbedBuilder> {
@@ -511,15 +527,23 @@ export class SalmonRunNode extends BaseCoopNode<
 	public emoji = "🐟";
 	public name = "Salmon Run";
 	public kingSalmonid: "Horrorboros" | "Cohozuna";
+	public get kingSalmonidEmoji() {
+		return this.kingSalmonid === "Horrorboros" ? HORRORBOROS_EMOJI : COHOZUNA_EMOJI;
+	}
 	constructor(data: SchedulesAPI.CoopGroupingRegularNode, setting: SchedulesAPI.BaseCoopRegularSetting) {
 		super(data, setting);
 		this.kingSalmonid = data.__splatoon3ink_king_salmonid_guess;
+	}
+	public override short() {
+		const shortSuper = super.short();
+		shortSuper[0]?.push(this.kingSalmonidEmoji);
+		return shortSuper;
 	}
 	public override async embed(b: EmbedBuilder): Promise<EmbedBuilder> {
 		const gear = await Rotations.fetchSalmonRunGear();
 		b.addFields({
 			name: "King salmonid",
-			value: `${this.kingSalmonid === "Horrorboros" ? HORRORBOROS_EMOJI : COHOZUNA_EMOJI} ${this.kingSalmonid}`,
+			value: `${this.kingSalmonidEmoji} ${this.kingSalmonid}`,
 			inline: true,
 		})
 			.addFields({

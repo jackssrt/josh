@@ -48,44 +48,42 @@ export default {
 	async execute({ interaction }) {
 		const subcommandGroup = interaction.options.getSubcommandGroup() as "list" | "search";
 		if (subcommandGroup === "list") {
-			const rotationType = interaction.options.getSubcommand() as ListSubcommand;
-
-			if (rotationType === "salmonrun") {
-				await interaction.editReply(
-					await embeds((b) =>
-						b
-							.setTitle("Salmon Run rotations")
-							.setDescription(rotations.salmonRun.ranges.map((v) => v.short()).join("\n"))
-							.setColor("#ff5033"),
-					),
+			const subcommand = interaction.options.getSubcommand(true) as ListSubcommand;
+			const subcommandMap = {
+				anarchyopen: rotations.rankedOpen,
+				anarchyseries: rotations.rankedSeries,
+				splatfest: rotations.splatfest,
+				turfwar: rotations.turfWar,
+				challenges: rotations.challenges,
+				xbattle: rotations.xBattle,
+				salmonrun: rotations.salmonRun,
+			} as const satisfies Record<ListSubcommand, PoppingTimeRangeCollection<BaseNode | undefined>>;
+			const nodes = subcommandMap[subcommand];
+			const displayNode = (nodes as PoppingTimeRangeCollection<BaseNode | undefined>).ranges.find((v) => !!v);
+			if (!displayNode)
+				return await interaction.editReply(
+					await errorEmbeds({ title: "Couldn't find rotation type", description: "Try again later..." }),
 				);
-			} else {
-				const subcommandMap = {
-					anarchyopen: rotations.rankedOpen,
-					anarchyseries: rotations.rankedSeries,
-					splatfest: rotations.splatfest,
-					turfwar: rotations.turfWar,
-					challenges: rotations.challenges,
-					xbattle: rotations.xBattle,
-					salmonrun: rotations.salmonRun,
-				} as const satisfies Record<ListSubcommand, PoppingTimeRangeCollection<BaseNode | undefined>>;
-				const nodes = subcommandMap[interaction.options.getSubcommand(true) as ListSubcommand];
-				const displayNode = (nodes as PoppingTimeRangeCollection<BaseNode | undefined>).ranges.find((v) => !!v);
-				if (!displayNode)
-					return await interaction.editReply(
-						await errorEmbeds({ title: "Couldn't find rotation type", description: "Try again later..." }),
-					);
-				await interaction.editReply(
-					await embeds((b) =>
-						b
-							.setTitle(`${displayNode.emoji} ${displayNode.name} rotations`)
-							.setDescription(
-								nodes.ranges.flatMap((v) => (v ? v.short({ showDate: true }) : [])).join("\n"),
-							)
-							.setColor(displayNode.color),
-					),
-				);
-			}
+			await interaction.editReply(
+				await embeds((b) =>
+					b
+						.setTitle(`${displayNode.emoji} ${displayNode.name} rotations`)
+						.setDescription(
+							nodes.ranges
+								.flatMap((v) =>
+									v
+										? v
+												.short({ showDate: true })
+												.map((v) => v.join(" "))
+												.join("\n")
+										: [],
+								)
+								.join(subcommand === "salmonrun" ? "\n\n" : "\n"),
+						)
+						.setColor(displayNode.color),
+				),
+			);
+			//}
 		} else {
 			const subcommand = interaction.options.getSubcommand() as SearchSubcommand;
 			const gamemode = SUBCOMMAND_GAMEMODE_MAP[subcommand];
@@ -111,7 +109,16 @@ export default {
 								v[0]
 									? {
 											name: `${v[0].emoji} ${v[0].name}`,
-											value: v.flatMap((x) => (x ? x.short({ showDate: true }) : [])).join("\n"),
+											value: v
+												.flatMap((x) =>
+													x
+														? x
+																.short({ showDate: true })
+																.map((v) => v.join(" "))
+																.join("\n")
+														: [],
+												)
+												.join("\n"),
 									  }
 									: [],
 							),

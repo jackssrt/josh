@@ -25,7 +25,14 @@ export async function makeChallengeEvents(guild: Guild, overrideDatabase = false
 				scheduledEndTime: challenge.endTime,
 				image: await (await challenge.images(600, 180, "challengesEvent"))[0].toBuffer(),
 				description: dedent`**Time Periods**
-									${challenge.timePeriods.ranges.map((v) => v.short()).join("\n")}
+									${challenge.timePeriods.ranges
+										.map((v) =>
+											v
+												.short()
+												.map((v) => v.join(" "))
+												.join("\n"),
+										)
+										.join("\n")}
 									
 									**Game Mode**
 									${challenge.rule.emoji} ${challenge.rule.name}

@@ -33,12 +33,15 @@ export async function sendSalmonRunRotation(client: Client<true>) {
 				rotations.salmonRun.active?.embed(
 					b.setAuthor({ name: "Data provided by splatoon3.ink", url: "https://splatoon3.ink/" }),
 				),
-			...rotations.salmonRun
-				.future(FUTURE_ROTATIONS_COUNT)
-				.map<OptionalEmbedFactory>(
-					(v, i) => (b) =>
-						b.setAuthor(i === 0 ? { name: "Future rotations" } : null).setDescription(v.short()),
-				),
+			...rotations.salmonRun.future(FUTURE_ROTATIONS_COUNT).map<OptionalEmbedFactory>(
+				(v, i) => (b) =>
+					b.setAuthor(i === 0 ? { name: "Future rotations" } : null).setDescription(
+						v
+							.short()
+							.map((v) => v.join(" "))
+							.join("\n"),
+					),
+			),
 		)),
 		files: (
 			await parallel(rotations.salmonRun.active?.attachments(), rotations.eggstraWork.active?.attachments())
