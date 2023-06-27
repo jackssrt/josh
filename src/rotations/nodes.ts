@@ -94,7 +94,16 @@ export abstract class DisplayableMatchNode extends BaseNode {
 			.setImage(`attachment://${this.imageName}.png`);
 	}
 	public embedDescription(future: (this | undefined)[]): string {
-		return future.flatMap((v) => (v ? v.short() : [])).join("\n");
+		return future
+			.flatMap((v) =>
+				v
+					? v
+							.short()
+							.map((v) => v.join(" "))
+							.join("\n")
+					: [],
+			)
+			.join("\n");
 	}
 
 	public async images(
@@ -311,7 +320,14 @@ export class ChallengeNode extends BaseMatchNode<
 	public override embedDescription(): string {
 		return this.timePeriods
 			.future(3)
-			.flatMap((v) => (v.future ? v.short() : []))
+			.flatMap((v) =>
+				v.future
+					? v
+							.short()
+							.map((v) => v.join(" "))
+							.join("\n")
+					: [],
+			)
 			.join("\n");
 	}
 }
