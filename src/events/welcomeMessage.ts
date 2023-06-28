@@ -1,4 +1,4 @@
-import type { GuildMember, Message } from "discord.js";
+import type { Message } from "discord.js";
 import { Colors, MessageType, channelMention, roleMention, userMention } from "discord.js";
 import type Client from "../client.js";
 import { BOOYAH_EMOJI } from "../emojis.js";
@@ -6,7 +6,9 @@ import getEnv from "../env.js";
 import { dedent, embeds, formatNumberIntoNth, membersWithRoles } from "../utils.js";
 import type Event from "./../event.js";
 
-async function sendWelcomeMessage(client: Client<true>, member: GuildMember, message: Message<true>) {
+export async function sendWelcomeMessage(client: Client<true>, message: Message<true>) {
+	const { member } = message;
+	if (!member) return;
 	const allMembers = membersWithRoles([client.memberRole]);
 	// adds the new member to the collection if they aren't already in it
 	allMembers.set(member.id, member);
@@ -32,6 +34,6 @@ export default {
 	event: "messageCreate",
 	async on({ client }, message) {
 		if (!message.inGuild() || !message.member || message.type !== MessageType.UserJoin) return;
-		await sendWelcomeMessage(client, message.member, message);
+		await sendWelcomeMessage(client, message);
 	},
 } as Event<"messageCreate">;
