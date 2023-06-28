@@ -15,8 +15,8 @@ dependencies:
     specifier: ^1.4.0
     version: 1.4.0
   consola:
-    specifier: ^3.1.0
-    version: 3.1.0
+    specifier: ^3.2.1
+    version: 3.2.1
   discord.js:
     specifier: ^14.11.0
     version: 14.11.0
@@ -1300,8 +1300,8 @@ packages:
       well-known-symbols: 2.0.0
     dev: true
 
-  /consola@3.1.0:
-    resolution: {integrity: sha512-rrrJE6rP0qzl/Srg+C9x/AE5Kxfux7reVm1Wh0wCjuXvih6DqZgqDZe8auTD28fzJ9TF0mHlSDrPpWlujQRo1Q==}
+  /consola@3.2.1:
+    resolution: {integrity: sha512-p4cjcr/NHr2pbmXcTBcdNwIWEyQIzavKkZt6d0rDPQXta+oilM9j9Folao2REulksBZhYX39vF+HlIm7QRTeWA==}
     dev: false
 
   /console-control-strings@1.1.0:
