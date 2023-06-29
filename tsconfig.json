@@ -98,15 +98,7 @@
 
 		/* Completeness */
 		"skipDefaultLibCheck": true /* Skip type checking .d.ts files that are included with TypeScript. */,
-		"paths": {
-			"env": ["./src/types/env"]
-		}
 		//"skipLibCheck": true /* Skip type checking all .d.ts files. */
 	},
 	"include": ["src/**/*.ts", "src/**/*.ts.disabled"],
-	"ts-node": {
-		"esm": true,
-		"files": true,
-		"pretty": true
-	}
 }

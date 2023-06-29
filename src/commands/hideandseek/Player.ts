@@ -2,12 +2,8 @@ import type { ButtonInteraction, ChatInputCommandInteraction, GuildMember } from
 import { userMention } from "discord.js";
 import { SQUIDSHUFFLE_EMOJI } from "../../emojis.js";
 import { embeds } from "../../utils.js";
-import { HIDER_EXPLANATION, ROLE_ICON_MAP, SEEKER_EXPLANATION } from "./consts.js";
+import { HIDER_EXPLANATION, PlayerRole, ROLE_ICON_MAP, SEEKER_EXPLANATION } from "./consts.js";
 
-export const enum PlayerRole {
-	Seeker,
-	Hider,
-}
 export default class Player<Host extends boolean = boolean> {
 	public member: GuildMember;
 	private readonly gameHost: Player<true>;

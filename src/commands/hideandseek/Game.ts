@@ -33,8 +33,9 @@ import {
 	parallel,
 	wait,
 } from "../../utils.js";
-import Player, { PlayerRole } from "./Player.js";
+import Player from "./Player.js";
 import {
+	PlayerRole,
 	RULES,
 	SECONDS_TO_CONFIRM_LEAVE,
 	SECONDS_TO_JOIN,
