@@ -36,10 +36,12 @@ export async function deploy(guildId: string) {
 	);
 	const rest = new REST({ version: "10" }).setToken(getEnv("TOKEN"));
 
-	rest.put(Routes.applicationGuildCommands(getEnv("CLIENT_ID"), guildId), { body: [...commands, ...contexts] })
+	await rest
+		.put(Routes.applicationGuildCommands(getEnv("CLIENT_ID"), guildId), { body: [...commands, ...contexts] })
 		.then((data) => {
 			if (Array.isArray(data)) consola.success(`Successfully registered ${data.length} application commands.`);
 		})
 		.catch((...params: unknown[]) => consola.error(params.shift(), ...params));
+	process.exit();
 }
 await deploy(getEnv("GUILD_ID"));
