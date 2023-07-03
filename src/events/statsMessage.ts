@@ -1,4 +1,3 @@
-import consola from "consola";
 import type { Guild } from "discord.js";
 import { AttachmentBuilder, TimestampStyles, roleMention, time } from "discord.js";
 import type { Vector } from "ngraph.forcelayout";
@@ -69,7 +68,6 @@ async function makeInviteGraph(guild: Guild): Promise<Buffer> {
 	graph.forEachNode((v) => {
 		const pos = layout.getNodePosition(v.id);
 		const scaledPos = scaleVector(pos);
-		consola.log("circle", scaledPos);
 		// Draw a node as a circle
 		svg += dedent`<circle cx="${scaledPos.x}" cy="${scaledPos.y}" r="30" fill="#17a80d"/>`;
 		text += `<text x="${scaledPos.x}" y="${
