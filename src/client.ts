@@ -153,6 +153,14 @@ export default class Client<Ready extends boolean = false, Loaded extends boolea
 				`Fetching discord objects took ${formatTime((new Date().getTime() - start.getTime()) / 1000)}`,
 			);
 			this.loadedSyncSignal.fire();
+			if (IS_DEV && platform === "win32")
+				spawn(`powershell.exe`, [
+					"-c",
+					`$player = New-Object System.Media.SoundPlayer;$player.SoundLocation = '${path.resolve(
+						"./assets/startup.wav",
+					)}';$player.playsync();`,
+				]);
+			consola.ready("Ready!");
 		});
 
 		for (const event of this.eventRegistry.values()) {
@@ -254,12 +262,5 @@ export default class Client<Ready extends boolean = false, Loaded extends boolea
 			await command?.autocomplete?.({ client: this, interaction });
 		});
 		await this.login(getEnv("TOKEN"));
-		if (IS_DEV && platform === "win32")
-			spawn(`powershell.exe`, [
-				"-c",
-				`$player = New-Object System.Media.SoundPlayer;$player.SoundLocation = '${path.resolve(
-					"./assets/startup.wav",
-				)}';$player.playsync();`,
-			]);
 	}
 }
