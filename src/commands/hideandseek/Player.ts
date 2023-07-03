@@ -42,13 +42,14 @@ export default class Player<Host extends boolean = boolean> {
 		)}`;
 	}
 	public async roleEmbed() {
+		const hostIcon = this.gameHost.member.avatarURL();
 		return await embeds((b) =>
 			b
 				.setAuthor(
 					!this.host
 						? {
 								name: `Host: ${this.gameHost.member.displayName}・Room code: ${this.gameCode}`,
-								iconURL: this.gameHost.member.avatarURL() ?? "",
+								...(hostIcon ? { iconURL: hostIcon } : {}),
 						  }
 						: null,
 				)
