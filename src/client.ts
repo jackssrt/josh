@@ -149,7 +149,9 @@ export default class Client<Ready extends boolean = false, Loaded extends boolea
 				this.guild.channels.fetch(getEnv("STATS_CHANNEL_ID")) as Promise<TextChannel>,
 				this.guild.roles.fetch(getEnv("SPLATFEST_TEAM_CATEGORY_ROLE_ID")) as Promise<Role>,
 			);
-			consola.success(`Fetching discord objects took ${formatTime(new Date().getTime() - start.getTime())}`);
+			consola.success(
+				`Fetching discord objects took ${formatTime((new Date().getTime() - start.getTime()) / 1000)}`,
+			);
 			this.loadedSyncSignal.fire();
 		});
 
