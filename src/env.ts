@@ -24,6 +24,7 @@ export interface ProcessEnv {
 	MATCH_CHANNEL_CATEGORY_ID: string;
 	TTS_CHANNEL_ID: string;
 	STATS_CHANNEL_ID: string;
+	ROLEPLAYER_IDS: string;
 }
 
 export default function getEnv<T extends keyof ProcessEnv>(key: T): ProcessEnv[T] {

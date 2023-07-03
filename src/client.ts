@@ -184,6 +184,14 @@ export default class Client<Ready extends boolean = false, Loaded extends boolea
 					content: "This command can only be used by the owner.",
 					ephemeral: true,
 				}));
+			if (
+				command.userAllowList &&
+				!(command.userAllowList.includes(interaction.user.id) || interaction.user === this.owner.user)
+			)
+				return void (await interaction.reply({
+					content: "Sorry, you aren't allowed to use this command...",
+					ephemeral: true,
+				}));
 			if (command.defer) await interaction.deferReply({ ephemeral: command.defer === "ephemeral" });
 			try {
 				await command.execute({ client: this, interaction });
