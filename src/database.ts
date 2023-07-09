@@ -8,6 +8,7 @@ import type { SalmonRunAPI, SchedulesAPI } from "./types/rotationNotifier.js";
 import { SMALLEST_DATE, parallel } from "./utils.js";
 export const FEATURE_FLAGS = {
 	"tts.voice": "gtts",
+	"tts.enabled": "true",
 } satisfies Record<string, string>;
 export type FeatureFlag = keyof typeof FEATURE_FLAGS;
 export interface DatabaseData {
@@ -133,6 +134,9 @@ export class Database {
 	public async getFeatureFlag<T extends FeatureFlag>(flag: T): Promise<(typeof FEATURE_FLAGS)[T]> {
 		const overrides = await this.backend.get("featureFlags", {} as Partial<typeof FEATURE_FLAGS>);
 		return overrides[flag] ?? FEATURE_FLAGS[flag];
+	}
+	public async getBooleanFeatureFlag<T extends FeatureFlag>(flag: T): Promise<boolean> {
+		return (await this.getFeatureFlag(flag)) === "true";
 	}
 }
 

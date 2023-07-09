@@ -59,7 +59,8 @@ export default [
 				message.channelId !== getEnv("TTS_CHANNEL_ID") ||
 				message.author.bot ||
 				!message.inGuild() ||
-				!message.member?.voice.channel
+				!message.member?.voice.channel ||
+				!(await database.getBooleanFeatureFlag("tts.enabled"))
 			)
 				return;
 			const filesToPlay = message.attachments.filter(
