@@ -9,6 +9,7 @@ import { SMALLEST_DATE, parallel } from "./utils.js";
 export const FEATURE_FLAGS = {
 	"tts.voice": "gtts",
 	"tts.enabled": "true",
+	"tts.mutedOnly": "false",
 } satisfies Record<string, string>;
 export type FeatureFlag = keyof typeof FEATURE_FLAGS;
 export interface DatabaseData {

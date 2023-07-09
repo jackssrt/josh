@@ -60,7 +60,8 @@ export default [
 				message.author.bot ||
 				!message.inGuild() ||
 				!message.member?.voice.channel ||
-				!(await database.getBooleanFeatureFlag("tts.enabled"))
+				!(await database.getBooleanFeatureFlag("tts.enabled")) ||
+				((await database.getBooleanFeatureFlag("tts.mutedOnly")) && !message.member.voice.mute)
 			)
 				return;
 			const filesToPlay = message.attachments.filter(
