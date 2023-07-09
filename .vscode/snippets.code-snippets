@@ -44,5 +44,21 @@
 			""
 		],
 		"description": "Command"
+	},
+	"ContextMenuItem": {
+		"prefix": "contextMenuItem",
+		"body": [
+			"import type { ContextMenuItem } from \"../contextMenuItem.js\";",
+			"",
+			"export default {",
+			"\ttype: \"${1|Message,User|}\",",
+			"\tdata: (b) => b,",
+			"\tasync execute({ client, interaction }) {",
+			"\t\t${0}",
+			"\t}",
+			"} as ContextMenuItem<\"${1}\">;",
+			""
+		],
+		"description": "Context Menu Item"
 	}
 }
