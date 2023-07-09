@@ -4,6 +4,10 @@ import type Command from "../command.js";
 import type { FeatureFlag } from "../database.js";
 import database, { FEATURE_FLAGS } from "../database.js";
 
+function displayFlag(flag: string, value: string) {
+	return codeBlock(`${flag} = ${value}`);
+}
+
 export default {
 	data: (b) =>
 		b
@@ -49,10 +53,12 @@ export default {
 	async execute({ interaction }) {
 		const flag = interaction.options.getString("flag", true) as FeatureFlag;
 		if (interaction.options.getSubcommand(true) === "get") {
-			await interaction.reply(codeBlock(await database.getFeatureFlag(flag)));
+			await interaction.reply(displayFlag(flag, await database.getFeatureFlag(flag)));
 		} else {
-			await database.setFeatureFlag(flag, interaction.options.getString("value", true));
-			await interaction.reply(`✅`);
+			const oldValue = await database.getFeatureFlag(flag);
+			const newValue = interaction.options.getString("value", true);
+			await database.setFeatureFlag(flag, newValue);
+			await interaction.reply(`${displayFlag(flag, oldValue)}->${displayFlag(flag, newValue)}`);
 		}
 	},
 } as Command;
