@@ -29,7 +29,7 @@ class DatabaseBackend<T extends Record<K, unknown>, K extends string> {
 	private data: T | undefined = undefined;
 	private static readonly PATH = "./database.json";
 	private async load() {
-		if (existsSync("./database.json"))
+		if (existsSync(DatabaseBackend.PATH))
 			this.data = JSON.parse(await readFile(DatabaseBackend.PATH, { encoding: "utf-8" })) as T;
 		else this.data = {} as T;
 	}
