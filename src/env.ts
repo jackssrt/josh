@@ -25,6 +25,7 @@ export interface ProcessEnv {
 	TTS_CHANNEL_ID: string;
 	STATS_CHANNEL_ID: string;
 	ROLEPLAYER_IDS: string;
+	JOIN_IGNORE_IDS: string;
 }
 
 export default function getEnv<T extends keyof ProcessEnv>(key: T): ProcessEnv[T] {

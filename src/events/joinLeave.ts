@@ -1,6 +1,7 @@
 import type { Collection, GuildMember, PartialGuildMember } from "discord.js";
 import { userMention } from "discord.js";
 import type Client from "../client.js";
+import getEnv from "../env.js";
 import type Event from "../event.js";
 import { impersonate, membersWithRoles } from "../utils.js";
 
@@ -34,14 +35,24 @@ export default [
 	{
 		event: "guildMemberAdd",
 		async on({ client }, member) {
-			if (member.user.bot || member.guild !== client.guild) return;
+			if (
+				member.user.bot ||
+				member.guild !== client.guild ||
+				getEnv("JOIN_IGNORE_IDS").split(",").includes(member.id)
+			)
+				return;
 			await onMemberJoin(client, member);
 		},
 	} as Event<"guildMemberAdd">,
 	{
 		event: "guildMemberRemove",
 		async on({ client }, member) {
-			if (member.user.bot || member.guild !== client.guild) return;
+			if (
+				member.user.bot ||
+				member.guild !== client.guild ||
+				getEnv("JOIN_IGNORE_IDS").split(",").includes(member.id)
+			)
+				return;
 			await onMemberLeave(client, member);
 		},
 	} as Event<"guildMemberRemove">,

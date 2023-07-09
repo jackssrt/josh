@@ -34,6 +34,7 @@ export default {
 	event: "messageCreate",
 	async on({ client }, message) {
 		if (!message.inGuild() || !message.member || message.type !== MessageType.UserJoin) return;
+		if (getEnv("JOIN_IGNORE_IDS").split(",").includes(message.author.id)) return await message.delete();
 		await sendWelcomeMessage(client, message);
 	},
 } as Event<"messageCreate">;
