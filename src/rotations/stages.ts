@@ -1,5 +1,5 @@
 import { BULLET_EMOJI } from "../emojis.js";
-import type { SchedulesAPI } from "../types/rotationNotifier.js";
+import type * as SchedulesAPI from "../types/schedulesApi.js";
 
 export class Stage {
 	public name: string;

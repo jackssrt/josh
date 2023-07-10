@@ -3,7 +3,8 @@ import type { Snowflake } from "discord.js";
 import { existsSync } from "fs";
 import { readFile, writeFile } from "fs/promises";
 import Lock from "./lock.js";
-import type { SalmonRunAPI, SchedulesAPI } from "./types/rotationNotifier.js";
+import type * as SalmonRunAPI from "./types/salmonRunApi.js";
+import type * as SchedulesAPI from "./types/schedulesApi.js";
 import { SMALLEST_DATE, parallel } from "./utils.js";
 export const FEATURE_FLAGS = {
 	"tts.voice": "gtts",

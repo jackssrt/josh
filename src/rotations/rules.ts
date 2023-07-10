@@ -1,6 +1,6 @@
 import type { HexColorString } from "discord.js";
 import { REGULAR_BATTLE_EMOJI } from "../emojis.js";
-import type { SchedulesAPI } from "../types/rotationNotifier.js";
+import type * as SchedulesAPI from "../types/schedulesApi.js";
 
 interface BaseRule {
 	name: string;

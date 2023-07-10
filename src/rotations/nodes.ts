@@ -15,7 +15,7 @@ import {
 	SPLATFEST_EMOJI,
 	X_BATTLE_EMOJI,
 } from "../emojis.js";
-import type { SchedulesAPI } from "../types/rotationNotifier.js";
+import type * as SchedulesAPI from "../types/schedulesApi.js";
 import { dedent, parallel, textImage } from "../utils.js";
 import TimeRange from "./TimeRange.js";
 import TimeRangeCollection from "./TimeRangeCollection.js";

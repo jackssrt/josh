@@ -3,7 +3,8 @@ import consola from "consola";
 import type { Awaitable } from "discord.js";
 import { USER_AGENT } from "../client.js";
 import database from "../database.js";
-import type { SalmonRunAPI, SchedulesAPI } from "../types/rotationNotifier.js";
+import type * as SalmonRunAPI from "../types/salmonRunApi.js";
+import type * as SchedulesAPI from "../types/schedulesApi.js";
 import { LARGEST_DATE, formatTime, iteratorToArray, parallel } from "../utils.js";
 import { PoppingTimeRangeCollection } from "./TimeRangeCollection.js";
 import {
