@@ -9,6 +9,7 @@ import getEnv from "../env.js";
 import {
 	dedent,
 	embeds,
+	escapeXml,
 	getLowerRolesInSameCategory,
 	membersWithRoles,
 	parallel,
@@ -73,7 +74,7 @@ async function makeInviteGraph(guild: Guild): Promise<Buffer> {
 		text += `<text x="${scaledPos.x}" y="${
 			scaledPos.y + 5
 		}" text-anchor="middle" dominant-baseline="middle" fill="white" font-family="splatoon2
-			" font-size="30px">${v.data}</text>`;
+			" font-size="30px">${escapeXml(v.data)}</text>`;
 	});
 	svg += text;
 	svg += "</svg>";

@@ -314,6 +314,22 @@ export function dedent(strings: TemplateStringsArray, ...values: unknown[]): str
 		}, "")
 		.replace(/^(\t| {4})+/gm, "");
 }
+/**
+ * @link https://stackoverflow.com/a/27979933
+ */
+export function escapeXml(unsafe: string) {
+	return unsafe.replace(/[<>&'"]/g, function (c) {
+		switch (c) {
+			case '<': return '&lt;';
+			case '>': return '&gt;';
+			case '&': return '&amp;';
+			case '\'': return '&apos;';
+			case '"': return '&quot;';
+			default: return '';
+		}
+	});
+}
+
 export function membersWithRoles(roles: Role[]): Collection<string, GuildMember> {
 	return roles.reduce((acc, v) => {
 		return acc.intersect(v.members);
