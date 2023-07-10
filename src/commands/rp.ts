@@ -1,5 +1,4 @@
 import type Command from "../command.js";
-import getEnv from "../env.js";
 import { parallel } from "../utils.js";
 
 export default {
@@ -15,7 +14,7 @@ export default {
 					.setRequired(false),
 			)
 			.addAttachmentOption((b) => b.setName("attachment").setDescription("Attachment").setRequired(false)),
-	userAllowList: getEnv("ROLEPLAYER_IDS").split(","),
+	userAllowList: process.env.ROLEPLAYER_IDS.split(","),
 	async execute({ interaction }) {
 		if (!interaction.channel) return;
 		const content = interaction.options.getString("content");

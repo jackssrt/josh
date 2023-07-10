@@ -5,7 +5,6 @@ import createLayout from "ngraph.forcelayout";
 import createGraph from "ngraph.graph";
 import sharp from "sharp";
 import database from "../database.js";
-import getEnv from "../env.js";
 import {
 	dedent,
 	embeds,
@@ -129,8 +128,8 @@ export default [
 			if (
 				newMember.guild !== client.guild &&
 				// oldMemberHasRole xor newMemberHasRole
-				oldMember.roles.cache.has(getEnv("MEMBER_ROLE_ID")) !==
-					newMember.roles.cache.has(getEnv("MEMBER_ROLE_ID"))
+				oldMember.roles.cache.has(process.env.MEMBER_ROLE_ID) !==
+					newMember.roles.cache.has(process.env.MEMBER_ROLE_ID)
 			)
 				return;
 			await updateStatsMessage(client);

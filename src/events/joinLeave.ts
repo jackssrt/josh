@@ -1,7 +1,6 @@
 import type { Collection, GuildMember, PartialGuildMember } from "discord.js";
 import { userMention } from "discord.js";
 import type Client from "../client.js";
-import getEnv from "../env.js";
 import type Event from "../event.js";
 import { impersonate, membersWithRoles } from "../utils.js";
 
@@ -38,7 +37,7 @@ export default [
 			if (
 				member.user.bot ||
 				member.guild !== client.guild ||
-				getEnv("JOIN_IGNORE_IDS").split(",").includes(member.id)
+				process.env.JOIN_IGNORE_IDS.split(",").includes(member.id)
 			)
 				return;
 			await onMemberJoin(client, member);
@@ -50,7 +49,7 @@ export default [
 			if (
 				member.user.bot ||
 				member.guild !== client.guild ||
-				getEnv("JOIN_IGNORE_IDS").split(",").includes(member.id)
+				process.env.JOIN_IGNORE_IDS.split(",").includes(member.id)
 			)
 				return;
 			await onMemberLeave(client, member);

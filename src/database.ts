@@ -2,7 +2,6 @@ import axios from "axios";
 import type { Snowflake } from "discord.js";
 import { existsSync } from "fs";
 import { readFile, writeFile } from "fs/promises";
-import getEnv from "./env.js";
 import Lock from "./lock.js";
 import type { SalmonRunAPI, SchedulesAPI } from "./types/rotationNotifier.js";
 import { SMALLEST_DATE, parallel } from "./utils.js";
@@ -25,7 +24,7 @@ export interface DatabaseData {
 	featureFlags: Partial<typeof FEATURE_FLAGS>;
 }
 class DatabaseBackend<T extends Record<K, unknown>, K extends string> {
-	private readonly replitDatabaseUrl = getEnv("REPLIT_DB_URL");
+	private readonly replitDatabaseUrl = process.env.REPLIT_DB_URL;
 	private data: T | undefined = undefined;
 	private static readonly PATH = "./database.json";
 	private async load() {

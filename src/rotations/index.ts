@@ -3,7 +3,6 @@ import consola from "consola";
 import type { Awaitable } from "discord.js";
 import { USER_AGENT } from "../client.js";
 import database from "../database.js";
-import getEnv from "../env.js";
 import type { SalmonRunAPI, SchedulesAPI } from "../types/rotationNotifier.js";
 import { LARGEST_DATE, formatTime, iteratorToArray, parallel } from "../utils.js";
 import { PoppingTimeRangeCollection } from "./TimeRangeCollection.js";
@@ -131,7 +130,7 @@ export class Rotations {
 	}
 
 	private static async fetch(ignoreCache = false): Promise<FetchedRotations> {
-		if (getEnv("NODE_ENV") === "test")
+		if (process.env.NODE_ENV === "test")
 			return {
 				splatfest: new PoppingTimeRangeCollection([]),
 				challenges: new PoppingTimeRangeCollection([]),

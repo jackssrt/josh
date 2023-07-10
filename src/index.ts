@@ -1,8 +1,8 @@
-import * as dotenv from "dotenv";
+
 import Client from "./client.js";
 import installDependencies from "./dependencies.js";
 import { IS_PROD } from "./env.js";
-dotenv.config();
+
 await installDependencies();
 if (IS_PROD) import("./keepalive.js");
 const client = new (Client as typeof Client<boolean, boolean>)();

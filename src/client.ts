@@ -21,7 +21,7 @@ import { platform } from "node:process";
 import SyncSignal from "./SyncSignal.js";
 import type Command from "./command.js";
 import type { ContextMenuItem } from "./contextMenuItem.js";
-import getEnv, { IS_BUILT, IS_DEV } from "./env.js";
+import { IS_BUILT, IS_DEV } from "./env.js";
 import type Event from "./event.js";
 import Registry from "./registry.js";
 import { errorEmbeds, formatTime, parallel, pluralize } from "./utils.js";
@@ -122,7 +122,7 @@ export default class Client<Ready extends boolean = false, Loaded extends boolea
 		this.on("ready", async () => {
 			consola.info("Fetching discord objects phase 1...");
 			const start = new Date();
-			this.guild = await this.guilds.fetch(getEnv("GUILD_ID"));
+			this.guild = await this.guilds.fetch(process.env.GUILD_ID);
 			consola.info("Fetching discord objects phase 2...");
 			[
 				this.owner,
@@ -137,17 +137,17 @@ export default class Client<Ready extends boolean = false, Loaded extends boolea
 				this.statsChannel,
 				this.splatfestTeamRoleCategory,
 			] = await parallel(
-				this.guild.members.fetch(getEnv("OWNER_ID")),
-				this.guild.channels.fetch(getEnv("VOICE_CATEGORY_ID")) as Promise<CategoryChannel>,
-				this.guild.channels.fetch(getEnv("UNUSED_VOICE_CATEGORY_ID")) as Promise<CategoryChannel>,
-				this.guild.channels.fetch(getEnv("GENERAL_CHANNEL_ID")) as Promise<TextChannel>,
-				this.guild.roles.fetch(getEnv("MEMBER_ROLE_ID")) as Promise<Role>,
-				this.guild.channels.fetch(getEnv("JOIN_LEAVE_CHANNEL_ID")) as Promise<TextChannel>,
-				this.guild.channels.fetch(getEnv("MAPS_CHANNEL_ID")) as Promise<NewsChannel>,
-				this.guild.channels.fetch(getEnv("SALMON_RUN_CHANNEL_ID")) as Promise<NewsChannel>,
-				this.guild.roles.fetch(getEnv("COLORS_ROLE_CATEGORY_ID")) as Promise<Role>,
-				this.guild.channels.fetch(getEnv("STATS_CHANNEL_ID")) as Promise<TextChannel>,
-				this.guild.roles.fetch(getEnv("SPLATFEST_TEAM_CATEGORY_ROLE_ID")) as Promise<Role>,
+				this.guild.members.fetch(process.env.OWNER_ID),
+				this.guild.channels.fetch(process.env.VOICE_CATEGORY_ID) as Promise<CategoryChannel>,
+				this.guild.channels.fetch(process.env.UNUSED_VOICE_CATEGORY_ID) as Promise<CategoryChannel>,
+				this.guild.channels.fetch(process.env.GENERAL_CHANNEL_ID) as Promise<TextChannel>,
+				this.guild.roles.fetch(process.env.MEMBER_ROLE_ID) as Promise<Role>,
+				this.guild.channels.fetch(process.env.JOIN_LEAVE_CHANNEL_ID) as Promise<TextChannel>,
+				this.guild.channels.fetch(process.env.MAPS_CHANNEL_ID) as Promise<NewsChannel>,
+				this.guild.channels.fetch(process.env.SALMON_RUN_CHANNEL_ID) as Promise<NewsChannel>,
+				this.guild.roles.fetch(process.env.COLORS_ROLE_CATEGORY_ID) as Promise<Role>,
+				this.guild.channels.fetch(process.env.STATS_CHANNEL_ID) as Promise<TextChannel>,
+				this.guild.roles.fetch(process.env.SPLATFEST_TEAM_CATEGORY_ROLE_ID) as Promise<Role>,
 			);
 			consola.success(
 				`Fetching discord objects took ${formatTime((new Date().getTime() - start.getTime()) / 1000)}`,
@@ -261,6 +261,6 @@ export default class Client<Ready extends boolean = false, Loaded extends boolea
 			await this.loadedSyncSignal.await();
 			await command?.autocomplete?.({ client: this, interaction });
 		});
-		await this.login(getEnv("TOKEN"));
+		await this.login(process.env.TOKEN);
 	}
 }

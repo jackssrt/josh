@@ -12,7 +12,6 @@ import type { Snowflake } from "discord.js";
 import { Collection } from "discord.js";
 import { Readable } from "node:stream";
 import database from "../database.js";
-import getEnv from "../env.js";
 import { LINK_REGEX, awaitEvent, errorEmbeds, parallel, pawait } from "../utils.js";
 import type Event from "./../event.js";
 const lastNames = new Collection<Snowflake, string>();
@@ -56,7 +55,7 @@ export default [
 		event: "messageCreate",
 		async on({ client }, message) {
 			if (
-				message.channelId !== getEnv("TTS_CHANNEL_ID") ||
+				message.channelId !== process.env.TTS_CHANNEL_ID ||
 				message.author.bot ||
 				!message.inGuild() ||
 				!message.member?.voice.channel ||

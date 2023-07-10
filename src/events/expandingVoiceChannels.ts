@@ -1,7 +1,6 @@
 import { consola } from "consola";
 import type { VoiceBasedChannel } from "discord.js";
 import { ChannelType, type CategoryChannel, type CategoryChildChannel, type VoiceChannel } from "discord.js";
-import getEnv from "../env.js";
 import type Event from "../event.js";
 import { parallel } from "../utils.js";
 
@@ -76,7 +75,7 @@ export default [
 		event: "voiceStateUpdate",
 		async on({ client }, oldState, newState) {
 			const category = [newState.channel?.parent, oldState.channel?.parent].find(
-				(v) => v?.id === getEnv("VOICE_CATEGORY_ID"),
+				(v) => v?.id === process.env.VOICE_CATEGORY_ID,
 			);
 			if (!category) return;
 			await updateChannels(category, client.unusedVoiceCategory);
