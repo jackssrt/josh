@@ -83,14 +83,11 @@ export type EmbedFactory = (b: EmbedBuilder) => Awaitable<EmbedBuilder>;
 export type OptionalEmbedFactory = (b: EmbedBuilder) => Awaitable<EmbedBuilder | false | undefined>;
 
 export async function embeds(...funcs: OptionalEmbedFactory[]) {
-	// the || operator catches `false` and `undefined`
-	/* eslint-disable @typescript-eslint/prefer-nullish-coalescing */
 	return {
 		embeds: (
 			await parallel(funcs.map(async (func) => (await func(new EmbedBuilder().setColor("#2b2d31"))) || []))
 		).flat(),
 	} satisfies InteractionReplyOptions;
-	/* eslint-enable @typescript-eslint/prefer-nullish-coalescing */
 }
 export function constructEmbedsWrapper(baseFactory: EmbedFactory): typeof embeds {
 	return async (...funcs) =>
@@ -320,20 +317,29 @@ export function dedent(strings: TemplateStringsArray, ...values: unknown[]): str
 export function escapeXml(unsafe: string) {
 	return unsafe.replace(/[<>&'"]/g, function (c) {
 		switch (c) {
-			case '<': return '&lt;';
-			case '>': return '&gt;';
-			case '&': return '&amp;';
-			case '\'': return '&apos;';
-			case '"': return '&quot;';
-			default: return '';
+			case "<":
+				return "&lt;";
+			case ">":
+				return "&gt;";
+			case "&":
+				return "&amp;";
+			case "'":
+				return "&apos;";
+			case '"':
+				return "&quot;";
+			default:
+				return "";
 		}
 	});
 }
 
 export function membersWithRoles(roles: Role[]): Collection<string, GuildMember> {
-	return roles.reduce((acc, v) => {
-		return acc.intersect(v.members);
-	}, roles[0]?.members ?? new Collection<string, GuildMember>());
+	return roles.reduce(
+		(acc, v) => {
+			return acc.intersect(v.members);
+		},
+		roles[0]?.members ?? new Collection<string, GuildMember>(),
+	);
 }
 export function formatNumberIntoNth(num: number): string {
 	const lastDigit = num % 10;

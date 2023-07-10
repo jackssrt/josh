@@ -94,9 +94,7 @@ export async function updateStatsMessage(client: Client<true>) {
 				}),
 			async (b) =>
 				b.setTitle("Roles").setDescription(
-					(
-						await client.guild.roles.fetch()
-					)
+					(await client.guild.roles.fetch())
 						.filter((v) => v.members.size > 0 && v.name !== "@everyone" && !colorRoles.includes(v))
 						.sort((a, b) => b.position - a.position)
 						.map(

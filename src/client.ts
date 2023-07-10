@@ -84,7 +84,7 @@ export default class Client<Ready extends boolean = false, Loaded extends boolea
 		});
 
 		// sanity checks
-		/* eslint-disable @typescript-eslint/no-unnecessary-condition */
+
 		this.commandRegistry.forEach((v, k) => {
 			function fail(reason: string) {
 				consola.error(`${k} command failed sanity check, ${reason} not defined`);

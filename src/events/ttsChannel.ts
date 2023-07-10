@@ -76,9 +76,7 @@ export default [
 							...(await parallel(
 								filesToPlay.map(async (v) =>
 									Buffer.from(
-										(
-											await axios.get<ArrayBuffer>(v.url, { responseType: "arraybuffer" })
-										).data,
+										(await axios.get<ArrayBuffer>(v.url, { responseType: "arraybuffer" })).data,
 									),
 								),
 							)),

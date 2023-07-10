@@ -542,7 +542,7 @@ export default class Game<State extends GameState = GameState.WaitingForPlayers>
 	}
 
 	public async start() {
-		// eslint-disable-next-line no-constant-condition, @typescript-eslint/no-unnecessary-condition
+		// eslint-disable-next-line no-constant-condition
 		while (true) {
 			if ((await (this as Game).awaitPlayers()) === false) break;
 			if (!(await (this as Game<GameState.DecidingTeams>).decideTeams())) break;

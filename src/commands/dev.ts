@@ -253,7 +253,6 @@ export default {
 		} else if (subcommand === "expandingvoicechannels") {
 			await updateChannels(client.voiceCategory, client.unusedVoiceCategory);
 			await interaction.editReply("done");
-			// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
 		} else if (subcommand === "renamevoicechannels") {
 			const result = await parallel(
 				...iteratorToArray(

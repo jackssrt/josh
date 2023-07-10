@@ -1,4 +1,3 @@
-
 import Client from "./client.js";
 import installDependencies from "./dependencies.js";
 import { IS_PROD } from "./env.js";

@@ -16,7 +16,7 @@ function generateChannelTopic(): string {
 		rotations.rankedOpen.active?.channelTopic(rotations.rankedOpen.future()[0]),
 		rotations.xBattle.active?.channelTopic(rotations.xBattle.future()[0]),
 	];
-	// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
+
 	return parts.flatMap((v) => v || []).join("\n・\n");
 }
 
