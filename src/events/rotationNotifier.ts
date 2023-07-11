@@ -1,3 +1,4 @@
+import type { MessageCreateOptions, NewsChannel } from "discord.js";
 import { TimestampStyles, time } from "discord.js";
 import type Event from "../event.js";
 import rotations from "../rotations/index.js";
@@ -20,12 +21,24 @@ function generateChannelTopic(): string {
 	return parts.flatMap((v) => v || []).join("\n・\n");
 }
 
-export async function sendSalmonRunRotation(client: Client<true>) {
-	// delete previous message
-	await (await client.salmonRunChannel.messages.fetch({ limit: 1 })).first()?.delete();
-
+async function sendRotation(channel: NewsChannel, dataCreator: () => Promise<MessageCreateOptions>) {
+	// get message data
+	// get previous message
+	const [messageData, oldMessage] = await parallel(dataCreator, channel.messages.fetch({ limit: 1 }));
+	// delete old message
 	// send message
-	const message = await client.salmonRunChannel.send({
+	// crosspost message
+	await parallel(
+		async () => {
+			const message = await channel.send(messageData);
+			await message.crosspost();
+		},
+		oldMessage.first()?.delete(),
+	);
+}
+
+export async function sendSalmonRunRotation(client: Client<true>) {
+	await sendRotation(client.salmonRunChannel, async () => ({
 		...(await embeds(
 			(b) => rotations.eggstraWork.active?.embed(b),
 			(b) =>
@@ -45,56 +58,45 @@ export async function sendSalmonRunRotation(client: Client<true>) {
 		files: (
 			await parallel(rotations.salmonRun.active?.attachments(), rotations.eggstraWork.active?.attachments())
 		).flatMap((x) => x ?? []),
-	});
-
-	// crosspost message
-	await message.crosspost();
+	}));
 }
 
 export async function sendRegularRotations(client: Client<true>) {
 	await parallel(
 		// set channel topic
-		client.generalChannel.setTopic(generateChannelTopic()),
+		async () => await client.generalChannel.setTopic(generateChannelTopic()),
 
-		async () => {
-			// delete previous message
-			await (await client.mapsChannel.messages.fetch({ limit: 1 })).first()?.delete();
-			// send message
-			const message = await client.mapsChannel.send({
-				...(await embeds(
-					(b) =>
-						b
-							.setAuthor({ name: "Data provided by splatoon3.ink", url: "https://splatoon3.ink/" })
-							.setDescription(
-								`Ends ${time(rotations.endTime, TimestampStyles.RelativeTime)} ${time(
-									rotations.endTime,
-									TimestampStyles.ShortTime,
-								)}`,
-							),
-					(b) => rotations.splatfest.active?.embed(b, rotations.splatfest.future(FUTURE_ROTATIONS_COUNT)),
-					(b) => rotations.currentFest?.state === "SECOND_HALF" && rotations.currentFest.embed(b, []),
-					(b) => rotations.challenges.active?.embed(b, []),
-					(b) => rotations.turfWar.active?.embed(b, rotations.turfWar.future(FUTURE_ROTATIONS_COUNT)),
-					(b) =>
-						rotations.rankedSeries.active?.embed(b, rotations.rankedSeries.future(FUTURE_ROTATIONS_COUNT)),
-					(b) => rotations.rankedOpen.active?.embed(b, rotations.rankedOpen.future(FUTURE_ROTATIONS_COUNT)),
-					(b) => rotations.xBattle.active?.embed(b, rotations.xBattle.future(FUTURE_ROTATIONS_COUNT)),
-				)),
-				files: (
-					await parallel(
-						rotations.splatfest.active?.attachments(),
-						rotations.currentFest?.attachments(),
-						rotations.challenges.active?.attachments(),
-						rotations.turfWar.active?.attachments(),
-						rotations.rankedOpen.active?.attachments(),
-						rotations.rankedSeries.active?.attachments(),
-						rotations.xBattle.active?.attachments(),
-					)
-				).flatMap((x) => x ?? []),
-			});
-			// crosspost message
-			await message.crosspost();
-		},
+		sendRotation(client.mapsChannel, async () => ({
+			...(await embeds(
+				(b) =>
+					b
+						.setAuthor({ name: "Data provided by splatoon3.ink", url: "https://splatoon3.ink/" })
+						.setDescription(
+							`Ends ${time(rotations.endTime, TimestampStyles.RelativeTime)} ${time(
+								rotations.endTime,
+								TimestampStyles.ShortTime,
+							)}`,
+						),
+				(b) => rotations.splatfest.active?.embed(b, rotations.splatfest.future(FUTURE_ROTATIONS_COUNT)),
+				(b) => rotations.currentFest?.state === "SECOND_HALF" && rotations.currentFest.embed(b, []),
+				(b) => rotations.challenges.active?.embed(b, []),
+				(b) => rotations.turfWar.active?.embed(b, rotations.turfWar.future(FUTURE_ROTATIONS_COUNT)),
+				(b) => rotations.rankedSeries.active?.embed(b, rotations.rankedSeries.future(FUTURE_ROTATIONS_COUNT)),
+				(b) => rotations.rankedOpen.active?.embed(b, rotations.rankedOpen.future(FUTURE_ROTATIONS_COUNT)),
+				(b) => rotations.xBattle.active?.embed(b, rotations.xBattle.future(FUTURE_ROTATIONS_COUNT)),
+			)),
+			files: (
+				await parallel(
+					rotations.splatfest.active?.attachments(),
+					rotations.currentFest?.attachments(),
+					rotations.challenges.active?.attachments(),
+					rotations.turfWar.active?.attachments(),
+					rotations.rankedOpen.active?.attachments(),
+					rotations.rankedSeries.active?.attachments(),
+					rotations.xBattle.active?.attachments(),
+				)
+			).flatMap((x) => x ?? []),
+		})),
 	);
 }
 
