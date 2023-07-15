@@ -88,14 +88,14 @@ export async function sendRegularRotations(client: Client<true>) {
 			files: (
 				await parallel(
 					rotations.splatfest.active?.attachments(),
-					rotations.currentFest?.attachments(),
+					rotations.currentFest?.state === "SECOND_HALF" && rotations.currentFest?.attachments(),
 					rotations.challenges.active?.attachments(),
 					rotations.turfWar.active?.attachments(),
 					rotations.rankedOpen.active?.attachments(),
 					rotations.rankedSeries.active?.attachments(),
 					rotations.xBattle.active?.attachments(),
 				)
-			).flatMap((x) => x ?? []),
+			).flatMap((x) => x || []),
 		})),
 	);
 }
