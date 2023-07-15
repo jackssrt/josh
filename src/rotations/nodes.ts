@@ -37,7 +37,7 @@ export abstract class BaseNode extends TimeRange implements Shortable {
 	public abstract emoji: string;
 	public abstract name: string;
 	public get imageName() {
-		return this.name.toLowerCase().replace(" ", "_").replace("&", "and");
+		return this.name.toLowerCase().replace(/&/g, "and").replace(/ /g, "_");
 	}
 
 	constructor(data: SchedulesAPI.BaseNode) {

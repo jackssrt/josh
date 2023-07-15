@@ -270,7 +270,7 @@ export async function textImage(text: string, color: string, size: number): Prom
 	// adding "Dg" forces the text image to be as tall as possible,
 	const img = sharp({
 		text: {
-			text: `<span foreground="${color}">Dg ${text.replace("&", "&amp;")} Dg</span>`,
+			text: `<span foreground="${color}">Dg ${text.replace(/&/g, "&amp;")} Dg</span>`,
 			dpi: 72 * size,
 			font: "Splatoon2",
 			rgba: true,

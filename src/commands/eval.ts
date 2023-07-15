@@ -19,7 +19,7 @@ async function clean(client: Client<true>, text: unknown): Promise<string> {
 
 	// Replace symbols with character code alternatives
 	text = (text as string)
-		.replace(client.token, "[REDACTED]")
+		.replace(new RegExp(client.token.replace(/\./g, "\\."), "gi"), "[REDACTED]")
 		.replace(/`/g, "`" + String.fromCharCode(8203))
 		.replace(/@/g, "@" + String.fromCharCode(8203));
 
@@ -42,7 +42,7 @@ export default {
 			const evaled = eval(
 				`(async function() {\n${interaction.options
 					.getString("code", true)
-					.replace("client.token", '"[haha no you don\'t]"')}\n})()`,
+					.replace(/client\.token/g, '"[haha no you don\'t]"')}\n})()`,
 			) as unknown;
 			const cleaned = await clean(client, evaled);
 			!interaction.replied &&
