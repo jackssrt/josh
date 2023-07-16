@@ -33,6 +33,7 @@ export default class Client<Ready extends boolean = false, Loaded extends boolea
 	public eventRegistry = new Registry<Event<keyof ClientEvents>>();
 	public contextMenuItemsRegistry = new Registry<ContextMenuItem<"User" | "Message">>();
 	public guild = undefined as Loaded extends true ? Guild : undefined;
+	public guildMe = undefined as Loaded extends true ? GuildMember : undefined;
 	public owner = undefined as Loaded extends true ? GuildMember : undefined;
 	public voiceCategory = undefined as Loaded extends true ? CategoryChannel : undefined;
 	public unusedVoiceCategory = undefined as Loaded extends true ? CategoryChannel : undefined;
@@ -125,6 +126,7 @@ export default class Client<Ready extends boolean = false, Loaded extends boolea
 			this.guild = await this.guilds.fetch(process.env.GUILD_ID);
 			consola.info("Fetching discord objects phase 2...");
 			[
+				this.guildMe,
 				this.owner,
 				this.voiceCategory,
 				this.unusedVoiceCategory,
@@ -137,6 +139,7 @@ export default class Client<Ready extends boolean = false, Loaded extends boolea
 				this.statsChannel,
 				this.splatfestTeamRoleCategory,
 			] = await parallel(
+				this.guild.members.fetchMe(),
 				this.guild.members.fetch(process.env.OWNER_ID),
 				this.guild.channels.fetch(process.env.VOICE_CATEGORY_ID) as Promise<CategoryChannel>,
 				this.guild.channels.fetch(process.env.UNUSED_VOICE_CATEGORY_ID) as Promise<CategoryChannel>,

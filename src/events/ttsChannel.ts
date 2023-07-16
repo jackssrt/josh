@@ -1,25 +1,17 @@
-import {
-	AudioPlayerStatus,
-	createAudioPlayer,
-	createAudioResource,
-	getVoiceConnection,
-	joinVoiceChannel,
-} from "@discordjs/voice";
 import { getAllAudioBase64 } from "google-tts-api";
 
 import axios from "axios";
 import type { Snowflake } from "discord.js";
 import { Collection } from "discord.js";
-import { Readable } from "node:stream";
 import database from "../database.js";
-import { LINK_REGEX, awaitEvent, errorEmbeds, parallel, pawait } from "../utils.js";
+import { LINK_REGEX, errorEmbeds, parallel, pawait } from "../utils.js";
+import { queueSound } from "../voice.js";
 import type Event from "./../event.js";
 const lastNames = new Collection<Snowflake, string>();
-const queue: Buffer[] = [];
 const SPEAK_REGEX = /<a?:|:\d+>|<id:\w+>|^--.*/g;
 
 export function clean(text: string): string {
-	return text.replace(SPEAK_REGEX, "").replace(LINK_REGEX, "").replace("_", " ");
+	return text.replace(SPEAK_REGEX, "").replace(LINK_REGEX, "").replace(/_/g, " ");
 }
 async function getSound(text: string) {
 	const voice = await database.getFeatureFlag("tts.voice");
@@ -68,18 +60,15 @@ export default [
 			);
 			const memberVoiceChannel = message.member.voice.channel;
 
-			// eslint-disable-next-line @typescript-eslint/no-unused-vars
-			const [_, error] = await pawait(
+			const [data, error] = await pawait(
 				(async () => {
 					if (filesToPlay.size > 0) {
-						queue.push(
-							...(await parallel(
-								filesToPlay.map(async (v) =>
-									Buffer.from(
-										(await axios.get<ArrayBuffer>(v.url, { responseType: "arraybuffer" })).data,
-									),
+						return await parallel(
+							filesToPlay.map(async (v) =>
+								Buffer.from(
+									(await axios.get<ArrayBuffer>(v.url, { responseType: "arraybuffer" })).data,
 								),
-							)),
+							),
 						);
 					} else {
 						const memberName = clean(message.member!.displayName);
@@ -91,7 +80,7 @@ export default [
 						lastNames.set(memberVoiceChannel.id, memberName);
 						const sound = await getSound(text);
 
-						queue.push(sound);
+						return sound;
 					}
 				})(),
 			);
@@ -105,37 +94,8 @@ export default [
 						}),
 					),
 				);
-			if (queue.length > 1) return;
-			while (queue[0]) {
-				const x = queue[0]!;
-				try {
-					const connection =
-						(memberVoiceChannel.id === (await message.guild.members.fetchMe()).voice.channelId &&
-							getVoiceConnection(message.guildId)) ||
-						joinVoiceChannel({
-							channelId: memberVoiceChannel.id,
-							guildId: message.guildId,
-							adapterCreator: message.channel.guild.voiceAdapterCreator,
-							selfDeaf: false,
-						});
-					const player = createAudioPlayer();
-					connection.subscribe(player);
-					const resource = createAudioResource(Readable.from(x), { inlineVolume: true });
-					resource.volume?.setVolume(0.2);
-					player.play(resource);
-					await awaitEvent(player, AudioPlayerStatus.Idle, 30);
-				} finally {
-					queue.shift();
-				}
-			}
+			if (!data) return;
+			(Array.isArray(data) ? data : [data]).forEach((v) => queueSound(client, memberVoiceChannel, v));
 		},
 	} as Event<"messageCreate">,
-	{
-		event: "voiceStateUpdate",
-		async on(_, oldState) {
-			const { voice } = await oldState.guild.members.fetchMe();
-			if (oldState.channel?.id === voice.channel?.id && voice.channel?.members.size === 1)
-				await voice.disconnect();
-		},
-	} as Event<"voiceStateUpdate">,
 ];
