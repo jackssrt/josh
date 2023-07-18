@@ -24,18 +24,9 @@ export default [
 				(v) => !!v.contentType && (v.contentType.startsWith("video") || v.contentType.startsWith("audio")),
 			);
 			const memberVoiceChannel = message.member.voice.channel;
-
 			const [data, error] = await pawait(
-				(async () => {
-					if (filesToPlay.size > 0 && (await database.getBooleanFeatureFlag("tts.playFiles"))) {
-						return await parallel(
-							filesToPlay.map(async (v) =>
-								Buffer.from(
-									(await axios.get<ArrayBuffer>(v.url, { responseType: "arraybuffer" })).data,
-								),
-							),
-						);
-					} else {
+				parallel(
+					async () => {
 						const memberName = cleanForSpeaking(message.member!.displayName);
 						const content = cleanForSpeaking(message.cleanContent);
 						if (content === "") return;
@@ -46,8 +37,15 @@ export default [
 						const sound = await textToSpeech(text);
 
 						return sound;
-					}
-				})(),
+					},
+					...(filesToPlay.size > 0 && (await database.getBooleanFeatureFlag("tts.playFiles"))
+						? filesToPlay.map(async (v) =>
+								Buffer.from(
+									(await axios.get<ArrayBuffer>(v.url, { responseType: "arraybuffer" })).data,
+								),
+						  )
+						: []),
+				),
 			);
 			if (error)
 				await parallel(
@@ -59,8 +57,7 @@ export default [
 						}),
 					),
 				);
-			if (!data) return;
-			(Array.isArray(data) ? data : [data]).forEach((v) => queueSound(client, memberVoiceChannel, v));
+			data?.forEach((v) => v && queueSound(client, memberVoiceChannel, v));
 		},
 	} as Event<"messageCreate">,
 ];

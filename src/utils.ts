@@ -363,6 +363,7 @@ export async function parallel<T extends ((() => Promise<unknown>) | Promise<unk
 		-readonly [i in keyof T]: Awaited<T[i] extends (...args: unknown[]) => unknown ? ReturnType<T[i]> : T[i]>;
 	};
 }
+
 /**
  * A tuple of an optional value or error.
  * @link https://doc.rust-lang.org/std/result/index.html
