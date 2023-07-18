@@ -10,6 +10,7 @@ export const FEATURE_FLAGS = {
 	"tts.voice": "gtts",
 	"tts.enabled": "true",
 	"tts.mutedOnly": "false",
+	"tts.playFiles": "true",
 } satisfies Record<string, string>;
 export type FeatureFlag = keyof typeof FEATURE_FLAGS;
 export interface DatabaseData {

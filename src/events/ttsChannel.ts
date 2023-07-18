@@ -27,7 +27,7 @@ export default [
 
 			const [data, error] = await pawait(
 				(async () => {
-					if (filesToPlay.size > 0) {
+					if (filesToPlay.size > 0 && (await database.getBooleanFeatureFlag("tts.playFiles"))) {
 						return await parallel(
 							filesToPlay.map(async (v) =>
 								Buffer.from(
