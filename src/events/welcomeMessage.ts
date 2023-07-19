@@ -32,7 +32,13 @@ export async function sendWelcomeMessage(client: Client<true>, message: Message<
 export default {
 	event: "messageCreate",
 	async on({ client }, message) {
-		if (!message.inGuild() || !message.member || message.type !== MessageType.UserJoin) return;
+		if (
+			!message.inGuild() ||
+			!message.member ||
+			message.type !== MessageType.UserJoin ||
+			message.guild !== client.guild
+		)
+			return;
 		if (process.env.JOIN_IGNORE_IDS.split(",").includes(message.author.id)) return await message.delete();
 		await sendWelcomeMessage(client, message);
 	},

@@ -135,7 +135,8 @@ export default [
 	} as Event<"guildMemberUpdate">,
 	{
 		event: "guildMemberRemove",
-		async on({ client }) {
+		async on({ client }, member) {
+			if (member.guild !== client.guild) return;
 			await updateStatsMessage(client);
 		},
 	} as Event<"guildMemberRemove">,
