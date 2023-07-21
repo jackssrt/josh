@@ -1,7 +1,8 @@
 import type Command from "../command.js";
 import { BOOYAH_EMOJI } from "../emojis.js";
 import Lock from "../lock.js";
-import { getLowerRolesInSameCategory, parallel, search } from "../utils.js";
+import type { Result } from "../utils.js";
+import { getLowerRolesInSameCategory, parallel } from "../utils.js";
 
 export const COLOR_DATA = [
 	{ name: "Blue Raspberry", value: "1FE2F3" },
@@ -56,6 +57,19 @@ export const COLOR_DATA = [
 	{ name: "Pastel Yellow", value: "F5E198" },
 ] as const;
 
+function parseHex(color: string): Result<string> {
+	// Remove the leading '#' if present
+	if (color.startsWith("#")) color = color.slice(1);
+
+	// Check if the hexColor string is valid
+	if (!/^[0-9A-Fa-f]{3}$|^[0-9A-Fa-f]{6}$/.test(color)) return [undefined, new Error("Invalid hex color string")];
+
+	// Expand the short-hand color notation (e.g., #abc to #aabbcc)
+	if (color.length === 3) color = color.replace(/(.)/g, "$1$1");
+
+	return [color, undefined];
+}
+
 const colorEmojiLock = new Lock();
 
 export default {
@@ -63,35 +77,33 @@ export default {
 		b
 			.setDescription("Sets your name color")
 			.addStringOption((b) =>
-				b.setAutocomplete(true).setName("color").setDescription("The color").setRequired(true),
+				b
+					.setName("color")
+					.setDescription(
+						`The color name or hex code, ex: "${COLOR_DATA[0].name.toLowerCase()}" or "${COLOR_DATA[0].value.toLowerCase()}"`,
+					)
+					.setRequired(true),
 			)
 			.setDMPermission(false),
-	async autocomplete({ interaction }) {
-		const focusedValue = interaction.options.getFocused();
-		const colorDataCopy = [...COLOR_DATA];
-		// slice limits the options to only be 25
-		await interaction.respond(
-			search(
-				colorDataCopy.map((v) => v.name),
-				focusedValue,
-			)
-				.slice(0, 25)
-				.map((v) => ({ name: v, value: v })),
-		);
-	},
 	async execute({ client, interaction }) {
 		if (!interaction.inCachedGuild() || interaction.guild !== client.guild)
 			return await interaction.reply("You can't run this command here!");
-		const colorInput = interaction.options.getString("color", true);
-		const colorData = COLOR_DATA.find((a) => a.name.toLowerCase().trim() === colorInput.toLowerCase().trim());
-		if (!colorData) return await interaction.reply({ content: "That color doesn't exist!", ephemeral: true });
+		const input = interaction.options.getString("color", true).trim().toLowerCase();
+		const [colorInput] = parseHex(input);
+		const colorData = COLOR_DATA.find(
+			(v) => v.value.toLowerCase() === colorInput?.toLowerCase() || v.name.toLowerCase() === input.toLowerCase(),
+		);
+
+		const hexColor = (colorInput || colorData?.value)?.toLowerCase();
+		if (!hexColor) return await interaction.reply("Provide a valid color name or hex!");
+
 		let key = "color-command-emoji-lock";
 		try {
 			await parallel(interaction.deferReply(), async () => {
 				key = await colorEmojiLock.lock();
 				const colorRoles = await getLowerRolesInSameCategory(client.colorsRoleCategory);
 				const alreadyExistingRole = colorRoles.find(
-					(v) => (v.hexColor.toLowerCase() as `#${string}`) === `#${colorData.value.toLowerCase()}`,
+					(v) => (v.hexColor.toLowerCase() as `#${string}`) === `#${hexColor}`,
 				);
 				const otherColorRoles = colorRoles.filter(
 					(v) => v.members.has(interaction.member.id) && v.id !== alreadyExistingRole?.id,
@@ -108,12 +120,12 @@ export default {
 				// make a new role
 				// and give it to the user
 				const newRole = await client.guild.roles.create({
-					color: `#${colorData.value}`,
+					color: `#${hexColor}`,
 					hoist: false,
 					mentionable: false,
 					permissions: [],
 					position: client.colorsRoleCategory.position,
-					name: `🎨・${colorData.name}`,
+					name: `🎨・${colorData?.name ?? "Custom"}`,
 				});
 				await interaction.member.roles.add(newRole, "Requested color");
 			});

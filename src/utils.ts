@@ -270,15 +270,16 @@ export async function textImage(text: string, color: string, size: number): Prom
 	// adding "Dg" forces the text image to be as tall as possible,
 	const img = sharp({
 		text: {
-			text: `<span foreground="${color}">Dg ${text.replace(/&/g, "&amp;")} Dg</span>`,
+			text: `<span foreground="${color}">Dg ${escapeXml(text)} Dg</span>`,
 			dpi: 72 * size,
 			font: "Splatoon2",
 			rgba: true,
 		},
 	});
-	const width = Math.ceil(((await img.metadata()).width ?? 15.5 * 2 * size) - 15.5 * 2 * size);
+	const metadata = await img.metadata();
+	const width = Math.ceil((metadata.width ?? 15.5 * 2 * size) - 15.5 * 2 * size);
 
-	const height = (await img.metadata()).height ?? 0;
+	const height = metadata.height ?? 0;
 	// cuts off the "Dg" text while keeping the height
 	return img.resize(width, height).png();
 }
