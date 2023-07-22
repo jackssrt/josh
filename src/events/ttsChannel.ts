@@ -32,7 +32,7 @@ export default [
 						if (content === "") return;
 						const text = `${
 							lastNames.get(memberVoiceChannel.id) !== memberName ? `${memberName} says ` : ""
-						}${content}`;
+						}${content}`.toLowerCase();
 						lastNames.set(memberVoiceChannel.id, memberName);
 						const sound = await textToSpeech(text);
 
