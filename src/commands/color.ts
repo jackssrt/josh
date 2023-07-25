@@ -2,7 +2,7 @@ import type Command from "../command.js";
 import { BOOYAH_EMOJI } from "../emojis.js";
 import Lock from "../lock.js";
 import type { Result } from "../utils.js";
-import { getLowerRolesInSameCategory, parallel } from "../utils.js";
+import { getLowerRolesInSameCategory, parallel, search } from "../utils.js";
 
 export const COLOR_DATA = [
 	{ name: "Blue Raspberry", value: "1FE2F3" },
@@ -79,12 +79,28 @@ export default {
 			.addStringOption((b) =>
 				b
 					.setName("color")
+					.setAutocomplete(true)
 					.setDescription(
 						`The color name or hex code, ex: "${COLOR_DATA[0].name.toLowerCase()}" or "${COLOR_DATA[0].value.toLowerCase()}"`,
 					)
 					.setRequired(true),
 			)
 			.setDMPermission(false),
+	async autocomplete({ interaction }) {
+		const focusedValue = interaction.options.getFocused();
+		// slice limits the options to only be 25
+		const [hex] = parseHex(focusedValue);
+		await interaction.respond([
+			...(hex ? [{ name: focusedValue, value: focusedValue }] : []),
+			...search(
+				COLOR_DATA.map((v) => v.name),
+				focusedValue,
+			)
+				.slice(0, hex ? 24 : 25)
+				.map((v) => ({ name: v, value: v })),
+		]);
+	},
+
 	async execute({ client, interaction }) {
 		if (!interaction.inCachedGuild() || interaction.guild !== client.guild)
 			return await interaction.reply("You can't run this command here!");
