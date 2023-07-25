@@ -17,7 +17,6 @@ import {
 	StringSelectMenuOptionBuilder,
 	userMention,
 } from "discord.js";
-import { randomInt } from "node:crypto";
 import EventEmitter from "node:events";
 import { BOOYAH_EMOJI, OUCH_EMOJI, SQUIDSHUFFLE_EMOJI, VEEMO_PEEK_EMOJI } from "../../emojis.js";
 import { IS_PROD } from "../../env.js";
@@ -70,7 +69,6 @@ export default class Game<State extends GameState = GameState.WaitingForPlayers>
 	public startedTime = SMALLEST_DATE;
 	private state = GameState.WaitingForPlayers as State;
 	private hostConfigInteraction = undefined as NotDefinedAt<State, GameState.WaitingForPlayers, ButtonInteraction>;
-	public readonly code: string;
 	private mainMessage = undefined as NotDefinedAt<State, GameState.WaitingForPlayers, Message>;
 	private playedAgain = false;
 	private hidingTimeUpMsg = undefined as DefinedAt<State, GameState.SeekTime, Message>;
@@ -91,8 +89,8 @@ export default class Game<State extends GameState = GameState.WaitingForPlayers>
 		hostInteraction: ChatInputCommandInteraction<"cached">,
 		private readonly mode: "turfwar" | "ranked",
 		private readonly maxPlayers: number,
+		public readonly code: string,
 	) {
-		this.code = `${randomInt(0, 9)}${randomInt(0, 9)}${randomInt(0, 9)}${randomInt(0, 9)}`;
 		const host = new Player(hostInteraction, true as const, undefined, undefined, this.code);
 		this.players.set(hostInteraction.member, host);
 		this.host = host;

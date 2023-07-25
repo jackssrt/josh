@@ -1,3 +1,4 @@
+import { randomInt } from "node:crypto";
 import type Command from "../command.js";
 import Game from "./hideandseek/Game.js";
 
@@ -12,6 +13,14 @@ export default {
 					.setName("mode")
 					.setRequired(true),
 			)
+			.addStringOption((b) =>
+				b
+					.setName("passcode")
+					.setMinLength(4)
+					.setMaxLength(4)
+					.setRequired(false)
+					.setDescription("The passcode set for the room"),
+			)
 			.addIntegerOption((b) =>
 				b
 					.setName("maxplayers")
@@ -24,7 +33,10 @@ export default {
 		if (!interaction.inCachedGuild()) return;
 		const mode = interaction.options.getString("mode", true) as "ranked" | "turfwar";
 		const maxPlayers = interaction.options.getInteger("maxplayers", false);
-		const game = new Game(interaction, mode, maxPlayers ?? 8);
+		const passcode =
+			interaction.options.getString("passcode", false) ??
+			`${randomInt(0, 9)}${randomInt(0, 9)}${randomInt(0, 9)}${randomInt(0, 9)}`;
+		const game = new Game(interaction, mode, maxPlayers ?? 8, passcode);
 		await game.start();
 	},
 } as Command;
