@@ -4,6 +4,8 @@
 	"typescript.tsdk": "node_modules/typescript/lib",
 	"testing.automaticallyOpenPeekView": "never",
 	"eslint.format.enable": true,
+	"editor.tabSize": 4,
+	"editor.insertSpaces": false,
 	"[typescript]": {
 		"editor.defaultFormatter": "dbaeumer.vscode-eslint"
 	}
