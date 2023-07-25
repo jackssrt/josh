@@ -26,6 +26,12 @@
 			"problemMatcher": [],
 			"label": "npm: test",
 			"detail": "vitest"
+		},
+		{
+			"label": "Publish",
+			"type": "shell",
+			"command": "powershell ./scripts/publish.ps1",
+			"problemMatcher": []
 		}
 	]
 }
