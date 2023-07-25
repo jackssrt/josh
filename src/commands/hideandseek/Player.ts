@@ -1,6 +1,6 @@
 import type { ButtonInteraction, ChatInputCommandInteraction, GuildMember } from "discord.js";
 import { userMention } from "discord.js";
-import { SQUIDSHUFFLE_EMOJI } from "../../emojis.js";
+import { SQUID_SHUFFLE_EMOJI } from "../../emojis.js";
 import { embeds } from "../../utils.js";
 import { HIDER_EXPLANATION, PlayerRole, ROLE_ICON_MAP, SEEKER_EXPLANATION } from "./consts.js";
 
@@ -55,7 +55,7 @@ export default class Player<Host extends boolean = boolean> {
 				)
 				.setTitle(
 					this.role === undefined
-						? `Waiting for role... ${SQUIDSHUFFLE_EMOJI}`
+						? `Waiting for role... ${SQUID_SHUFFLE_EMOJI}`
 						: `Your role: ${this.role === PlayerRole.Seeker ? "Seeker" : "Hider"} ${
 								ROLE_ICON_MAP[this.role]
 						  }`,

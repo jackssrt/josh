@@ -18,7 +18,7 @@ import {
 	userMention,
 } from "discord.js";
 import EventEmitter from "node:events";
-import { BOOYAH_EMOJI, OUCH_EMOJI, SQUIDSHUFFLE_EMOJI, VEEMO_PEEK_EMOJI } from "../../emojis.js";
+import { BOOYAH_EMOJI, OUCH_EMOJI, SQUID_SHUFFLE_EMOJI, VEEMO_PEEK_EMOJI } from "../../emojis.js";
 import { IS_PROD } from "../../env.js";
 import {
 	SMALLEST_DATE,
@@ -131,7 +131,7 @@ export default class Game<State extends GameState = GameState.WaitingForPlayers>
 	private async awaitPlayers(this: Game): Promise<boolean | undefined> {
 		this.state = GameState.WaitingForPlayers;
 		const data = {
-			...(await embeds((b) => b.setDescription(`${SQUIDSHUFFLE_EMOJI} Setting everything up...`))),
+			...(await embeds((b) => b.setDescription(`${SQUID_SHUFFLE_EMOJI} Setting everything up...`))),
 			components: [
 				new ActionRowBuilder<ButtonBuilder>().addComponents(
 					new ButtonBuilder()
@@ -409,7 +409,7 @@ export default class Game<State extends GameState = GameState.WaitingForPlayers>
 				...(
 					await this.hostConfigEmbeds((b) =>
 						b
-							.setTitle(`Waiting for match start... ${SQUIDSHUFFLE_EMOJI}`)
+							.setTitle(`Waiting for match start... ${SQUID_SHUFFLE_EMOJI}`)
 							.setDescription(
 								'Press the `Match started!` button after the game says "Ready?" and "GO!"!',
 							),
@@ -579,10 +579,10 @@ export default class Game<State extends GameState = GameState.WaitingForPlayers>
 				parts.push(`Expires ${futureTimestamp(SECONDS_TO_JOIN, this.createdTime)}`);
 				break;
 			case GameState.DecidingTeams:
-				parts.push(`${SQUIDSHUFFLE_EMOJI} ${userMention(this.host.member.id)} is deciding teams...`);
+				parts.push(`${SQUID_SHUFFLE_EMOJI} ${userMention(this.host.member.id)} is deciding teams...`);
 				break;
 			case GameState.WaitingForMatchStart:
-				parts.push(`${SQUIDSHUFFLE_EMOJI} Waiting for the match to start...`);
+				parts.push(`${SQUID_SHUFFLE_EMOJI} Waiting for the match to start...`);
 				break;
 			case GameState.HideTime:
 				parts.push(`Hiding time ends ${futureTimestamp(this.hideTimeSeconds, this.startedTime)}`);

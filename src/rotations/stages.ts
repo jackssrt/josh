@@ -1,4 +1,11 @@
-import { BULLET_EMOJI } from "../emojis.js";
+import {
+	BULLET_EMOJI,
+	GONE_FISSION_HYDROPLANT_EMOJI,
+	JAMMIN_SALMON_JUNCTION_EMOJI,
+	MAROONERS_BAY_EMOJI,
+	SOCKEYE_STATION_EMOJI,
+	SPAWNING_GROUNDS_EMOJI,
+} from "../emojis.js";
 import type * as SchedulesAPI from "../types/schedulesApi.js";
 
 export class Stage {
@@ -41,11 +48,11 @@ export class CoopStage {
 		this.id = data.id;
 		this.emoji = (
 			{
-				"Spawning Grounds": "<:spawningGrounds:1087077105638047764>",
-				"Gone Fission Hydroplant": "<:goneFissionHydroplant:1087077100294516750>",
-				"Marooner's Bay": "<:maroonersBay:1087077102559432894>",
-				"Sockeye Station": "<:sockeyeStation:1087077104274911292>",
-				"Jammin' Salmon Junction": "<:jamminSalmonJunction:1114180647129456693>",
+				"Spawning Grounds": SPAWNING_GROUNDS_EMOJI,
+				"Gone Fission Hydroplant": GONE_FISSION_HYDROPLANT_EMOJI,
+				"Marooner's Bay": MAROONERS_BAY_EMOJI,
+				"Sockeye Station": SOCKEYE_STATION_EMOJI,
+				"Jammin' Salmon Junction": JAMMIN_SALMON_JUNCTION_EMOJI,
 				"???": BULLET_EMOJI,
 			} as const satisfies Record<CoopStage["name"], string>
 		)[this.name];

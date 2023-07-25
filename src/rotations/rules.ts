@@ -1,5 +1,11 @@
 import type { HexColorString } from "discord.js";
-import { REGULAR_BATTLE_EMOJI } from "../emojis.js";
+import {
+	CLAM_BLITZ_EMOJI,
+	RAINMAKER_EMOJI,
+	REGULAR_BATTLE_EMOJI,
+	SPLAT_ZONES_EMOJI,
+	TOWER_CONTROL_EMOJI,
+} from "../emojis.js";
 import type * as SchedulesAPI from "../types/schedulesApi.js";
 
 interface BaseRule {
@@ -22,7 +28,7 @@ export const splatZonesRule = {
 	name: "Splat Zones",
 	rule: "AREA",
 	id: "VnNSdWxlLTE:",
-	emoji: "<:splatZones:1071477929969721474>",
+	emoji: SPLAT_ZONES_EMOJI,
 	image: "https://cdn.wikimg.net/en/splatoonwiki/images/3/38/S3_icon_Splat_Zones.png",
 	color: "#00EFD6",
 } as const satisfies BaseRule;
@@ -30,7 +36,7 @@ export const clamBlitzRule = {
 	name: "Clam Blitz",
 	rule: "CLAM",
 	id: "VnNSdWxlLTQ:",
-	emoji: "<:clamBlitz:1071477924764598313>",
+	emoji: CLAM_BLITZ_EMOJI,
 	image: "https://cdn.wikimg.net/en/splatoonwiki/images/e/e3/S3_icon_Clam_Blitz.png",
 	color: "#FFFE00" as const,
 } as const satisfies BaseRule;
@@ -38,7 +44,7 @@ export const rainmakerRule = {
 	name: "Rainmaker",
 	rule: "GOAL",
 	id: "VnNSdWxlLTM:",
-	emoji: "<:rainmaker:1071477926974992384>",
+	emoji: RAINMAKER_EMOJI,
 	image: "https://cdn.wikimg.net/en/splatoonwiki/images/1/12/S3_icon_Rainmaker.png",
 	color: "#FEEF1A" as const,
 } as const satisfies BaseRule;
@@ -46,7 +52,7 @@ export const towerControlRule = {
 	name: "Tower Control",
 	rule: "LOFT",
 	id: "VnNSdWxlLTI:",
-	emoji: "<:towerControl:1071477928304578560>",
+	emoji: TOWER_CONTROL_EMOJI,
 	image: "https://cdn.wikimg.net/en/splatoonwiki/images/b/bc/S3_icon_Tower_Control.png",
 	color: "#6600E5" as const,
 } as const satisfies BaseRule;
