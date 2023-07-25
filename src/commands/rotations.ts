@@ -4,7 +4,7 @@ import rotations from "../rotations/index.js";
 import type { BaseNode } from "../rotations/nodes.js";
 import type { RankedRule } from "../rotations/rules.js";
 import { RULE_MAP } from "../rotations/rules.js";
-import { embeds, errorEmbeds } from "../utils.js";
+import { embeds } from "../utils.js";
 const listSubcommands = [
 	"challenges",
 	"turfwar",
@@ -60,10 +60,7 @@ export default {
 			} as const satisfies Record<ListSubcommand, PoppingTimeRangeCollection<BaseNode | undefined>>;
 			const nodes = subcommandMap[subcommand];
 			const displayNode = (nodes as PoppingTimeRangeCollection<BaseNode | undefined>).ranges.find((v) => !!v);
-			if (!displayNode)
-				return await interaction.editReply(
-					await errorEmbeds({ title: "Couldn't find rotation type", description: "Try again later..." }),
-				);
+			if (!displayNode) throw new Error("Couldn't find rotation type, try again later...");
 			await interaction.editReply(
 				await embeds((b) =>
 					b
@@ -92,10 +89,7 @@ export default {
 				rotations.rankedOpen.ranges.filter((v) => v?.rule.rule === gamemode),
 				rotations.xBattle.ranges.filter((v) => v?.rule.rule === gamemode),
 			] as const;
-			if (matched.every((v) => v.length === 0))
-				return await interaction.editReply(
-					await errorEmbeds({ title: "Couldn't find gamemode", description: "Try again later..." }),
-				);
+			if (matched.every((v) => v.length === 0)) throw new Error("Couldn't find gamemode, try again later...");
 
 			const rule = RULE_MAP[gamemode];
 			await interaction.editReply(

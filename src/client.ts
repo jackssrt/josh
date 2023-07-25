@@ -2,19 +2,8 @@
 /// <reference path="./src/types/env.d.ts"></reference>
 
 import consola from "consola";
-import type {
-	CategoryChannel,
-	ClientEvents,
-	Guild,
-	GuildMember,
-	InteractionReplyOptions,
-	MessageCreateOptions,
-	NewsChannel,
-	PresenceData,
-	Role,
-	TextChannel,
-} from "discord.js";
-import { ActivityType, Client as DiscordClient, EmbedBuilder, GatewayIntentBits } from "discord.js";
+import type { CategoryChannel, ClientEvents, Guild, NewsChannel, PresenceData, Role, TextChannel } from "discord.js";
+import { ActivityType, Client as DiscordClient, GatewayIntentBits, GuildMember, inlineCode } from "discord.js";
 import { spawn } from "node:child_process";
 import path from "node:path";
 import { platform } from "node:process";
@@ -24,7 +13,7 @@ import type { ContextMenuItem } from "./contextMenuItem.js";
 import { IS_BUILT, IS_DEV } from "./env.js";
 import type Event from "./event.js";
 import Registry from "./registry.js";
-import { errorEmbeds, formatTime, parallel, pluralize } from "./utils.js";
+import { formatTime, parallel, pluralize, reportError } from "./utils.js";
 consola.wrapAll();
 export const USER_AGENT =
 	"Splat Squad Bot (source code: https://github.com/jackssrt/josh , make an issue if it's misbehaving)";
@@ -176,12 +165,11 @@ export default class Client<Ready extends boolean = false, Loaded extends boolea
 
 		this.on("error", async (error) => {
 			await this.loadedSyncSignal.await();
-			await this.owner.send(
-				await errorEmbeds({
-					title: "Generic Error",
-					description: `${error.name} ${error.message}\n${error.stack ?? "no stack"}`,
-				}),
-			);
+			await reportError(this, {
+				title: "Generic Error",
+				description: `${inlineCode('client.on("error", () => {...}))')} caught an error.`,
+				error,
+			});
 		});
 
 		this.on("interactionCreate", async (interaction) => {
@@ -207,39 +195,13 @@ export default class Client<Ready extends boolean = false, Loaded extends boolea
 			try {
 				await command.execute({ client: this, interaction });
 			} catch (e) {
-				consola.error(e);
-				const data = {
-					embeds: [
-						new EmbedBuilder()
-							.setTitle(":( An error occurred")
-							.setColor("Red")
-							.setDescription(
-								`The following error was thrown while running command \`/${
-									interaction.commandName
-								}${interaction.options.data.reduce(
-									(p, v) => `${p} ${v.name}:${v.value?.toString() ?? "undefined"}`,
-									"",
-								)}\`:\n${(e as Error).name} - ${(e as Error).message || "No message provided."}`,
-							),
-					],
-					ephemeral: true,
-					components: [],
-				} as InteractionReplyOptions;
-				try {
-					await interaction.reply(data);
-				} catch {
-					try {
-						await interaction.editReply(data);
-					} catch {
-						try {
-							const owner = this.owner.user;
-							await owner.send(data as MessageCreateOptions);
-							await interaction.user.send(data as MessageCreateOptions);
-						} catch {
-							consola.error("everything failed while trying to send error message");
-						}
-					}
-				}
+				await reportError(this, {
+					title: `Command error: /${interaction.commandName}`,
+					description: "An error was thrown while running a command.",
+					error: e as Error,
+					affectedUser: interaction.member instanceof GuildMember ? interaction.member : interaction.user,
+					interaction,
+				});
 			}
 		});
 		this.on("interactionCreate", async (interaction) => {

@@ -1,9 +1,11 @@
+import { consola } from "consola";
 import type {
 	Awaitable,
 	InteractionReplyOptions,
 	Message,
 	MessageCreateOptions,
 	MessageEditOptions,
+	RepliableInteraction,
 	Role,
 	TextChannel,
 	User,
@@ -14,6 +16,7 @@ import levenshtein from "js-levenshtein";
 import type EventEmitter from "node:events";
 import { existsSync } from "node:fs";
 import { readFile } from "node:fs/promises";
+import { inspect } from "node:util";
 import type { Sharp } from "sharp";
 import sharp from "sharp";
 import type Client from "./client.js";
@@ -93,19 +96,6 @@ export function constructEmbedsWrapper(baseFactory: EmbedFactory): typeof embeds
 	return async (...funcs) =>
 		await embeds(...funcs.map<OptionalEmbedFactory>((v) => async (b) => v(await baseFactory(b))));
 }
-export function errorEmbeds(...data: { title: string; description: string }[]) {
-	// I guess it got a little too much for ts to imply the types
-	return embeds(
-		...data.map<EmbedFactory>(
-			(v) => (b) =>
-				b
-					.setTitle(`An error occurred 😭`)
-					.setDescription(`### ${v.title}\n${codeBlock(v.description.replace(/(?<=\().*(?=josh)/gm, ""))}`)
-					.setColor("Red")
-					.setTimestamp(new Date()),
-		),
-	);
-}
 
 export function pluralize(word: string, count: number): string {
 	return `${word}${count === 1 ? "" : "s"}`;
@@ -157,6 +147,68 @@ export async function updateStaticMessage(
  */
 export function scaleNumber(val: number, src: [number, number], dst: [number, number]): number {
 	return ((val - src[0]) / (src[1] - src[0])) * (dst[1] - dst[0]) + dst[0];
+}
+
+interface ErrorData {
+	title: string;
+	affectedUser?: GuildMember | User | undefined;
+	interaction?: RepliableInteraction | undefined;
+	description?: string | undefined;
+	error?: Error | undefined;
+}
+
+export async function reportError(
+	client: Client<true>,
+	{ title, description, error, affectedUser, interaction }: ErrorData,
+) {
+	const parts = ["Error reported:", title];
+	if (description) parts.push(description);
+	if (error) parts.push(inspect(error, { depth: 1 }));
+	consola.error(parts.join("\n"));
+	const embed = await embeds((b) => {
+		if (affectedUser) {
+			const url = affectedUser.displayAvatarURL();
+			b.setAuthor({
+				...(url ? { iconURL: url } : {}),
+				name: affectedUser instanceof GuildMember ? affectedUser.displayName : affectedUser.username,
+			});
+		}
+		return b
+			.setColor("#ff0000")
+			.setTitle(title)
+			.setDescription(
+				dedent`${description}
+				${
+					error
+						? codeBlock(
+								"ts",
+								error.stack?.replace(/(?<=\().*(?=josh)/gm, "") ?? `${error.name}(${error.message})`,
+						  )
+						: ""
+				}`.trim(),
+			)
+			.setFooter({ text: "An error occurred 😭" })
+			.setTimestamp(new Date());
+	});
+	// send error to owner,
+	// reply or edit, and if it doesnt work: send to user in dms
+	const result = await pawait(
+		parallel(interaction?.user !== client.owner.user && client.owner.send(embed), async () => {
+			if (interaction) {
+				const [res] = await pawait(
+					interaction.replied
+						? interaction.editReply({ ...embed, components: [], files: [] })
+						: interaction.reply({ ...embed, components: [], files: [], ephemeral: true }),
+				);
+				if (res) return;
+			}
+			if (affectedUser?.id !== client.owner.id) await affectedUser?.send(embed);
+		}),
+	);
+	if (result[1])
+		consola.error(
+			`Failed to send error report: ${title}\n${embed.embeds[0]?.data.description}\n<@${affectedUser?.id}>`,
+		);
 }
 
 const WEBHOOK_NAME = "josh impersonation webhook";
@@ -374,7 +426,7 @@ export type Result<T, E = Error> = [T, undefined] | [undefined, E];
  * @link https://youtu.be/ITogH7lJTyE
  * @returns `[result, undefined]` or `[undefined, error]`
  */
-export async function pawait<T, E extends Error>(x: Promise<T>): Promise<Result<T, E>> {
+export async function pawait<T extends PromiseLike<unknown>, E extends Error>(x: T): Promise<Result<Awaited<T>, E>> {
 	try {
 		return [await x, undefined];
 	} catch (e) {

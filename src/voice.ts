@@ -7,14 +7,13 @@ import {
 	joinVoiceChannel,
 } from "@discordjs/voice";
 import axios from "axios";
-import { consola } from "consola";
-import type { VoiceBasedChannel } from "discord.js";
+import { inlineCode, type VoiceBasedChannel } from "discord.js";
 import { EventEmitter } from "events";
 import { getAllAudioBase64 } from "google-tts-api";
 import { Readable } from "stream";
 import type Client from "./client.js";
 import database from "./database.js";
-import { LINK_REGEX, Queue, awaitEvent, errorEmbeds, parallel } from "./utils.js";
+import { LINK_REGEX, Queue, awaitEvent, parallel, reportError } from "./utils.js";
 const SPEAK_REGEX = /<a?:|:\d+>|<id:\w+>|^--.*/g;
 
 export function cleanForSpeaking(text: string): string {
@@ -95,16 +94,12 @@ function spawnWorker(client: Client<true>) {
 				// play the sound
 				player.play(currentSound.resource);
 				await awaitEvent(player, AudioPlayerStatus.Idle, 30);
-			} catch (e) {
-				consola.error("sound error caught");
-				consola.error(e);
-				if (e instanceof Error)
-					await client.owner.send(
-						await errorEmbeds({
-							title: "Sound error",
-							description: `${e.name} ${e.message}\n${e.stack ?? "no stack"}`,
-						}),
-					);
+			} catch (error) {
+				await reportError(client, {
+					title: "Voice worker error",
+					description: `The worker spawned by ${inlineCode("queueSound()")} threw an error.`,
+					error: error as Error,
+				});
 			}
 		}
 	})();

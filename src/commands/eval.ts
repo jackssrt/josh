@@ -2,7 +2,7 @@ import { PermissionFlagsBits } from "discord.js";
 import { inspect } from "node:util";
 import type Client from "../client.js";
 import type Command from "../command.js";
-import { embeds, errorEmbeds, impersonate } from "../utils.js";
+import { embeds, impersonate } from "../utils.js";
 
 // This function cleans up and prepares the
 // result of our eval command input for sending
@@ -38,21 +38,13 @@ export default {
 		client;
 		embeds;
 		impersonate;
-		try {
-			const evaled = eval(
-				`(async function() {\n${interaction.options
-					.getString("code", true)
-					.replace(/client\.token/g, '"[haha no you don\'t]"')}\n})()`,
-			) as unknown;
-			const cleaned = await clean(client, evaled);
-			!interaction.replied &&
-				(await interaction.reply({ content: `\`\`\`js\n${cleaned}\n\`\`\``, ephemeral: true }));
-		} catch (e) {
-			!interaction.replied &&
-				(await interaction.reply({
-					...(await errorEmbeds({ title: "eval error", description: inspect(e, { depth: 1 }) })),
-					ephemeral: true,
-				}));
-		}
+		const evaled = eval(
+			`(async function() {\n${interaction.options
+				.getString("code", true)
+				.replace(/client\.token/g, '"[haha no you don\'t]"')}\n})()`,
+		) as unknown;
+
+		const cleaned = await clean(client, evaled);
+		if (!interaction.replied) await interaction.reply({ content: `\`\`\`js\n${cleaned}\n\`\`\``, ephemeral: true });
 	},
 } as Command;

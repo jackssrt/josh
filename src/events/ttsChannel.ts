@@ -2,7 +2,7 @@ import axios from "axios";
 import type { Snowflake } from "discord.js";
 import { Collection } from "discord.js";
 import database from "../database.js";
-import { errorEmbeds, parallel, pawait } from "../utils.js";
+import { parallel, pawait } from "../utils.js";
 import { cleanForSpeaking, queueSound, textToSpeech } from "../voice.js";
 import type Event from "./../event.js";
 const lastNames = new Collection<Snowflake, string>();
@@ -47,16 +47,8 @@ export default [
 						: []),
 				),
 			);
-			if (error)
-				await parallel(
-					message.react("❌"),
-					client.owner.send(
-						await errorEmbeds({
-							title: "TTS error",
-							description: `${error.name} ${error.message}\n${error.stack ?? "no stack"}`,
-						}),
-					),
-				);
+			if (error) await message.react("❌");
+
 			data?.forEach((v) => v && queueSound(client, memberVoiceChannel, v));
 		},
 	} as Event<"messageCreate">,
