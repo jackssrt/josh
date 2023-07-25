@@ -2,10 +2,10 @@
 git pull
 echo Pulled!
 if [[ $1 -eq "--install" ]]; then
-	pnpm install
+	$HOME/.local/share/pnpm/pnpm install
 	echo Installed!
 fi
-pnpm run build
+$HOME/.local/share/pnpm/pnpm run build
 echo Built!
 sudo systemctl restart josh.service
 echo Restarted and done!
