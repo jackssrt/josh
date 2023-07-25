@@ -27,7 +27,7 @@ import Registry from "./registry.js";
 import { errorEmbeds, formatTime, parallel, pluralize } from "./utils.js";
 consola.wrapAll();
 export const USER_AGENT =
-	"Splat Squad Bot (source code: https://github.com/jackssrt/splatsquad-bot , make an issue if it's misbehaving)";
+	"Splat Squad Bot (source code: https://github.com/jackssrt/josh , make an issue if it's misbehaving)";
 export default class Client<Ready extends boolean = false, Loaded extends boolean = true> extends DiscordClient<Ready> {
 	public commandRegistry = new Registry<Command>();
 	public eventRegistry = new Registry<Event<keyof ClientEvents>>();

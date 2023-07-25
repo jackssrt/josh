@@ -100,9 +100,7 @@ export function errorEmbeds(...data: { title: string; description: string }[]) {
 			(v) => (b) =>
 				b
 					.setTitle(`An error occurred 😭`)
-					.setDescription(
-						`### ${v.title}\n${codeBlock(v.description.replace(/(?<=\().*(?=splatsquad-bot)/gm, ""))}`,
-					)
+					.setDescription(`### ${v.title}\n${codeBlock(v.description.replace(/(?<=\().*(?=josh)/gm, ""))}`)
 					.setColor("Red")
 					.setTimestamp(new Date()),
 		),
@@ -161,7 +159,7 @@ export function scaleNumber(val: number, src: [number, number], dst: [number, nu
 	return ((val - src[0]) / (src[1] - src[0])) * (dst[1] - dst[0]) + dst[0];
 }
 
-const WEBHOOK_NAME = "splatsquad-bot impersonation webhook";
+const WEBHOOK_NAME = "josh impersonation webhook";
 export async function impersonate(
 	client: Client<true>,
 	user: GuildMember | User,
