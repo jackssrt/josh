@@ -1,3 +1,4 @@
+import database from "../database.js";
 import { cleanForSpeaking, queueSound, textToSpeech } from "../voice.js";
 import type Event from "./../event.js";
 
@@ -20,8 +21,22 @@ export default {
 
 		// only say it if someone other than the active user will hear it
 		if (newState.channel && newState.channel.members.filter((v) => !v.user.bot).size > 1)
-			queueSound(client, newState.channel, await textToSpeech(cleanForSpeaking(`${member.displayName} joined`)));
+			queueSound(
+				client,
+				newState.channel,
+				await textToSpeech(
+					cleanForSpeaking(`${member.displayName} joined`),
+					await database.getFeatureFlag("tts.voice"),
+				),
+			);
 		if (oldState.channel && oldState.channel.members.filter((v) => !v.user.bot).size > 0)
-			queueSound(client, oldState.channel, await textToSpeech(cleanForSpeaking(`${member.displayName} left`)));
+			queueSound(
+				client,
+				oldState.channel,
+				await textToSpeech(
+					cleanForSpeaking(`${member.displayName} left`),
+					await database.getFeatureFlag("tts.voice"),
+				),
+			);
 	},
 } as Event<"voiceStateUpdate">;

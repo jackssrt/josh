@@ -34,7 +34,7 @@ export default [
 							lastNames.get(memberVoiceChannel.id) !== memberName ? `${memberName} says ` : ""
 						}${content}`.toLowerCase();
 						lastNames.set(memberVoiceChannel.id, memberName);
-						const sound = await textToSpeech(text);
+						const sound = await textToSpeech(text, await database.getFeatureFlag("tts.voice"));
 
 						return sound;
 					},

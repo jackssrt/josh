@@ -12,15 +12,13 @@ import { EventEmitter } from "events";
 import { getAllAudioBase64 } from "google-tts-api";
 import { Readable } from "stream";
 import type Client from "./client.js";
-import database from "./database.js";
 import { LINK_REGEX, Queue, awaitEvent, parallel, reportError } from "./utils.js";
 const SPEAK_REGEX = /<a?:|:\d+>|<id:\w+>|^--.*/g;
 
 export function cleanForSpeaking(text: string): string {
 	return text.replace(SPEAK_REGEX, "").replace(LINK_REGEX, "").replace(/_/g, " ");
 }
-export async function textToSpeech(text: string) {
-	const voice = await database.getFeatureFlag("tts.voice");
+export async function textToSpeech(text: string, voice: string) {
 	const subVoice = voice.split("-")[1];
 	return Buffer.concat(
 		voice.startsWith("tiktok")
