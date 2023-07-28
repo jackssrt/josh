@@ -42,7 +42,7 @@ export default class Player<Host extends boolean = boolean> {
 		)}`;
 	}
 	public async roleEmbed() {
-		const hostIcon = this.gameHost.member.avatarURL();
+		const hostIcon = this.gameHost.member.displayAvatarURL();
 		return await embeds((b) =>
 			b
 				.setAuthor(

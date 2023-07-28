@@ -223,7 +223,7 @@ export async function impersonate(
 		(await channel.createWebhook({
 			name: WEBHOOK_NAME,
 			reason: "impersonation webhook",
-			avatar: client.user.avatarURL({ size: 128 }),
+			avatar: client.user.displayAvatarURL({ size: 128 }),
 		}));
 	await webhook.send({
 		...(typeof message === "string" ? { content: message } : message),
