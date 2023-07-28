@@ -3,7 +3,7 @@ import type { Snowflake } from "discord.js";
 import { Collection } from "discord.js";
 import database from "../database.js";
 import { parallel, pawait } from "../utils.js";
-import { cleanForSpeaking, queueSound, textToSpeech } from "../voice.js";
+import { cleanForSpeaking, cleanName, queueSound, textToSpeech } from "../voice.js";
 import type Event from "./../event.js";
 const lastNames = new Collection<Snowflake, string>();
 
@@ -27,7 +27,7 @@ export default [
 			const [data, error] = await pawait(
 				parallel(
 					async () => {
-						const memberName = cleanForSpeaking(message.member!.displayName);
+						const memberName = cleanName(cleanForSpeaking(message.member!.displayName));
 						const content = cleanForSpeaking(message.cleanContent);
 						if (content === "") return;
 						const text = `${
