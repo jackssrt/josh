@@ -2,19 +2,27 @@
 	"configurations": [
 		{
 			"type": "node",
+			"outputCapture": "std",
 			"request": "launch",
-			"name": "Launch Program",
-			"program": "${workspaceFolder}/src/index.ts",
-			"preLaunchTask": "tsc: debug build - tsconfig.json",
-			"outFiles": ["${workspaceFolder}/build/**/*.js"]
+			"name": "Debug josh",
+			"runtimeExecutable": "${workspaceFolder}/node_modules/.bin/esno.CMD",
+			"args": [
+				"${workspaceFolder}/src/index.ts"
+			],
+			"cwd": "${workspaceFolder}",
+			"outFiles": [
+				"${workspaceFolder}/build/**/*.js"
+			]
 		},
 		{
 			"type": "node",
 			"request": "launch",
-			"name": "Deploy",
+			"name": "Debug deploy script",
 			"program": "${workspaceFolder}/src/deploy.ts",
 			"preLaunchTask": "tsc: debug build - tsconfig.json",
-			"outFiles": ["${workspaceFolder}/build/**/*.js"]
+			"outFiles": [
+				"${workspaceFolder}/build/**/*.js"
+			]
 		},
 	]
 }
