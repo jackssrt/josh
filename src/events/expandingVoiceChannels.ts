@@ -1,8 +1,8 @@
-import { consola } from "consola";
 import type { VoiceBasedChannel } from "discord.js";
 import { ChannelType, type CategoryChannel, type CategoryChildChannel, type VoiceChannel } from "discord.js";
 import type Event from "../event.js";
 import { parallel } from "../utils.js";
+import logger from "./../logger.js";
 
 const SUPERSCRIPT_NUMBERS = ["⁰", "¹", "²", "³", "⁴", "⁵", "⁶", "⁷", "⁸", "⁹"] as const;
 interface ChannelData {
@@ -40,7 +40,7 @@ async function addChannel(category: CategoryChannel) {
 	await channel.channel.setParent(category);
 }
 async function removeChannel(channel: ChannelData, unusedCategory: CategoryChannel) {
-	if (!channel.used) return consola.warn("Attempted to remove unused channel");
+	if (!channel.used) return logger.warn("Attempted to remove unused channel");
 	channel.used = false;
 	await channel.channel.setParent(unusedCategory);
 }

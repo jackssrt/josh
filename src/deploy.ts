@@ -1,4 +1,3 @@
-import consola from "consola";
 import {
 	ApplicationCommandType,
 	ContextMenuCommandBuilder,
@@ -9,6 +8,7 @@ import {
 } from "discord.js";
 import * as dotenv from "dotenv";
 import Client from "./client.js";
+import logger from "./logger.js";
 dotenv.config();
 export async function deploy(guildId: string) {
 	const client = new Client();
@@ -38,9 +38,9 @@ export async function deploy(guildId: string) {
 	await rest
 		.put(Routes.applicationGuildCommands(process.env.CLIENT_ID, guildId), { body: [...commands, ...contexts] })
 		.then((data) => {
-			if (Array.isArray(data)) consola.success(`Successfully registered ${data.length} application commands.`);
+			if (Array.isArray(data)) logger.info(`Successfully registered ${data.length} application commands.`);
 		})
-		.catch((...params: unknown[]) => consola.error(params.shift(), ...params));
+		.catch((...params: unknown[]) => logger.error(params));
 	process.exit();
 }
 await deploy(process.env.GUILD_ID);

@@ -18,6 +18,7 @@ import {
 } from "../utils.js";
 import type Client from "./../client.js";
 import type Event from "./../event.js";
+import logger from "./../logger.js";
 
 async function makeInviteGraph(guild: Guild): Promise<Buffer> {
 	const graph = createGraph<string>();
@@ -77,7 +78,7 @@ async function makeInviteGraph(guild: Guild): Promise<Buffer> {
 	});
 	svg += text;
 	svg += "</svg>";
-
+	logger.debug("statsMessage image");
 	return sharp(Buffer.from(svg)).png({ force: true }).toBuffer();
 }
 

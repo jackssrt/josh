@@ -1,7 +1,3 @@
-// eslint-disable-next-line @typescript-eslint/triple-slash-reference
-/// <reference path="./src/types/env.d.ts"></reference>
-
-import consola from "consola";
 import type { CategoryChannel, ClientEvents, Guild, NewsChannel, PresenceData, Role, TextChannel } from "discord.js";
 import { ActivityType, Client as DiscordClient, GatewayIntentBits, GuildMember, inlineCode } from "discord.js";
 import { spawn } from "node:child_process";
@@ -12,9 +8,10 @@ import type Command from "./command.js";
 import type { ContextMenuItem } from "./contextMenuItem.js";
 import { IS_BUILT, IS_DEV } from "./env.js";
 import type Event from "./event.js";
+import logger from "./logger.js";
 import Registry from "./registry.js";
 import { formatTime, parallel, pluralize, reportError } from "./utils.js";
-consola.wrapAll();
+
 export const USER_AGENT =
 	"Splat Squad Bot (source code: https://github.com/jackssrt/josh , make an issue if it's misbehaving)";
 export default class Client<Ready extends boolean = false, Loaded extends boolean = true> extends DiscordClient<Ready> {
@@ -53,6 +50,8 @@ export default class Client<Ready extends boolean = false, Loaded extends boolea
 			],
 			presence: Client.defaultPresence,
 		});
+		this.on("debug", (message) => logger.debug(message));
+		this.on("warn", (message) => logger.warn(message));
 	}
 	public resetPresence() {
 		this.user?.setPresence(Client.defaultPresence);
@@ -66,7 +65,7 @@ export default class Client<Ready extends boolean = false, Loaded extends boolea
 			this.eventRegistry.loadFromDirectory(`./${dirName}/events`),
 			this.contextMenuItemsRegistry.loadFromDirectory(`./${dirName}/contextMenuItems`),
 		);
-		consola.success(`Loaded ${this.commandRegistry.size} ${pluralize("command", this.commandRegistry.size)}`);
+		logger.info(`Loaded ${this.commandRegistry.size} ${pluralize("command", this.commandRegistry.size)}`);
 		new Set(this.commandRegistry.values()).forEach((v) => {
 			v.aliases?.forEach((alias) => {
 				this.commandRegistry.set(alias, v);
@@ -77,21 +76,21 @@ export default class Client<Ready extends boolean = false, Loaded extends boolea
 
 		this.commandRegistry.forEach((v, k) => {
 			function fail(reason: string) {
-				consola.error(`${k} command failed sanity check, ${reason} not defined`);
+				logger.error(`${k} command failed sanity check, ${reason} not defined`);
 			}
 			if (!v.data) fail("data");
 			if (!v.execute) fail("execute");
 		});
 		this.eventRegistry.forEach((v, k) => {
 			function fail(reason: string) {
-				consola.error(`${k} event failed sanity check, ${reason} not defined`);
+				logger.error(`${k} event failed sanity check, ${reason} not defined`);
 			}
 			if (!v.event) fail("event");
 			if (!v.on) fail("on()");
 		});
 		this.contextMenuItemsRegistry.forEach((v, k) => {
 			function fail(reason: string) {
-				consola.error(`${k} contextMenuItem failed sanity check, ${reason} not defined`);
+				logger.error(`${k} contextMenuItem failed sanity check, ${reason} not defined`);
 			}
 			if (!v.data) fail("data");
 			if (!v.execute) fail("execute()");
@@ -99,21 +98,21 @@ export default class Client<Ready extends boolean = false, Loaded extends boolea
 		});
 		/* eslint-enable @typescript-eslint/no-unnecessary-condition */
 		const end = new Date();
-		consola.success(`Loaded ${this.eventRegistry.size} ${pluralize("event", this.eventRegistry.size)}`);
-		consola.success(
+		logger.info(`Loaded ${this.eventRegistry.size} ${pluralize("event", this.eventRegistry.size)}`);
+		logger.info(
 			`Loaded ${this.contextMenuItemsRegistry.size} ${pluralize(
 				"context menu item",
 				this.contextMenuItemsRegistry.size,
 			)}`,
 		);
-		consola.success(`Loading took ${formatTime((end.getTime() - start.getTime()) / 1000)}`);
+		logger.info(`Loading took ${formatTime((end.getTime() - start.getTime()) / 1000)}`);
 	}
 	public async start(this: Client<true>) {
 		this.on("ready", async () => {
-			consola.info("Fetching discord objects phase 1...");
+			logger.info("Fetching discord objects phase 1...");
 			const start = new Date();
 			this.guild = await this.guilds.fetch(process.env.GUILD_ID);
-			consola.info("Fetching discord objects phase 2...");
+			logger.info("Fetching discord objects phase 2...");
 			[
 				this.guildMe,
 				this.owner,
@@ -141,9 +140,7 @@ export default class Client<Ready extends boolean = false, Loaded extends boolea
 				this.guild.channels.fetch(process.env.STATS_CHANNEL_ID) as Promise<TextChannel>,
 				this.guild.roles.fetch(process.env.SPLATFEST_TEAM_CATEGORY_ROLE_ID) as Promise<Role>,
 			);
-			consola.success(
-				`Fetching discord objects took ${formatTime((new Date().getTime() - start.getTime()) / 1000)}`,
-			);
+			logger.info(`Fetching discord objects took ${formatTime((new Date().getTime() - start.getTime()) / 1000)}`);
 			this.loadedSyncSignal.fire();
 			if (IS_DEV && platform === "win32")
 				spawn(`powershell.exe`, [
@@ -152,7 +149,7 @@ export default class Client<Ready extends boolean = false, Loaded extends boolea
 						"./assets/startup.wav",
 					)}';$player.playsync();`,
 				]);
-			consola.ready("Ready!");
+			logger.info("Ready!");
 		});
 
 		for (const event of this.eventRegistry.values()) {
@@ -161,7 +158,7 @@ export default class Client<Ready extends boolean = false, Loaded extends boolea
 				await event.on({ client: this }, ...params);
 			});
 		}
-		consola.success(`Hooked ${this.eventRegistry.size} event${this.eventRegistry.size === 1 ? "" : "s"}`);
+		logger.info(`Hooked ${this.eventRegistry.size} event${this.eventRegistry.size === 1 ? "" : "s"}`);
 
 		this.on("error", async (error) => {
 			await this.loadedSyncSignal.await();

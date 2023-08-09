@@ -1,11 +1,11 @@
 import axios from "axios";
-import consola from "consola";
 import type { Awaitable } from "discord.js";
 import { USER_AGENT } from "../client.js";
 import database from "../database.js";
 import type * as SalmonRunAPI from "../types/salmonRunApi.js";
 import type * as SchedulesAPI from "../types/schedulesApi.js";
 import { LARGEST_DATE, formatTime, iteratorToArray, parallel } from "../utils.js";
+import logger from "./../logger.js";
 import { PoppingTimeRangeCollection } from "./TimeRangeCollection.js";
 import {
 	ChallengeNode,
@@ -77,15 +77,15 @@ export class Rotations {
 			!fetched.wasCached,
 			fetched.salmonRunChanged,
 		);
-		consola.info("rotations instantiated, cached:", fetched.wasCached);
-		consola.info(
+		logger.info("rotations instantiated, cached:", fetched.wasCached);
+		logger.info(
 			"Time until next rotation fetch",
 			formatTime((rotations.endTime.getTime() - new Date().getTime()) / 1000),
 		);
 		setTimeout(function timeout() {
 			void (async () => {
 				const fetched = await Rotations.fetch();
-				consola.info("rotations fetched, cached:", fetched.wasCached);
+				logger.info("rotations fetched, cached:", fetched.wasCached);
 				rotations.applyRotations(fetched);
 				await parallel(rotations.notifyChanged(), fetched.salmonRunChanged && rotations.notifySalmonChanged());
 				setTimeout(timeout, rotations.endTime.getTime() - new Date().getTime());
@@ -120,7 +120,7 @@ export class Rotations {
 	}
 	public static async fetchSalmonRunGear(): Promise<SalmonRunAPI.MonthlyGear> {
 		const [cachedGearMonth, cachedGear] = await database.getCachedSalmonRunGear();
-		consola.info("salmon run gear fetched, cached:", cachedGearMonth === new Date().getMonth() && cachedGear);
+		logger.info("salmon run gear fetched, cached:", cachedGearMonth === new Date().getMonth() && cachedGear);
 		if (cachedGearMonth === new Date().getMonth() && cachedGear) return cachedGear;
 		const response = await axios.get<SalmonRunAPI.Response>("https://splatoon3.ink/data/coop.json", {
 			headers: { "User-Agent": USER_AGENT },

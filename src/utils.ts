@@ -1,4 +1,3 @@
-import { consola } from "consola";
 import type {
 	Awaitable,
 	InteractionReplyOptions,
@@ -21,6 +20,7 @@ import type { Sharp } from "sharp";
 import sharp from "sharp";
 import type Client from "./client.js";
 import database from "./database.js";
+import logger from "./logger.js";
 
 export type StrictOmit<T extends Record<string, unknown>, K extends keyof T> = Omit<T, K>;
 
@@ -37,6 +37,20 @@ export const LARGEST_DATE = new Date(8640000000000000);
  */
 export const LINK_REGEX =
 	/((([A-Za-z]{3,9}:(?:\/\/)?)(?:[-;:&=+$,\w]+@)?[A-Za-z0-9.-]+|(?:www\.|[-;:&=+$,\w]+@)[A-Za-z0-9.-]+)((?:\/[+~%/.\w\-_]*)?\??(?:[-+=&;%@.\w_]*)#?(?:[.!/\\\w]*))?)/;
+/**
+ * A regex to remove all ansi colors from a string.
+ */
+// eslint-disable-next-line no-control-regex
+export const COLORS_REGEX = /\u001b\[(.*?)m/g;
+
+/**
+ * Custom type guard for checking if a value is an error.
+ * @param e the thing to test
+ * @returns e is Error
+ */
+export function isError(e: unknown): e is Error {
+	return e instanceof Error;
+}
 
 /**
  * Pauses the program for the specified amount of time.
@@ -164,7 +178,7 @@ export async function reportError(
 	const parts = ["Error reported:", title];
 	if (description) parts.push(description);
 	if (error) parts.push(inspect(error, { depth: 1 }));
-	consola.error(parts.join("\n"));
+	logger.error(parts.join("\n"));
 	const embed = await embeds((b) => {
 		if (affectedUser) {
 			const url = affectedUser.displayAvatarURL();
@@ -206,7 +220,7 @@ export async function reportError(
 		}),
 	);
 	if (result[1])
-		consola.error(
+		logger.error(
 			`Failed to send error report: ${title}\n${embed.embeds[0]?.data.description}\n<@${affectedUser?.id}>`,
 		);
 }
@@ -318,6 +332,7 @@ export function search<T extends string[]>(source: T, term: string): T[number][]
 }
 export async function textImage(text: string, color: string, size: number): Promise<Sharp> {
 	// adding "Dg" forces the text image to be as tall as possible,
+	logger.debug("TextImage");
 	const img = sharp({
 		text: {
 			text: `<span foreground="${color}">Dg ${escapeXml(text)} Dg</span>`,

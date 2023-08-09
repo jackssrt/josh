@@ -6,3 +6,4 @@ build
 package-lock.json
 coverage
 scripts/publish.ps1
+logs

@@ -17,6 +17,7 @@ import {
 } from "../emojis.js";
 import type * as SchedulesAPI from "../types/schedulesApi.js";
 import { dedent, parallel, textImage } from "../utils.js";
+import logger from "./../logger.js";
 import TimeRange from "./TimeRange.js";
 import TimeRangeCollection from "./TimeRangeCollection.js";
 import { Rotations } from "./index.js";
@@ -112,26 +113,28 @@ export abstract class DisplayableMatchNode extends BaseNode {
 		context: "challengesEvent" | "rotationNotifier" = "rotationNotifier",
 	): Promise<[Sharp]> {
 		const stageWidth = Math.ceil(width / this.stages.length);
+		logger.debug("DisplayableMatchNode stage image parallel");
 		const images = await parallel(
-			this.stages.map(
-				async (v) =>
-					[
-						v,
-						sharp(
-							Buffer.from(
-								(
-									await axios.get<ArrayBuffer>(v.image, {
-										responseType: "arraybuffer",
-										headers: {
-											"User-Agent": USER_AGENT,
-										},
-									})
-								).data,
-							),
-						).resize(stageWidth, height, { fit: sharp.fit.cover }),
-					] as const,
-			),
+			this.stages.map(async (v) => {
+				logger.debug("DisplayableMatchNode stage image");
+				return [
+					v,
+					sharp(
+						Buffer.from(
+							(
+								await axios.get<ArrayBuffer>(v.image, {
+									responseType: "arraybuffer",
+									headers: {
+										"User-Agent": USER_AGENT,
+									},
+								})
+							).data,
+						),
+					).resize(stageWidth, height, { fit: sharp.fit.cover }),
+				] as const;
+			}),
 		);
+		logger.debug("DisplayableMatchNode output image");
 		return [
 			sharp({
 				create: {
@@ -160,16 +163,19 @@ export abstract class DisplayableMatchNode extends BaseNode {
 												{
 													top: 0,
 													left: stageWidth * i,
-													input: await sharp({
-														create: {
-															background: "#000000AA",
-															width: stageWidth,
-															height: 16 + ((await text.metadata()).height ?? 20) + 8,
-															channels: 4,
-														},
-													})
-														.png()
-														.toBuffer(),
+													input: await (async () => {
+														logger.debug("displayablematchnode text bg");
+														return await sharp({
+															create: {
+																background: "#000000AA",
+																width: stageWidth,
+																height: 16 + ((await text.metadata()).height ?? 20) + 8,
+																channels: 4,
+															},
+														})
+															.png()
+															.toBuffer();
+													})(),
 												},
 												{
 													left: stageWidth * i + 16 + 4,
@@ -188,9 +194,13 @@ export abstract class DisplayableMatchNode extends BaseNode {
 												{
 													top: height / 2 - height / 2 / 2,
 													left: width / 2 - height / 2 / 2,
-													input: await sharp("./assets/challenges.png")
-														.resize({ width: height / 2, height: height / 2 })
-														.toBuffer(),
+													input: await (async () => {
+														logger.debug("challenges badge");
+
+														return await sharp("./assets/challenges.png")
+															.resize({ width: height / 2, height: height / 2 })
+															.toBuffer();
+													})(),
 												},
 										  ]
 										: []),
@@ -431,6 +441,7 @@ abstract class BaseCoopNode<
 		const WIDTH = 800;
 		const HEIGHT = 600;
 		const ICON_SIZE = HEIGHT - 450 - 16;
+		logger.debug("BaseCoopNode image");
 		return [
 			sharp({ create: { width: WIDTH, height: HEIGHT, background: "#00000000", channels: 4 } })
 				.composite([
@@ -439,6 +450,7 @@ abstract class BaseCoopNode<
 							this.weapons.map<Promise<sharp.OverlayOptions[]>>(async (v, i) => {
 								// adding "Dg" forces the text image to be as tall as possible,
 								// thus making all weapon names align.
+								logger.debug("BaseCoopNode text image");
 								const nameImage = sharp({
 									text: {
 										text: `<span foreground="white">Dg ${v.name} Dg</span>`,
@@ -453,22 +465,25 @@ abstract class BaseCoopNode<
 								// cuts off the "Dg" text while keeping the height
 								// and extra horizontal space for the blur to look good
 								nameImage.resize(nameImageWidth, nameImageHeight);
-
+								logger.debug("BaseCoopNode weapon image");
 								return [
 									{
-										input: await sharp(
-											Buffer.from(
-												(
-													await axios.get<ArrayBuffer>(v.image.url, {
-														responseType: "arraybuffer",
+										input: await (async () => {
+											logger.debug("BaseCoopNode Download weapon image");
+											return await sharp(
+												Buffer.from(
+													(
+														await axios.get<ArrayBuffer>(v.image.url, {
+															responseType: "arraybuffer",
 
-														headers: { "User-Agent": USER_AGENT },
-													})
-												).data,
-											),
-										)
-											.resize(ICON_SIZE, ICON_SIZE)
-											.toBuffer(),
+															headers: { "User-Agent": USER_AGENT },
+														})
+													).data,
+												),
+											)
+												.resize(ICON_SIZE, ICON_SIZE)
+												.toBuffer();
+										})(),
 										left: (WIDTH / 4) * i + WIDTH / 4 / 2 - ICON_SIZE / 2,
 										top: (HEIGHT - 450) / 2 + 450 - 10 - ICON_SIZE / 2,
 									},
@@ -501,28 +516,31 @@ abstract class BaseCoopNode<
 							})),
 					)),
 					{
-						input: await sharp(
-							Buffer.from(
-								(
-									await axios.get<ArrayBuffer>(this.stage.image, {
-										responseType: "arraybuffer",
-										headers: {
-											"User-Agent": USER_AGENT,
-										},
-									})
-								).data,
-							),
-						)
-							.composite([
-								{
-									input: Buffer.from(
-										`<svg><rect x="0" y="0" width="800" height="450" rx="8" ry="8"/></svg>`,
-									),
-									blend: "dest-in",
-								},
-							])
-							.png()
-							.toBuffer(),
+						input: await (async () => {
+							logger.debug("baseCoopNode stage image");
+							return await sharp(
+								Buffer.from(
+									(
+										await axios.get<ArrayBuffer>(this.stage.image, {
+											responseType: "arraybuffer",
+											headers: {
+												"User-Agent": USER_AGENT,
+											},
+										})
+									).data,
+								),
+							)
+								.composite([
+									{
+										input: Buffer.from(
+											`<svg><rect x="0" y="0" width="800" height="450" rx="8" ry="8"/></svg>`,
+										),
+										blend: "dest-in",
+									},
+								])
+								.png()
+								.toBuffer();
+						})(),
 						left: 0,
 						top: 0,
 					},
