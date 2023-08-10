@@ -1,5 +1,5 @@
 import axios from "axios";
-import type { Snowflake } from "discord.js";
+import type { PresenceData, Snowflake } from "discord.js";
 import { existsSync } from "fs";
 import { readFile, writeFile } from "fs/promises";
 import Lock from "./lock.js";
@@ -24,6 +24,7 @@ export interface DatabaseData {
 	staticMessageIds: Record<string, Snowflake>;
 	inviteRecords: Record<Snowflake, Snowflake>;
 	featureFlags: Partial<typeof FEATURE_FLAGS>;
+	activePresence: PresenceData;
 }
 class DatabaseBackend<T extends Record<K, unknown>, K extends string> {
 	private readonly replitDatabaseUrl = process.env.REPLIT_DB_URL;
@@ -139,6 +140,12 @@ export class Database {
 	}
 	public async getBooleanFeatureFlag<T extends FeatureFlag>(flag: T): Promise<boolean> {
 		return (await this.getFeatureFlag(flag)) === "true";
+	}
+	public async getActivePresence(): Promise<PresenceData | undefined> {
+		return await this.backend.get("activePresence");
+	}
+	public async setActivePresence(presence: PresenceData) {
+		await this.backend.set("activePresence", presence);
 	}
 }
 

@@ -6,6 +6,7 @@ import { platform } from "node:process";
 import SyncSignal from "./SyncSignal.js";
 import type Command from "./command.js";
 import type { ContextMenuItem } from "./contextMenuItem.js";
+import database from "./database.js";
 import { IS_BUILT, IS_DEV } from "./env.js";
 import type Event from "./event.js";
 import logger from "./logger.js";
@@ -32,11 +33,12 @@ export default class Client<Ready extends boolean = false, Loaded extends boolea
 	public statsChannel = undefined as Loaded extends true ? TextChannel : undefined;
 	public splatfestTeamRoleCategory = undefined as Loaded extends true ? Role : undefined;
 	public loadedSyncSignal = new SyncSignal();
-	private static readonly defaultPresence: PresenceData = {
+	public static readonly defaultPresence = {
 		status: "online",
 		activities: [{ type: ActivityType.Competing, name: "Splatoon 3" }],
-	};
-	constructor() {
+	} satisfies Readonly<PresenceData>;
+	private constructor(presence: PresenceData) {
+		logger.debug(presence);
 		super({
 			intents: [
 				GatewayIntentBits.Guilds,
@@ -48,11 +50,15 @@ export default class Client<Ready extends boolean = false, Loaded extends boolea
 				GatewayIntentBits.GuildPresences,
 				GatewayIntentBits.GuildVoiceStates,
 			],
-			presence: Client.defaultPresence,
+			presence,
 		});
 		this.on("debug", (message) => logger.debug(message));
 		this.on("warn", (message) => logger.warn(message));
 	}
+	public static async new(): Promise<Client<false, false>> {
+		return new Client((await database.getActivePresence()) ?? Client.defaultPresence);
+	}
+
 	public resetPresence() {
 		this.user?.setPresence(Client.defaultPresence);
 	}
