@@ -9,6 +9,7 @@ import {
 import * as dotenv from "dotenv";
 import Client from "./client.js";
 import logger from "./logger.js";
+import { pluralize } from "./utils.js";
 dotenv.config();
 export async function deploy(guildId: string) {
 	const client = (await Client.new()) as Client<boolean, boolean>;
@@ -38,7 +39,8 @@ export async function deploy(guildId: string) {
 	await rest
 		.put(Routes.applicationGuildCommands(process.env.CLIENT_ID, guildId), { body: [...commands, ...contexts] })
 		.then((data) => {
-			if (Array.isArray(data)) logger.info(`Successfully registered ${data.length} application commands.`);
+			if (Array.isArray(data))
+				logger.info(`Successfully registered ${data.length} ${pluralize("application command", data.length)}.`);
 		})
 		.catch((...params: unknown[]) => logger.error(params));
 	process.exit();
