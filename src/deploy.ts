@@ -11,7 +11,7 @@ import Client from "./client.js";
 import logger from "./logger.js";
 dotenv.config();
 export async function deploy(guildId: string) {
-	const client = new Client();
+	const client = (await Client.new()) as Client<boolean, boolean>;
 	await client.load();
 	const commands = client.commandRegistry.map((command, key) =>
 		command
