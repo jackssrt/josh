@@ -1,5 +1,12 @@
 import type { CategoryChannel, ClientEvents, Guild, NewsChannel, PresenceData, Role, TextChannel } from "discord.js";
-import { ActivityType, Client as DiscordClient, GatewayIntentBits, GuildMember, inlineCode } from "discord.js";
+import {
+	ActivityType,
+	ApplicationCommandOptionType,
+	Client as DiscordClient,
+	GatewayIntentBits,
+	GuildMember,
+	inlineCode,
+} from "discord.js";
 import { spawn } from "node:child_process";
 import path from "node:path";
 import { platform } from "node:process";
@@ -38,7 +45,6 @@ export default class Client<Ready extends boolean = false, Loaded extends boolea
 		activities: [{ type: ActivityType.Competing, name: "Splatoon 3" }],
 	} satisfies Readonly<PresenceData>;
 	private constructor(presence: PresenceData) {
-		logger.debug(presence);
 		super({
 			intents: [
 				GatewayIntentBits.Guilds,
@@ -177,7 +183,29 @@ export default class Client<Ready extends boolean = false, Loaded extends boolea
 
 		this.on("interactionCreate", async (interaction) => {
 			if (!interaction.isChatInputCommand()) return;
-
+			const parts = [`@${interaction.user.username} called /${interaction.commandName}`];
+			if (interaction.options.data.length)
+				parts.push(
+					...interaction.options.data.flatMap(function recursive(v): string[] {
+						return [
+							v.type === ApplicationCommandOptionType.Subcommand ||
+							v.type === ApplicationCommandOptionType.SubcommandGroup
+								? v.name
+								: `${v.name}: ${
+										(v.user && `@${v.user.username}`) ??
+										(v.role && `@${v.role.name}`) ??
+										(v.channel && `#${v.channel.name}`) ??
+										(v.message &&
+											`"${v.message.content.replace(/\n/g, "\\n")}" from @${
+												v.message.author.username
+											}`) ??
+										v.value
+								  }`,
+							...(v.options ? v.options.flatMap((v) => recursive.call(undefined, v)) : []),
+						];
+					}),
+				);
+			logger.debug(parts.join(" "));
 			const command = this.commandRegistry.get(interaction.commandName);
 			if (!command) return;
 			await this.loadedSyncSignal.await();
@@ -209,6 +237,15 @@ export default class Client<Ready extends boolean = false, Loaded extends boolea
 		});
 		this.on("interactionCreate", async (interaction) => {
 			if (!interaction.isContextMenuCommand()) return;
+			logger.debug(
+				`@${interaction.user.username} used ${interaction.commandName} on ${
+					interaction.isMessageContextMenuCommand()
+						? `message "${interaction.targetMessage.content.replace(/\n/g, "\\n")}" from @${
+								interaction.targetMessage.author.username
+						  }`
+						: `@${interaction.targetUser.username}`
+				}`,
+			);
 			const item = this.contextMenuItemsRegistry.get(interaction.commandName);
 			if (!item) return;
 			await this.loadedSyncSignal.await();
