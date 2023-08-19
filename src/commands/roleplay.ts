@@ -30,9 +30,9 @@ export default {
 						.setDescription("The type of the activity")
 						.setRequired(false)
 						.addChoices(
-							...(
-								[0, 1, 2, 3, 5] as const satisfies readonly Exclude<ActivityType, ActivityType.Custom>[]
-							).map<APIApplicationCommandOptionChoice<number>>((v) => ({
+							...([0, 1, 2, 3, 4, 5] as const satisfies readonly ActivityType[]).map<
+								APIApplicationCommandOptionChoice<number>
+							>((v) => ({
 								name: `${ActivityType[v]}`,
 								value: v,
 							})),
@@ -40,6 +40,9 @@ export default {
 				)
 				.addStringOption((b) =>
 					b.setName("activityname").setDescription("The name of the activity").setRequired(false),
+				)
+				.addStringOption((b) =>
+					b.setName("activitystate").setDescription("The state of the activity").setRequired(false),
 				)
 				.addStringOption((b) =>
 					b.setName("activityurl").setDescription("The url of the activity").setRequired(false),
@@ -50,28 +53,27 @@ export default {
 		const subcommand = interaction.options.getSubcommand(true) as Subcommand;
 		if (subcommand === "presence") {
 			const status = interaction.options.getString("status", true) as PresenceStatusData;
-			const activityType = interaction.options.getNumber("activitytype", false) as Exclude<
-				ActivityType,
-				ActivityType.Custom
-			>;
+			const activityType = interaction.options.getNumber("activitytype", false) as ActivityType | null;
 			const activityName = interaction.options.getString("activityname", false);
-			if (!activityName && activityType === undefined) {
+			const activityState = interaction.options.getString("activitystate", false);
+			const activityUrl = interaction.options.getString("activityurl", false);
+			if (!activityName && activityType === null && activityState === null) {
 				client.user.setPresence({ status, activities: Client.defaultPresence.activities });
 				await database.setActivePresence({ status, activities: Client.defaultPresence.activities });
 				await interaction.reply({ content: "✅", ephemeral: true });
 			}
-			if (!activityName || activityType === undefined) {
+			if (!activityName || activityType === null) {
 				logger.debug(activityName, activityType);
 				return await interaction.reply({ content: "Provide an activity type and name!", ephemeral: true });
 			}
-			const activityUrl = interaction.options.getString("activityurl", false);
 			const presenceData: PresenceData = {
 				status,
 				activities: [
 					{
 						type: activityType,
 						name: activityName,
-						...(activityUrl ? { url: activityUrl ?? undefined } : {}),
+						...(activityState ? { state: activityState } : {}),
+						...(activityUrl ? { url: activityUrl } : {}),
 					},
 				],
 			};
