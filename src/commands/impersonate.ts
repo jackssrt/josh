@@ -1,8 +1,8 @@
 import { ChannelType } from "discord.js";
-import type Command from "../command.js";
 import { impersonate } from "../utils.js";
+import createCommand from "./../command.js";
 
-export default {
+export default createCommand({
 	data: (b) =>
 		b
 			.setDescription("Sends a message as someone else.")
@@ -20,4 +20,4 @@ export default {
 		await impersonate(client, member, interaction.channel, interaction.options.getString("content", true));
 		await interaction.deleteReply();
 	},
-} as Command;
+});

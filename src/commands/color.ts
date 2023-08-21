@@ -1,8 +1,8 @@
-import type Command from "../command.js";
 import { BOOYAH_EMOJI } from "../emojis.js";
 import Lock from "../lock.js";
 import type { Result } from "../utils.js";
 import { getLowerRolesInSameCategory, parallel, search } from "../utils.js";
+import createCommand from "./../command.js";
 
 export const COLOR_DATA = [
 	{ name: "Blue Raspberry", value: "1FE2F3" },
@@ -72,7 +72,7 @@ function parseHex(color: string): Result<string> {
 
 const colorEmojiLock = new Lock();
 
-export default {
+export default createCommand({
 	data: (b) =>
 		b
 			.setDescription("Sets your name color")
@@ -158,4 +158,4 @@ export default {
 			colorEmojiLock.unlock(key);
 		}
 	},
-} as Command;
+});

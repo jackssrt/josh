@@ -3,7 +3,7 @@ import { Colors, MessageType, channelMention, roleMention, userMention } from "d
 import type Client from "../client.js";
 import { BOOYAH_EMOJI } from "../emojis.js";
 import { dedent, embeds, formatNumberIntoNth, membersWithRoles } from "../utils.js";
-import type Event from "./../event.js";
+import createEvent from "./../event.js";
 
 export async function sendWelcomeMessage(client: Client<true>, message: Message<true>) {
 	const { member } = message;
@@ -29,7 +29,7 @@ export async function sendWelcomeMessage(client: Client<true>, message: Message<
 	});
 }
 
-export default {
+export default createEvent({
 	event: "messageCreate",
 	async on({ client }, message) {
 		if (
@@ -42,4 +42,4 @@ export default {
 		if (process.env.JOIN_IGNORE_IDS.split(",").includes(message.author.id)) return await message.delete();
 		await sendWelcomeMessage(client, message);
 	},
-} as Event<"messageCreate">;
+});

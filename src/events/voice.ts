@@ -1,7 +1,7 @@
-import type Event from "../event.js";
 import { queue } from "../voice.js";
+import createEvent from "./../event.js";
 
-export default {
+export default createEvent({
 	event: "voiceStateUpdate",
 	async on({ client }, oldState) {
 		const { voice } = client.guildMe;
@@ -10,4 +10,4 @@ export default {
 			await voice.disconnect();
 		}
 	},
-} as Event<"voiceStateUpdate">;
+});

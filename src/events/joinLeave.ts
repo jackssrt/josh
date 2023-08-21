@@ -1,7 +1,7 @@
 import type { Collection, GuildMember, PartialGuildMember } from "discord.js";
 import { userMention } from "discord.js";
 import type Client from "../client.js";
-import type Event from "../event.js";
+import createEvent from "../event.js";
 import { impersonate, membersWithRoles } from "../utils.js";
 
 export async function onMemberJoin(client: Client<true>, member: GuildMember) {
@@ -31,7 +31,7 @@ export async function onMemberLeave(client: Client<true>, member: GuildMember | 
 }
 
 export default [
-	{
+	createEvent({
 		event: "guildMemberAdd",
 		async on({ client }, member) {
 			if (
@@ -42,8 +42,8 @@ export default [
 				return;
 			await onMemberJoin(client, member);
 		},
-	} as Event<"guildMemberAdd">,
-	{
+	}),
+	createEvent({
 		event: "guildMemberRemove",
 		async on({ client }, member) {
 			if (
@@ -54,5 +54,5 @@ export default [
 				return;
 			await onMemberLeave(client, member);
 		},
-	} as Event<"guildMemberRemove">,
+	}),
 ];

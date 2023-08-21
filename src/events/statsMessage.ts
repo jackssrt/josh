@@ -17,7 +17,7 @@ import {
 	updateStaticMessage,
 } from "../utils.js";
 import type Client from "./../client.js";
-import type Event from "./../event.js";
+import createEvent from "./../event.js";
 import logger from "./../logger.js";
 
 async function makeInviteGraph(guild: Guild): Promise<Buffer> {
@@ -121,7 +121,7 @@ export async function updateStatsMessage(client: Client<true>) {
 }
 
 export default [
-	{
+	createEvent({
 		event: "guildMemberUpdate",
 		async on({ client }, oldMember, newMember) {
 			if (
@@ -133,18 +133,18 @@ export default [
 				return;
 			await updateStatsMessage(client);
 		},
-	} as Event<"guildMemberUpdate">,
-	{
+	}),
+	createEvent({
 		event: "guildMemberRemove",
 		async on({ client }, member) {
 			if (member.guild !== client.guild) return;
 			await updateStatsMessage(client);
 		},
-	} as Event<"guildMemberRemove">,
-	{
+	}),
+	createEvent({
 		event: "ready",
 		async on({ client }) {
 			await updateStatsMessage(client);
 		},
-	} as Event<"ready">,
+	}),
 ];

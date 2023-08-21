@@ -1,8 +1,8 @@
 import { randomInt } from "node:crypto";
-import type Command from "../command.js";
+import createCommand from "./../command.js";
 import Game from "./hideandseek/Game.js";
 
-export default {
+export default createCommand({
 	data: (b) =>
 		b
 			.setDescription("Starts a hide and seek game!")
@@ -39,4 +39,4 @@ export default {
 		const game = new Game(interaction, mode, maxPlayers ?? 8, passcode);
 		await game.start();
 	},
-} as Command;
+});

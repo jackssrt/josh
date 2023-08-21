@@ -1,13 +1,13 @@
 import type { APIApplicationCommandOptionChoice, PresenceData, PresenceStatusData } from "discord.js";
 import { ActivityType } from "discord.js";
 import Client from "../client.js";
-import type Command from "../command.js";
 import database from "../database.js";
 import logger from "../logger.js";
+import createCommand from "./../command.js";
 
 type Subcommand = "presence";
 
-export default {
+export default createCommand({
 	data: (b) =>
 		b.setDescription("Sets certain roleplay stuff").addSubcommand((b) =>
 			b
@@ -83,4 +83,4 @@ export default {
 			await interaction.reply({ content: "✅", ephemeral: true });
 		}
 	},
-} as Command;
+});

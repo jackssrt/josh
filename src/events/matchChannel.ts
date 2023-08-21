@@ -1,7 +1,7 @@
 import { ChannelType } from "discord.js";
-import type Event from "../event";
+import createEvent from "./../event.js";
 
-export default {
+export default createEvent({
 	event: "voiceStateUpdate",
 	async on(_, oldState, newState) {
 		if (!newState.member) return;
@@ -20,4 +20,4 @@ export default {
 		)
 			await oldState.channel.delete();
 	},
-} as Event<"voiceStateUpdate">;
+});

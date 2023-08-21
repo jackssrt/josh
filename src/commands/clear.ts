@@ -1,7 +1,7 @@
 import { PermissionFlagsBits } from "discord.js";
-import type Command from "../command";
+import createCommand from "./../command.js";
 
-export default {
+export default createCommand({
 	data: (b) =>
 		b
 			.setDescription("Delete the X latest message(s) in this channel.")
@@ -36,4 +36,4 @@ export default {
 			await interaction.reply({ content: "✅", ephemeral: true });
 		}
 	},
-} as Command;
+});

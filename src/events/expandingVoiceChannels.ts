@@ -1,6 +1,6 @@
 import type { VoiceBasedChannel } from "discord.js";
 import { ChannelType, type CategoryChannel, type CategoryChildChannel, type VoiceChannel } from "discord.js";
-import type Event from "../event.js";
+import createEvent from "../event.js";
 import { parallel } from "../utils.js";
 import logger from "./../logger.js";
 
@@ -71,7 +71,7 @@ export async function updateChannels(category: CategoryChannel, unusedCategory: 
 	await parallel(willRemove.map(async (v) => removeChannel(v, unusedCategory)));
 }
 export default [
-	{
+	createEvent({
 		event: "voiceStateUpdate",
 		async on({ client }, oldState, newState) {
 			const category = [newState.channel?.parent, oldState.channel?.parent].find(
@@ -80,8 +80,8 @@ export default [
 			if (!category) return;
 			await updateChannels(category, client.unusedVoiceCategory);
 		},
-	} as Event<"voiceStateUpdate">,
-	{
+	}),
+	createEvent({
 		event: "ready",
 		async on({ client }) {
 			function addChannels(v: CategoryChildChannel, used: boolean) {
@@ -93,5 +93,5 @@ export default [
 			client.unusedVoiceCategory.children.cache.forEach((v) => addChannels(v, false));
 			await updateChannels(client.voiceCategory, client.unusedVoiceCategory);
 		},
-	} as Event<"ready">,
+	}),
 ];

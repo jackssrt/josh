@@ -2,9 +2,9 @@ import type { Guild } from "discord.js";
 import { GuildScheduledEventEntityType, GuildScheduledEventPrivacyLevel } from "discord.js";
 import database from "../database.js";
 import { CHALLENGES_EMOJI, EMPTY_EMOJI, SUB_EMOJI } from "../emojis.js";
-import type Event from "../event.js";
 import rotations from "../rotations/index.js";
 import { dedent } from "../utils.js";
+import createEvent from "./../event.js";
 
 export async function makeChallengeEvents(guild: Guild, overrideDatabase = false) {
 	await Promise.all(
@@ -48,11 +48,11 @@ export async function makeChallengeEvents(guild: Guild, overrideDatabase = false
 	);
 }
 
-export default {
+export default createEvent({
 	event: "ready",
 	on({ client }) {
 		rotations.hook(async () => {
 			await makeChallengeEvents(client.guild);
 		});
 	},
-} as Event<"ready">;
+});

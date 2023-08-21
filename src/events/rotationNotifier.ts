@@ -1,10 +1,10 @@
 import type { MessageCreateOptions, NewsChannel } from "discord.js";
 import { TimestampStyles, time } from "discord.js";
-import type Event from "../event.js";
 import rotations from "../rotations/index.js";
 import type { OptionalEmbedFactory } from "../utils.js";
 import { embeds, parallel } from "../utils.js";
 import type Client from "./../client.js";
+import createEvent from "./../event.js";
 
 const FUTURE_ROTATIONS_COUNT = 3;
 function generateChannelTopic(): string {
@@ -100,10 +100,10 @@ export async function sendRegularRotations(client: Client<true>) {
 	);
 }
 
-export default {
+export default createEvent({
 	event: "ready",
 	on({ client }) {
 		rotations.hook(async () => await sendRegularRotations(client));
 		rotations.hookSalmon(async () => await sendSalmonRunRotation(client));
 	},
-} as Event<"ready">;
+});

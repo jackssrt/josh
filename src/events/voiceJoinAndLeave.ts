@@ -1,8 +1,8 @@
 import database from "../database.js";
 import { cleanForSpeaking, queueSound, textToSpeech } from "../voice.js";
-import type Event from "./../event.js";
+import createEvent from "./../event.js";
 
-export default {
+export default createEvent({
 	event: "voiceStateUpdate",
 	async on({ client }, oldState, newState) {
 		const member = newState.member ?? oldState.member;
@@ -39,4 +39,4 @@ export default {
 				),
 			);
 	},
-} as Event<"voiceStateUpdate">;
+});

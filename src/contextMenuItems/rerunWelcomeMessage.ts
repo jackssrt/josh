@@ -1,8 +1,8 @@
 import { MessageType } from "discord.js";
-import type { ContextMenuItem } from "../contextMenuItem.js";
 import { sendWelcomeMessage } from "../events/welcomeMessage.js";
+import createContextMenuItem from "./../contextMenuItem.js";
 
-export default {
+export default createContextMenuItem({
 	type: "Message",
 	data: (b) => b,
 	ownerOnly: true,
@@ -15,4 +15,4 @@ export default {
 		await sendWelcomeMessage(client, interaction.targetMessage);
 		await interaction.reply({ content: "done", ephemeral: true });
 	},
-} as ContextMenuItem<"Message">;
+});

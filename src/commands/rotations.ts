@@ -1,10 +1,10 @@
-import type Command from "../command.js";
 import type { PoppingTimeRangeCollection } from "../rotations/TimeRangeCollection.js";
 import rotations from "../rotations/index.js";
 import type { BaseNode } from "../rotations/nodes.js";
 import type { RankedRule } from "../rotations/rules.js";
 import { RULE_MAP } from "../rotations/rules.js";
 import { embeds } from "../utils.js";
+import createCommand from "./../command.js";
 const listSubcommands = [
 	"challenges",
 	"turfwar",
@@ -25,7 +25,7 @@ const SUBCOMMAND_GAMEMODE_MAP = {
 
 type SearchSubcommand = keyof typeof SUBCOMMAND_GAMEMODE_MAP;
 
-export default {
+export default createCommand({
 	data: (b) => {
 		b.addSubcommandGroup((b) => {
 			b.setName("list").setDescription("Lists rotations");
@@ -120,4 +120,4 @@ export default {
 			);
 		}
 	},
-} as Command;
+});

@@ -14,7 +14,6 @@ import {
 } from "discord.js";
 import sharp from "sharp";
 import { USER_AGENT } from "../client.js";
-import type Command from "../command";
 import database from "../database.js";
 import { makeChallengeEvents } from "../events/challengeEvent.js";
 import { updateChannelName, updateChannels } from "../events/expandingVoiceChannels.js";
@@ -25,6 +24,7 @@ import logger from "../logger.js";
 import rotations from "../rotations/index.js";
 import type * as FestivalsAPI from "../types/festivalsApi.js";
 import { colorLuminance, hexToRGB, iteratorToArray, parallel, pluralize, textImage } from "../utils.js";
+import createCommand from "./../command.js";
 import { COLOR_DATA } from "./color.js";
 
 type Subcommand =
@@ -92,7 +92,7 @@ async function makeColorRolesImage() {
 		.toBuffer();
 }
 
-export default {
+export default createCommand({
 	data: (b) =>
 		b
 			.addSubcommand((b) => b.setName("forcerotations").setDescription("Force fetch new rotations"))
@@ -279,4 +279,4 @@ export default {
 			await interaction.editReply("unimplemented");
 		}
 	},
-} as Command;
+});

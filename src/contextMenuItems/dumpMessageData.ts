@@ -1,8 +1,8 @@
 import { AttachmentBuilder } from "discord.js";
 import { inspect } from "node:util";
-import type { ContextMenuItem } from "../contextMenuItem.js";
+import createContextMenuItem from "./../contextMenuItem.js";
 
-export default {
+export default createContextMenuItem({
 	type: "Message",
 	data: (b) => b,
 	ownerOnly: true,
@@ -16,4 +16,4 @@ export default {
 			ephemeral: true,
 		});
 	},
-} as ContextMenuItem<"Message">;
+});

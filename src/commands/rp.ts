@@ -1,7 +1,7 @@
-import type Command from "../command.js";
 import { parallel } from "../utils.js";
+import createCommand from "./../command.js";
 
-export default {
+export default createCommand({
 	data: (b) =>
 		b
 			.setDescription("Roleplay as Josh")
@@ -30,4 +30,4 @@ export default {
 			},
 		);
 	},
-} as Command;
+});

@@ -1,8 +1,8 @@
 import { PermissionFlagsBits } from "discord.js";
 import { inspect } from "node:util";
 import type Client from "../client.js";
-import type Command from "../command.js";
 import { embeds, impersonate } from "../utils.js";
+import createCommand from "./../command.js";
 
 // This function cleans up and prepares the
 // result of our eval command input for sending
@@ -27,7 +27,7 @@ async function clean(client: Client<true>, text: unknown): Promise<string> {
 	return text as string;
 }
 
-export default {
+export default createCommand({
 	data: (b) =>
 		b
 			.setDescription("eval")
@@ -47,4 +47,4 @@ export default {
 		const cleaned = await clean(client, evaled);
 		if (!interaction.replied) await interaction.reply({ content: `\`\`\`js\n${cleaned}\n\`\`\``, ephemeral: true });
 	},
-} as Command;
+});

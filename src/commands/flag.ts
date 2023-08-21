@@ -1,14 +1,14 @@
 import type { APIApplicationCommandOptionChoice } from "discord.js";
 import { codeBlock } from "discord.js";
-import type Command from "../command.js";
 import type { FeatureFlag } from "../database.js";
 import database, { FEATURE_FLAGS } from "../database.js";
+import createCommand from "./../command.js";
 
 function displayFlag(flag: string, value: string) {
 	return codeBlock(`${flag} = ${value}`);
 }
 
-export default {
+export default createCommand({
 	data: (b) =>
 		b
 			.setDescription("Gets or sets feature flags")
@@ -61,4 +61,4 @@ export default {
 			await interaction.reply(`${displayFlag(flag, oldValue)}->${displayFlag(flag, newValue)}`);
 		}
 	},
-} as Command;
+});

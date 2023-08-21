@@ -13,5 +13,16 @@ export interface ContextMenuItem<T extends "User" | "Message"> {
 	execute: (param: {
 		client: Client<true>;
 		interaction: T extends "User" ? UserContextMenuCommandInteraction : MessageContextMenuCommandInteraction;
-	}) => Awaitable<void>;
+	}) => Awaitable<unknown>;
+}
+
+/**
+ * An identity function to make typescript supply the type argument automatically.
+ * @param contextMenuItem ContextMenuItem
+ * @returns ContextMenuItem
+ */
+export default function createContextMenuItem<Type extends "User" | "Message">(
+	contextMenuItem: ContextMenuItem<Type>,
+): ContextMenuItem<Type> {
+	return contextMenuItem;
 }

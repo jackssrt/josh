@@ -1,7 +1,7 @@
 import { randomInt } from "crypto";
-import type Command from "../command.js";
+import createCommand from "./../command.js";
 
-export default {
+export default createCommand({
 	data: (b) =>
 		b
 			.setDescription("Generates a random 4 digit room join code")
@@ -18,4 +18,4 @@ export default {
 			ephemeral: interaction.options.getBoolean("hidden", false) ?? false,
 		});
 	},
-} as Command;
+});
