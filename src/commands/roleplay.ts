@@ -2,7 +2,6 @@ import type { APIApplicationCommandOptionChoice, PresenceData, PresenceStatusDat
 import { ActivityType } from "discord.js";
 import Client from "../client.js";
 import database from "../database.js";
-import logger from "../logger.js";
 import createCommand from "./../command.js";
 
 type Subcommand = "presence";
@@ -57,15 +56,14 @@ export default createCommand({
 			const activityName = interaction.options.getString("activityname", false);
 			const activityState = interaction.options.getString("activitystate", false);
 			const activityUrl = interaction.options.getString("activityurl", false);
-			if (!activityName && activityType === null && activityState === null) {
+			if (!activityName && activityType === null && !activityState && !activityUrl) {
 				client.user.setPresence({ status, activities: Client.defaultPresence.activities });
 				await database.setActivePresence({ status, activities: Client.defaultPresence.activities });
 				await interaction.reply({ content: "✅", ephemeral: true });
+				return;
 			}
-			if (!activityName || activityType === null) {
-				logger.debug(activityName, activityType);
+			if (!activityName || activityType === null)
 				return await interaction.reply({ content: "Provide an activity type and name!", ephemeral: true });
-			}
 			const presenceData: PresenceData = {
 				status,
 				activities: [
