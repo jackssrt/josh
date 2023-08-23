@@ -18,8 +18,8 @@ import {
 import type * as SchedulesAPI from "../types/schedulesApi.js";
 import { dedent, parallel, textImage } from "../utils.js";
 import logger from "./../logger.js";
-import TimeRange from "./TimeRange.js";
-import TimeRangeCollection from "./TimeRangeCollection.js";
+import TimePeriod from "./TimePeriod.js";
+import TimePeriodCollection from "./TimePeriodCollection.js";
 import { Rotations } from "./index.js";
 import type { APIRuleToRule, Rule } from "./rules.js";
 import { RULE_MAP, turfWarRule } from "./rules.js";
@@ -33,7 +33,7 @@ interface BaseNodeShortOptions {
 	showDate: boolean;
 }
 
-export abstract class BaseNode extends TimeRange implements Shortable {
+export abstract class BaseNode extends TimePeriod implements Shortable {
 	public abstract color: HexColorString;
 	public abstract emoji: string;
 	public abstract name: string;
@@ -287,7 +287,7 @@ export class ChallengeNode extends BaseMatchNode<
 	public color = "#F02D7D" as const;
 	public emoji = CHALLENGES_EMOJI;
 	public name = "Challenges";
-	public timePeriods: TimeRangeCollection<ChallengeTimePeriod>;
+	public timePeriods: TimePeriodCollection<ChallengeTimePeriod>;
 	/**
 	 * @example "NewSeasonCup"
 	 * @example "SpecialRush_UltraShot"
@@ -320,7 +320,7 @@ export class ChallengeNode extends BaseMatchNode<
 		const endTime = timePeriods.map((v) => v.endTime).sort((a, b) => b.getTime() - a.getTime())[0]!;
 
 		super({ startTime: startTime.toISOString(), endTime: endTime.toISOString(), ...data }, setting, vsStages);
-		this.timePeriods = new TimeRangeCollection(timePeriods);
+		this.timePeriods = new TimePeriodCollection(timePeriods);
 		this.leagueId = setting.leagueMatchEvent.leagueMatchEventId;
 		this.challengeName = setting.leagueMatchEvent.name;
 		this.shortDescription = setting.leagueMatchEvent.desc;
@@ -341,7 +341,7 @@ export class ChallengeNode extends BaseMatchNode<
 			.join("\n");
 	}
 }
-export class ChallengeTimePeriod extends TimeRange implements Shortable {
+export class ChallengeTimePeriod extends TimePeriod implements Shortable {
 	constructor(data: SchedulesAPI.ChallengeTimePeriod) {
 		super(data.startTime, data.endTime);
 	}

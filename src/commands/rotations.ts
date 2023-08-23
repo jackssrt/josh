@@ -1,4 +1,4 @@
-import type { PoppingTimeRangeCollection } from "../rotations/TimeRangeCollection.js";
+import type { PoppingTimePeriodCollection } from "../rotations/TimePeriodCollection.js";
 import rotations from "../rotations/index.js";
 import type { BaseNode } from "../rotations/nodes.js";
 import type { RankedRule } from "../rotations/rules.js";
@@ -57,16 +57,16 @@ export default createCommand({
 				challenges: rotations.challenges,
 				xbattle: rotations.xBattle,
 				salmonrun: rotations.salmonRun,
-			} as const satisfies Record<ListSubcommand, PoppingTimeRangeCollection<BaseNode | undefined>>;
+			} as const satisfies Record<ListSubcommand, PoppingTimePeriodCollection<BaseNode | undefined>>;
 			const nodes = subcommandMap[subcommand];
-			const displayNode = (nodes as PoppingTimeRangeCollection<BaseNode | undefined>).ranges.find((v) => !!v);
+			const displayNode = (nodes as PoppingTimePeriodCollection<BaseNode | undefined>).periods.find((v) => !!v);
 			if (!displayNode) throw new Error("Couldn't find rotation type, try again later...");
 			await interaction.editReply(
 				await embeds((b) =>
 					b
 						.setTitle(`${displayNode.emoji} ${displayNode.name} rotations`)
 						.setDescription(
-							nodes.ranges
+							nodes.periods
 								.flatMap((v) =>
 									v
 										? v
@@ -84,10 +84,10 @@ export default createCommand({
 			const subcommand = interaction.options.getSubcommand() as SearchSubcommand;
 			const gamemode = SUBCOMMAND_GAMEMODE_MAP[subcommand];
 			const matched = [
-				rotations.challenges.ranges.filter((v) => v?.rule.rule === gamemode),
-				rotations.rankedSeries.ranges.filter((v) => v?.rule.rule === gamemode),
-				rotations.rankedOpen.ranges.filter((v) => v?.rule.rule === gamemode),
-				rotations.xBattle.ranges.filter((v) => v?.rule.rule === gamemode),
+				rotations.challenges.periods.filter((v) => v?.rule.rule === gamemode),
+				rotations.rankedSeries.periods.filter((v) => v?.rule.rule === gamemode),
+				rotations.rankedOpen.periods.filter((v) => v?.rule.rule === gamemode),
+				rotations.xBattle.periods.filter((v) => v?.rule.rule === gamemode),
 			] as const;
 			if (matched.every((v) => v.length === 0)) throw new Error("Couldn't find gamemode, try again later...");
 

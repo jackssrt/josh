@@ -1,4 +1,4 @@
-export default abstract class TimeRange {
+export default abstract class TimePeriod {
 	public startTime: Date;
 	public endTime: Date;
 	public get started() {

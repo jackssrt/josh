@@ -8,7 +8,7 @@ import createEvent from "./../event.js";
 
 export async function makeChallengeEvents(guild: Guild, overrideDatabase = false) {
 	await Promise.all(
-		rotations.challenges.ranges.map(async (challenge) => {
+		rotations.challenges.periods.map(async (challenge) => {
 			if (challenge === undefined) return;
 			if (!(await database.shouldMakeChallengeEvent(challenge.id)) && !overrideDatabase) return;
 			await guild.scheduledEvents.create({
@@ -25,7 +25,7 @@ export async function makeChallengeEvents(guild: Guild, overrideDatabase = false
 				scheduledEndTime: challenge.endTime,
 				image: await (await challenge.images(600, 180, "challengesEvent"))[0].toBuffer(),
 				description: dedent`**Time Periods**
-									${challenge.timePeriods.ranges
+									${challenge.timePeriods.periods
 										.map((v) =>
 											v
 												.short()

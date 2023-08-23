@@ -6,7 +6,7 @@ import type * as SalmonRunAPI from "../types/salmonRunApi.js";
 import type * as SchedulesAPI from "../types/schedulesApi.js";
 import { LARGEST_DATE, formatTime, iteratorToArray, parallel } from "../utils.js";
 import logger from "./../logger.js";
-import { PoppingTimeRangeCollection } from "./TimeRangeCollection.js";
+import { PoppingTimePeriodCollection } from "./TimePeriodCollection.js";
 import {
 	ChallengeNode,
 	CurrentFest,
@@ -20,14 +20,14 @@ import {
 } from "./nodes.js";
 
 export interface FetchedRotations {
-	splatfest: PoppingTimeRangeCollection<SplatfestNode | undefined>;
-	turfWar: PoppingTimeRangeCollection<TurfWarNode | undefined>;
-	rankedOpen: PoppingTimeRangeCollection<RankedOpenNode | undefined>;
-	rankedSeries: PoppingTimeRangeCollection<RankedSeriesNode | undefined>;
-	xBattle: PoppingTimeRangeCollection<XBattleNode | undefined>;
-	challenges: PoppingTimeRangeCollection<ChallengeNode | undefined>;
-	salmonRun: PoppingTimeRangeCollection<SalmonRunNode>;
-	eggstraWork: PoppingTimeRangeCollection<EggstraWorkNode>;
+	splatfest: PoppingTimePeriodCollection<SplatfestNode | undefined>;
+	turfWar: PoppingTimePeriodCollection<TurfWarNode | undefined>;
+	rankedOpen: PoppingTimePeriodCollection<RankedOpenNode | undefined>;
+	rankedSeries: PoppingTimePeriodCollection<RankedSeriesNode | undefined>;
+	xBattle: PoppingTimePeriodCollection<XBattleNode | undefined>;
+	challenges: PoppingTimePeriodCollection<ChallengeNode | undefined>;
+	salmonRun: PoppingTimePeriodCollection<SalmonRunNode>;
+	eggstraWork: PoppingTimePeriodCollection<EggstraWorkNode>;
 	startTime: Date;
 	endTime: Date;
 	salmonStartTime: Date;
@@ -41,14 +41,14 @@ export class Rotations {
 	private readonly hooks = new Set<() => Awaitable<void>>();
 	private readonly salmonHooks = new Set<() => Awaitable<void>>();
 	private constructor(
-		public challenges: PoppingTimeRangeCollection<ChallengeNode | undefined>,
-		public turfWar: PoppingTimeRangeCollection<TurfWarNode | undefined>,
-		public rankedOpen: PoppingTimeRangeCollection<RankedOpenNode | undefined>,
-		public rankedSeries: PoppingTimeRangeCollection<RankedSeriesNode | undefined>,
-		public xBattle: PoppingTimeRangeCollection<XBattleNode | undefined>,
-		public salmonRun: PoppingTimeRangeCollection<SalmonRunNode>,
-		public splatfest: PoppingTimeRangeCollection<SplatfestNode | undefined>,
-		public eggstraWork: PoppingTimeRangeCollection<EggstraWorkNode | undefined>,
+		public challenges: PoppingTimePeriodCollection<ChallengeNode | undefined>,
+		public turfWar: PoppingTimePeriodCollection<TurfWarNode | undefined>,
+		public rankedOpen: PoppingTimePeriodCollection<RankedOpenNode | undefined>,
+		public rankedSeries: PoppingTimePeriodCollection<RankedSeriesNode | undefined>,
+		public xBattle: PoppingTimePeriodCollection<XBattleNode | undefined>,
+		public salmonRun: PoppingTimePeriodCollection<SalmonRunNode>,
+		public splatfest: PoppingTimePeriodCollection<SplatfestNode | undefined>,
+		public eggstraWork: PoppingTimePeriodCollection<EggstraWorkNode | undefined>,
 		public currentFest: CurrentFest<"FIRST_HALF" | "SECOND_HALF"> | undefined,
 		public startTime: Date,
 		public endTime: Date,
@@ -133,14 +133,14 @@ export class Rotations {
 	private static async fetch(ignoreCache = false): Promise<FetchedRotations> {
 		if (process.env.NODE_ENV === "test")
 			return {
-				splatfest: new PoppingTimeRangeCollection([]),
-				challenges: new PoppingTimeRangeCollection([]),
-				turfWar: new PoppingTimeRangeCollection([]),
-				rankedOpen: new PoppingTimeRangeCollection([]),
-				rankedSeries: new PoppingTimeRangeCollection([]),
-				xBattle: new PoppingTimeRangeCollection([]),
-				salmonRun: new PoppingTimeRangeCollection([]),
-				eggstraWork: new PoppingTimeRangeCollection([]),
+				splatfest: new PoppingTimePeriodCollection([]),
+				challenges: new PoppingTimePeriodCollection([]),
+				turfWar: new PoppingTimePeriodCollection([]),
+				rankedOpen: new PoppingTimePeriodCollection([]),
+				rankedSeries: new PoppingTimePeriodCollection([]),
+				xBattle: new PoppingTimePeriodCollection([]),
+				salmonRun: new PoppingTimePeriodCollection([]),
+				eggstraWork: new PoppingTimePeriodCollection([]),
 				startTime: LARGEST_DATE,
 				endTime: LARGEST_DATE,
 				salmonStartTime: LARGEST_DATE,
@@ -176,36 +176,36 @@ export class Rotations {
 			},
 		} = response;
 
-		const challenges = new PoppingTimeRangeCollection(
+		const challenges = new PoppingTimePeriodCollection(
 			rawChallenges.map((x) =>
 				x.leagueMatchSetting && x.timePeriods.length > 0
 					? new ChallengeNode(x, x.leagueMatchSetting, vsStages)
 					: undefined,
 			),
 		);
-		const turfWar = new PoppingTimeRangeCollection(
+		const turfWar = new PoppingTimePeriodCollection(
 			rawTurfWar.map((x) =>
 				x.regularMatchSetting ? new TurfWarNode(x, x.regularMatchSetting, vsStages) : undefined,
 			),
 		);
-		const rankedOpen = new PoppingTimeRangeCollection(
+		const rankedOpen = new PoppingTimePeriodCollection(
 			rawRanked.map((x) =>
 				x.bankaraMatchSettings ? new RankedOpenNode(x, x.bankaraMatchSettings[1], vsStages) : undefined,
 			),
 		);
-		const rankedSeries = new PoppingTimeRangeCollection(
+		const rankedSeries = new PoppingTimePeriodCollection(
 			rawRanked.map((x) =>
 				x.bankaraMatchSettings ? new RankedSeriesNode(x, x.bankaraMatchSettings[0], vsStages) : undefined,
 			),
 		);
-		const xBattle = new PoppingTimeRangeCollection(
+		const xBattle = new PoppingTimePeriodCollection(
 			rawXBattle.map((x) => (x.xMatchSetting ? new XBattleNode(x, x.xMatchSetting, vsStages) : undefined)),
 		);
-		const salmonRun = new PoppingTimeRangeCollection(rawSalmonRun.map((x) => new SalmonRunNode(x, x.setting)));
-		const eggstraWork = new PoppingTimeRangeCollection(
+		const salmonRun = new PoppingTimePeriodCollection(rawSalmonRun.map((x) => new SalmonRunNode(x, x.setting)));
+		const eggstraWork = new PoppingTimePeriodCollection(
 			rawEggstraWork.map((x) => new EggstraWorkNode(x, x.setting)),
 		);
-		const splatfest = new PoppingTimeRangeCollection(
+		const splatfest = new PoppingTimePeriodCollection(
 			rawSplatfest.map((x) =>
 				x.festMatchSetting ? new SplatfestNode(x, x.festMatchSetting, vsStages) : undefined,
 			),
