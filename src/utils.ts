@@ -184,7 +184,7 @@ export async function reportError(
 			const url = affectedUser.displayAvatarURL();
 			b.setAuthor({
 				...(url ? { iconURL: url } : {}),
-				name: affectedUser instanceof GuildMember ? affectedUser.displayName : affectedUser.username,
+				name: `@${affectedUser instanceof GuildMember ? affectedUser.user.username : affectedUser.username}`,
 			});
 		}
 		return b
@@ -207,16 +207,16 @@ export async function reportError(
 	// send error to owner,
 	// reply or edit, and if it doesnt work: send to user in dms
 	const result = await pawait(
-		parallel(interaction?.user !== client.owner.user && client.owner.send(embed), async () => {
+		parallel((affectedUser?.id ?? "") !== client.owner.id && client.owner.send(embed), async () => {
 			if (interaction) {
 				const [res] = await pawait(
 					interaction.replied
-						? interaction.editReply({ ...embed, components: [], files: [] })
+						? interaction.editReply({ ...embed, content: "", components: [], files: [] })
 						: interaction.reply({ ...embed, components: [], files: [], ephemeral: true }),
 				);
 				if (res) return;
 			}
-			if (affectedUser?.id !== client.owner.id) await affectedUser?.send(embed);
+			await affectedUser?.send(embed);
 		}),
 	);
 	if (result[1])
