@@ -60,6 +60,17 @@ export default class Client<Ready extends boolean = false, Loaded extends boolea
 		});
 		this.on("debug", (message) => logger.debug(message));
 		this.on("warn", (message) => logger.warn(message));
+		this.rest.on("response", (req, res) =>
+			logger.debug(
+				"[R]",
+				req.method,
+				req.route,
+				res.headers.get("X-RateLimit-Remaining"),
+				"/",
+				res.headers.get("X-RateLimit-Limit"),
+				`[${res.headers.get("X-RateLimit-Reset-After")}]`,
+			),
+		);
 	}
 	public static async new(): Promise<Client<false, false>> {
 		return new Client((await database.getActivePresence()) ?? Client.defaultPresence);
