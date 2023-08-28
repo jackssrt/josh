@@ -1,4 +1,4 @@
-import type { ButtonInteraction, ChatInputCommandInteraction, GuildMember } from "discord.js";
+import type { ButtonInteraction, ChatInputCommandInteraction, GuildMember, Message } from "discord.js";
 import { userMention } from "discord.js";
 import { SQUID_SHUFFLE_EMOJI } from "../../emojis.js";
 import { embeds } from "../../utils.js";
@@ -7,6 +7,7 @@ import { HIDER_EXPLANATION, PlayerRole, ROLE_ICON_MAP, SEEKER_EXPLANATION } from
 export default class Player<Host extends boolean = boolean> {
 	public member: GuildMember;
 	private readonly gameHost: Player<true>;
+	public roleMessage: Host extends true ? undefined : Message | undefined = undefined;
 	constructor(
 		public interaction: Host extends true ? ChatInputCommandInteraction<"cached"> : ButtonInteraction<"cached">,
 		public host: Host,

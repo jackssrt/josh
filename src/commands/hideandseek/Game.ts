@@ -248,14 +248,16 @@ export default class Game<State extends GameState = GameState.WaitingForPlayers>
 				return;
 			}
 			const p = this.addPlayer(interaction);
-			await parallel(
-				interaction.reply({
-					...(await p.roleEmbed()),
-					ephemeral: true,
-					fetchReply: true,
-				}),
-				this.updateMainMessage(),
-			);
+			p.roleMessage = (
+				await parallel(
+					interaction.reply({
+						...(await p.roleEmbed()),
+						ephemeral: true,
+						fetchReply: true,
+					}),
+					this.updateMainMessage(),
+				)
+			)[0];
 		});
 		joinCollector.once("end", async (_, reason) => {
 			if (reason !== "started") await this.abort();
@@ -393,7 +395,7 @@ export default class Game<State extends GameState = GameState.WaitingForPlayers>
 			this.players.map(async (v) => {
 				if (v.isNotHost()) {
 					if (!this.playedAgain) await v.interaction.editReply(await v.roleEmbed());
-					else await v.interaction.followUp({ ...(await v.roleEmbed()), ephemeral: true });
+					else v.roleMessage = await v.interaction.followUp({ ...(await v.roleEmbed()), ephemeral: true });
 				}
 			}),
 		);
@@ -534,7 +536,9 @@ export default class Game<State extends GameState = GameState.WaitingForPlayers>
 				)),
 			}),
 			this.hostConfigInteraction.deleteReply(),
-			...this.players.map(async (v) => !v.host && (await v.interaction.deleteReply())),
+			...this.players.map(
+				async (v) => !v.host && v.roleMessage && (await v.interaction.deleteReply(v.roleMessage)),
+			),
 		);
 		return playAgain;
 	}
