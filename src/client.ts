@@ -20,8 +20,7 @@ import logger from "./logger.js";
 import Registry from "./registry.js";
 import { formatTime, parallel, pluralize, reportError } from "./utils.js";
 
-export const USER_AGENT =
-	"Splat Squad Bot (source code: https://github.com/jackssrt/josh , make an issue if it's misbehaving)";
+export const USER_AGENT = "Josh (source code: https://github.com/jackssrt/josh , make an issue if it's misbehaving)";
 export default class Client<Ready extends boolean = false, Loaded extends boolean = true> extends DiscordClient<Ready> {
 	public commandRegistry = new Registry<Command>();
 	public eventRegistry = new Registry<Event<keyof ClientEvents>>();
