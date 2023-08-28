@@ -58,18 +58,27 @@ export default class Client<Ready extends boolean = false, Loaded extends boolea
 			],
 			presence,
 		});
-		this.on("debug", (message) => logger.debug(message));
-		this.on("warn", (message) => logger.warn(message));
-		this.rest.on("response", (req, res) =>
-			logger.debug(
-				"[R]",
-				req.method,
-				req.route,
-				res.headers.get("X-RateLimit-Remaining"),
-				"/",
-				res.headers.get("X-RateLimit-Limit"),
-				`[${res.headers.get("X-RateLimit-Reset-After")}]`,
-			),
+		this.on("debug", async (message) => {
+			if (await database.getBooleanFeatureFlag("log.discord.debug")) logger.debug(message);
+		});
+		this.on("warn", async (message) => {
+			if (await database.getBooleanFeatureFlag("log.discord.warn")) logger.warn(message);
+		});
+		this.rest.on(
+			"response",
+			(req, res) =>
+				void (async () => {
+					if (await database.getBooleanFeatureFlag("log.ratelimits"))
+						logger.debug(
+							"[R]",
+							req.method,
+							req.route,
+							res.headers.get("X-RateLimit-Remaining"),
+							"/",
+							res.headers.get("X-RateLimit-Limit"),
+							`[${res.headers.get("X-RateLimit-Reset-After")}]`,
+						);
+				})(),
 		);
 	}
 	public static async new(): Promise<Client<false, false>> {
@@ -194,29 +203,31 @@ export default class Client<Ready extends boolean = false, Loaded extends boolea
 
 		this.on("interactionCreate", async (interaction) => {
 			if (!interaction.isChatInputCommand()) return;
-			const parts = [`@${interaction.user.username} called /${interaction.commandName}`];
-			if (interaction.options.data.length)
-				parts.push(
-					...interaction.options.data.flatMap(function recursive(v): string[] {
-						return [
-							v.type === ApplicationCommandOptionType.Subcommand ||
-							v.type === ApplicationCommandOptionType.SubcommandGroup
-								? v.name
-								: `${v.name}: ${
-										(v.user && `@${v.user.username}`) ??
-										(v.role && `@${v.role.name}`) ??
-										(v.channel && `#${v.channel.name}`) ??
-										(v.message &&
-											`"${v.message.content.replace(/\n/g, "\\n")}" from @${
-												v.message.author.username
-											}`) ??
-										v.value
-								  }`,
-							...(v.options ? v.options.flatMap((v) => recursive.call(undefined, v)) : []),
-						];
-					}),
-				);
-			logger.debug(parts.join(" "));
+			if (await database.getBooleanFeatureFlag("log.commands")) {
+				const parts = [`@${interaction.user.username} called /${interaction.commandName}`];
+				if (interaction.options.data.length)
+					parts.push(
+						...interaction.options.data.flatMap(function recursive(v): string[] {
+							return [
+								v.type === ApplicationCommandOptionType.Subcommand ||
+								v.type === ApplicationCommandOptionType.SubcommandGroup
+									? v.name
+									: `${v.name}: ${
+											(v.user && `@${v.user.username}`) ??
+											(v.role && `@${v.role.name}`) ??
+											(v.channel && `#${v.channel.name}`) ??
+											(v.message &&
+												`"${v.message.content.replace(/\n/g, "\\n")}" from @${
+													v.message.author.username
+												}`) ??
+											v.value
+									  }`,
+								...(v.options ? v.options.flatMap((v) => recursive.call(undefined, v)) : []),
+							];
+						}),
+					);
+				logger.debug(parts.join(" "));
+			}
 			const command = this.commandRegistry.get(interaction.commandName);
 			if (!command) return;
 			await this.loadedSyncSignal.await();
@@ -248,15 +259,16 @@ export default class Client<Ready extends boolean = false, Loaded extends boolea
 		});
 		this.on("interactionCreate", async (interaction) => {
 			if (!interaction.isContextMenuCommand()) return;
-			logger.debug(
-				`@${interaction.user.username} used ${interaction.commandName} on ${
-					interaction.isMessageContextMenuCommand()
-						? `message "${interaction.targetMessage.content.replace(/\n/g, "\\n")}" from @${
-								interaction.targetMessage.author.username
-						  }`
-						: `@${interaction.targetUser.username}`
-				}`,
-			);
+			if (await database.getBooleanFeatureFlag("log.contextMenuItems"))
+				logger.debug(
+					`@${interaction.user.username} used ${interaction.commandName} on ${
+						interaction.isMessageContextMenuCommand()
+							? `message "${interaction.targetMessage.content.replace(/\n/g, "\\n")}" from @${
+									interaction.targetMessage.author.username
+							  }`
+							: `@${interaction.targetUser.username}`
+					}`,
+				);
 			const item = this.contextMenuItemsRegistry.get(interaction.commandName);
 			if (!item) return;
 			await this.loadedSyncSignal.await();
