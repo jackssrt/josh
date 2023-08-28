@@ -1,4 +1,17 @@
-import type { CategoryChannel, ClientEvents, Guild, NewsChannel, PresenceData, Role, TextChannel } from "discord.js";
+import type {
+	AutocompleteInteraction,
+	CategoryChannel,
+	ChatInputCommandInteraction,
+	ClientEvents,
+	ContextMenuCommandInteraction,
+	Guild,
+	MessageContextMenuCommandInteraction,
+	NewsChannel,
+	PresenceData,
+	Role,
+	TextChannel,
+	UserContextMenuCommandInteraction,
+} from "discord.js";
 import {
 	ActivityType,
 	ApplicationCommandOptionType,
@@ -43,6 +56,7 @@ export default class Client<Ready extends boolean = false, Loaded extends boolea
 		status: "online",
 		activities: [{ type: ActivityType.Competing, name: "Splatoon 3" }],
 	} satisfies Readonly<PresenceData>;
+
 	private constructor(presence: PresenceData) {
 		super({
 			intents: [
@@ -80,13 +94,11 @@ export default class Client<Ready extends boolean = false, Loaded extends boolea
 				})(),
 		);
 	}
+
 	public static async new(): Promise<Client<false, false>> {
 		return new Client((await database.getActivePresence()) ?? Client.defaultPresence);
 	}
 
-	public resetPresence() {
-		this.user?.setPresence(Client.defaultPresence);
-	}
 	public async load(this: Client) {
 		const dirName = IS_BUILT ? "build" : "src";
 		const start = new Date();
@@ -202,92 +214,123 @@ export default class Client<Ready extends boolean = false, Loaded extends boolea
 
 		this.on("interactionCreate", async (interaction) => {
 			if (!interaction.isChatInputCommand()) return;
-			if (await database.getBooleanFeatureFlag("log.commands")) {
-				const parts = [`@${interaction.user.username} called /${interaction.commandName}`];
-				if (interaction.options.data.length)
-					parts.push(
-						...interaction.options.data.flatMap(function recursive(v): string[] {
-							return [
-								v.type === ApplicationCommandOptionType.Subcommand ||
-								v.type === ApplicationCommandOptionType.SubcommandGroup
-									? v.name
-									: `${v.name}: ${
-											(v.user && `@${v.user.username}`) ??
-											(v.role && `@${v.role.name}`) ??
-											(v.channel && `#${v.channel.name}`) ??
-											(v.message &&
-												`"${v.message.content.replace(/\n/g, "\\n")}" from @${
-													v.message.author.username
-												}`) ??
-											v.value
-									  }`,
-								...(v.options ? v.options.flatMap((v) => recursive.call(undefined, v)) : []),
-							];
-						}),
-					);
-				logger.debug(parts.join(" "));
-			}
+
+			if (await database.getBooleanFeatureFlag("log.commands")) this.logCommand(interaction);
+
 			const command = this.commandRegistry.get(interaction.commandName);
 			if (!command) return;
+
 			await this.loadedSyncSignal.await();
-			if (command.ownerOnly && interaction.user !== this.owner.user)
-				return void (await interaction.reply({
-					content: "This command can only be used by the owner.",
-					ephemeral: true,
-				}));
-			if (
-				command.userAllowList &&
-				!(command.userAllowList.includes(interaction.user.id) || interaction.user === this.owner.user)
-			)
-				return void (await interaction.reply({
-					content: "Sorry, you aren't allowed to use this command...",
-					ephemeral: true,
-				}));
-			if (command.defer) await interaction.deferReply({ ephemeral: command.defer === "ephemeral" });
-			try {
-				await command.execute({ client: this, interaction });
-			} catch (e) {
-				await reportError(this, {
-					title: `Command error: /${interaction.commandName}`,
-					description: "An error was thrown while running a command.",
-					error: e as Error,
-					affectedUser: interaction.member instanceof GuildMember ? interaction.member : interaction.user,
-					interaction,
-				});
-			}
+
+			await this.runCommand(interaction, command);
 		});
+
 		this.on("interactionCreate", async (interaction) => {
 			if (!interaction.isContextMenuCommand()) return;
-			if (await database.getBooleanFeatureFlag("log.contextMenuItems"))
-				logger.debug(
-					`@${interaction.user.username} used ${interaction.commandName} on ${
-						interaction.isMessageContextMenuCommand()
-							? `message "${interaction.targetMessage.content.replace(/\n/g, "\\n")}" from @${
-									interaction.targetMessage.author.username
-							  }`
-							: `@${interaction.targetUser.username}`
-					}`,
-				);
+
+			if (await database.getBooleanFeatureFlag("log.contextMenuItems")) this.logContextMenuItem(interaction);
 			const item = this.contextMenuItemsRegistry.get(interaction.commandName);
 			if (!item) return;
+
 			await this.loadedSyncSignal.await();
-			if (item.ownerOnly && interaction.user !== this.owner.user)
-				return void (await interaction.reply({
-					content: "This context menu item can only be used by the owner.",
-					ephemeral: true,
-				}));
-			if (item.type === "Message" && interaction.isMessageContextMenuCommand())
-				await item.execute({ client: this, interaction });
-			else if (item.type === "User" && interaction.isUserContextMenuCommand())
-				await item.execute({ client: this, interaction });
+
+			await this.runContextMenuItem(interaction, item);
 		});
+
 		this.on("interactionCreate", async (interaction) => {
 			if (!interaction.isAutocomplete()) return;
 
 			const command = this.commandRegistry.get(interaction.commandName);
+			if (!command) return;
+
 			await this.loadedSyncSignal.await();
-			await command?.autocomplete?.({ client: this, interaction });
+
+			await this.autocompleteCommand(interaction, command);
 		});
+
 		await this.login(process.env.TOKEN);
+	}
+
+	private logContextMenuItem(interaction: MessageContextMenuCommandInteraction | UserContextMenuCommandInteraction) {
+		logger.debug(
+			`@${interaction.user.username} used ${interaction.commandName} on ${
+				interaction.isMessageContextMenuCommand()
+					? `message "${interaction.targetMessage.content.replace(/\n/g, "\\n")}" from @${
+							interaction.targetMessage.author.username
+					  }`
+					: `@${interaction.targetUser.username}`
+			}`,
+		);
+	}
+
+	private async runContextMenuItem(
+		this: Client<true>,
+		interaction: ContextMenuCommandInteraction,
+		item: ContextMenuItem<"Message" | "User">,
+	) {
+		if (item.ownerOnly && interaction.user !== this.owner.user)
+			return void (await interaction.reply({
+				content: "This context menu item can only be used by the owner.",
+				ephemeral: true,
+			}));
+		if (
+			(item.type === "Message" && interaction.isMessageContextMenuCommand()) ||
+			(item.type === "User" && interaction.isUserContextMenuCommand())
+		)
+			await item.execute({ client: this, interaction });
+	}
+
+	private async autocompleteCommand(this: Client<true>, interaction: AutocompleteInteraction, command: Command) {
+		await command.autocomplete?.({ client: this, interaction });
+	}
+
+	private logCommand(interaction: ChatInputCommandInteraction) {
+		const parts = [`@${interaction.user.username} called /${interaction.commandName}`];
+		if (interaction.options.data.length)
+			parts.push(
+				...interaction.options.data.flatMap(function recursive(v): string[] {
+					return [
+						v.type === ApplicationCommandOptionType.Subcommand ||
+						v.type === ApplicationCommandOptionType.SubcommandGroup
+							? v.name
+							: `${v.name}: ${
+									(v.user && `@${v.user.username}`) ??
+									(v.role && `@${v.role.name}`) ??
+									(v.channel && `#${v.channel.name}`) ??
+									(v.message &&
+										`"${v.message.content.replace(/\n/g, "\\n")}" from @${
+											v.message.author.username
+										}`) ??
+									v.value
+							  }`,
+						...(v.options ? v.options.flatMap((v) => recursive.call(undefined, v)) : []),
+					];
+				}),
+			);
+		logger.debug(parts.join(" "));
+	}
+
+	private async runCommand(this: Client<true>, interaction: ChatInputCommandInteraction, command: Command) {
+		if (
+			(command.ownerOnly && interaction.user !== this.owner.user) ||
+			(command.userAllowList &&
+				!(command.userAllowList.includes(interaction.user.id) || interaction.user === this.owner.user))
+		)
+			return void (await interaction.reply({
+				content: "Sorry, you aren't allowed to use this command...",
+				ephemeral: true,
+			}));
+		if (command.defer) await interaction.deferReply({ ephemeral: command.defer === "ephemeral" });
+		try {
+			await command.execute({ client: this, interaction });
+		} catch (e) {
+			await reportError(this, {
+				title: `Command error: /${interaction.commandName}`,
+				description: "An error was thrown while running a command.",
+				error: e as Error,
+				affectedUser: interaction.member instanceof GuildMember ? interaction.member : interaction.user,
+				interaction,
+			});
+		}
 	}
 }
