@@ -26,17 +26,14 @@ export default createEvent({
 				newState.channel,
 				await textToSpeech(
 					cleanForSpeaking(`${member.displayName} joined`),
-					await database.getFeatureFlag("tts.voice"),
+					await database.getFlag("tts.voice"),
 				),
 			);
 		if (oldState.channel && oldState.channel.members.filter((v) => !v.user.bot).size > 0)
 			queueSound(
 				client,
 				oldState.channel,
-				await textToSpeech(
-					cleanForSpeaking(`${member.displayName} left`),
-					await database.getFeatureFlag("tts.voice"),
-				),
+				await textToSpeech(cleanForSpeaking(`${member.displayName} left`), await database.getFlag("tts.voice")),
 			);
 	},
 });

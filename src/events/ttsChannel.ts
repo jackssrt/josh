@@ -15,8 +15,8 @@ export default createEvent({
 			message.author.bot ||
 			!message.inGuild() ||
 			!message.member?.voice.channel ||
-			!(await database.getBooleanFeatureFlag("tts.enabled")) ||
-			((await database.getBooleanFeatureFlag("tts.mutedOnly")) && !message.member.voice.mute)
+			!(await database.getBooleanFlag("tts.enabled")) ||
+			((await database.getBooleanFlag("tts.mutedOnly")) && !message.member.voice.mute)
 		)
 			return;
 		const filesToPlay = message.attachments.filter(
@@ -33,11 +33,11 @@ export default createEvent({
 						lastNames.get(memberVoiceChannel.id) !== memberName ? `${memberName} says ` : ""
 					}${content}`.toLowerCase();
 					lastNames.set(memberVoiceChannel.id, memberName);
-					const sound = await textToSpeech(text, await database.getFeatureFlag("tts.voice"));
+					const sound = await textToSpeech(text, await database.getFlag("tts.voice"));
 
 					return sound;
 				},
-				...(filesToPlay.size > 0 && (await database.getBooleanFeatureFlag("tts.playFiles"))
+				...(filesToPlay.size > 0 && (await database.getBooleanFlag("tts.playFiles"))
 					? filesToPlay.map(async (v) =>
 							Buffer.from((await axios.get<ArrayBuffer>(v.url, { responseType: "arraybuffer" })).data),
 					  )

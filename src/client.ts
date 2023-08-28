@@ -72,16 +72,16 @@ export default class Client<Ready extends boolean = false, Loaded extends boolea
 			presence,
 		});
 		this.on("debug", async (message) => {
-			if (await database.getBooleanFeatureFlag("log.discord.debug")) logger.debug(message);
+			if (await database.getBooleanFlag("log.discord.debug")) logger.debug(message);
 		});
 		this.on("warn", async (message) => {
-			if (await database.getBooleanFeatureFlag("log.discord.warn")) logger.warn(message);
+			if (await database.getBooleanFlag("log.discord.warn")) logger.warn(message);
 		});
 		this.rest.on(
 			"response",
 			(req, res) =>
 				void (async () => {
-					if (await database.getBooleanFeatureFlag("log.ratelimits"))
+					if (await database.getBooleanFlag("log.ratelimits"))
 						logger.debug(
 							"[R]",
 							req.method,
@@ -198,7 +198,7 @@ export default class Client<Ready extends boolean = false, Loaded extends boolea
 		for (const event of this.eventRegistry.values()) {
 			this[event.isOnetime ? "once" : "on"](event.event, async (...params: ClientEvents[typeof event.event]) => {
 				await this.loadedSyncSignal.await();
-				if (await database.getBooleanFeatureFlag("log.events")) this.logEvent(event);
+				if (await database.getBooleanFlag("log.events")) this.logEvent(event);
 				await event.on({ client: this }, ...params);
 			});
 		}
@@ -216,7 +216,7 @@ export default class Client<Ready extends boolean = false, Loaded extends boolea
 		this.on("interactionCreate", async (interaction) => {
 			if (!interaction.isChatInputCommand()) return;
 
-			if (await database.getBooleanFeatureFlag("log.commands")) this.logCommand(interaction);
+			if (await database.getBooleanFlag("log.commands")) this.logCommand(interaction);
 
 			const command = this.commandRegistry.get(interaction.commandName);
 			if (!command) return;
@@ -229,7 +229,7 @@ export default class Client<Ready extends boolean = false, Loaded extends boolea
 		this.on("interactionCreate", async (interaction) => {
 			if (!interaction.isContextMenuCommand()) return;
 
-			if (await database.getBooleanFeatureFlag("log.contextMenuItems")) this.logContextMenuItem(interaction);
+			if (await database.getBooleanFlag("log.contextMenuItems")) this.logContextMenuItem(interaction);
 			const item = this.contextMenuItemsRegistry.get(interaction.commandName);
 			if (!item) return;
 

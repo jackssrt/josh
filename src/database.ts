@@ -6,7 +6,7 @@ import Lock from "./lock.js";
 import type * as SalmonRunAPI from "./types/salmonRunApi.js";
 import type * as SchedulesAPI from "./types/schedulesApi.js";
 import { SMALLEST_DATE, parallel } from "./utils.js";
-export const FEATURE_FLAGS = {
+export const DEFAULT_FLAGS = {
 	"tts.voice": "gtts",
 	"tts.enabled": "true",
 	"tts.mutedOnly": "false",
@@ -18,7 +18,7 @@ export const FEATURE_FLAGS = {
 	"log.discord.warn": "false",
 	"log.discord.debug": "false",
 } satisfies Record<string, string>;
-export type FeatureFlag = keyof typeof FEATURE_FLAGS;
+export type Flag = keyof typeof DEFAULT_FLAGS;
 export interface DatabaseData {
 	createdSplatfestEvent: string;
 	cachedMapRotation: SchedulesAPI.Response;
@@ -29,7 +29,7 @@ export interface DatabaseData {
 	madeChallengeEvents: string[];
 	staticMessageIds: Record<string, Snowflake>;
 	inviteRecords: Record<Snowflake, Snowflake>;
-	featureFlags: Partial<typeof FEATURE_FLAGS>;
+	flags: Partial<typeof DEFAULT_FLAGS>;
 	activePresence: PresenceData;
 }
 class DatabaseBackend<T extends Record<K, unknown>, K extends string> {
@@ -137,15 +137,15 @@ export class Database {
 	public async getInviteRecord(): Promise<Record<Snowflake, Snowflake>> {
 		return await this.backend.get("inviteRecords", {});
 	}
-	public async setFeatureFlag<T extends FeatureFlag>(flag: T, value: (typeof FEATURE_FLAGS)[T]) {
-		return await this.backend.set("featureFlags", { ...(await this.backend.get("featureFlags")), [flag]: value });
+	public async setFlag<T extends Flag>(flag: T, value: (typeof DEFAULT_FLAGS)[T]) {
+		return await this.backend.set("flags", { ...(await this.backend.get("flags")), [flag]: value });
 	}
-	public async getFeatureFlag<T extends FeatureFlag>(flag: T): Promise<(typeof FEATURE_FLAGS)[T]> {
-		const overrides = await this.backend.get("featureFlags", {} as Partial<typeof FEATURE_FLAGS>);
-		return overrides[flag] ?? FEATURE_FLAGS[flag];
+	public async getFlag<T extends Flag>(flag: T): Promise<(typeof DEFAULT_FLAGS)[T]> {
+		const overrides = await this.backend.get("flags", {} as Partial<typeof DEFAULT_FLAGS>);
+		return overrides[flag] ?? DEFAULT_FLAGS[flag];
 	}
-	public async getBooleanFeatureFlag<T extends FeatureFlag>(flag: T): Promise<boolean> {
-		return (await this.getFeatureFlag(flag)) === "true";
+	public async getBooleanFlag<T extends Flag>(flag: T): Promise<boolean> {
+		return (await this.getFlag(flag)) === "true";
 	}
 	public async getActivePresence(): Promise<PresenceData | undefined> {
 		return await this.backend.get("activePresence");
