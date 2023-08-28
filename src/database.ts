@@ -12,6 +12,7 @@ export const FEATURE_FLAGS = {
 	"tts.mutedOnly": "false",
 	"tts.playFiles": "true",
 	"log.ratelimits": "false",
+	"log.events": "false",
 	"log.commands": "true",
 	"log.contextMenuItems": "true",
 	"log.discord.warn": "false",

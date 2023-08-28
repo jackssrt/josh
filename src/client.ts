@@ -198,6 +198,7 @@ export default class Client<Ready extends boolean = false, Loaded extends boolea
 		for (const event of this.eventRegistry.values()) {
 			this[event.isOnetime ? "once" : "on"](event.event, async (...params: ClientEvents[typeof event.event]) => {
 				await this.loadedSyncSignal.await();
+				if (await database.getBooleanFeatureFlag("log.events")) this.logEvent(event);
 				await event.on({ client: this }, ...params);
 			});
 		}
@@ -249,6 +250,10 @@ export default class Client<Ready extends boolean = false, Loaded extends boolea
 		});
 
 		await this.login(process.env.TOKEN);
+	}
+
+	private logEvent(event: Event<keyof ClientEvents>) {
+		logger.debug("[E]", event.event);
 	}
 
 	private logContextMenuItem(interaction: MessageContextMenuCommandInteraction | UserContextMenuCommandInteraction) {
