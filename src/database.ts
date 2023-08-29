@@ -140,6 +140,9 @@ export class Database {
 	public async setFlag<T extends Flag>(flag: T, value: (typeof DEFAULT_FLAGS)[T]) {
 		return await this.backend.set("flags", { ...(await this.backend.get("flags")), [flag]: value });
 	}
+	public async getAllFlags(): Promise<DatabaseData["flags"]> {
+		return await this.backend.get("flags", {} as DatabaseData["flags"]);
+	}
 	public async getFlag<T extends Flag>(flag: T): Promise<(typeof DEFAULT_FLAGS)[T]> {
 		const overrides = await this.backend.get("flags", {} as Partial<typeof DEFAULT_FLAGS>);
 		return overrides[flag] ?? DEFAULT_FLAGS[flag];
