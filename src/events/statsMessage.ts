@@ -1,5 +1,5 @@
-import type { Guild } from "discord.js";
-import { AttachmentBuilder, TimestampStyles, roleMention, time } from "discord.js";
+import type { Guild, Snowflake } from "discord.js";
+import { AttachmentBuilder, TimestampStyles, roleMention, time, userMention } from "discord.js";
 import type { Vector } from "ngraph.forcelayout";
 import createLayout from "ngraph.forcelayout";
 import createGraph from "ngraph.graph";
@@ -20,10 +20,10 @@ import type Client from "./../client.js";
 import createEvent from "./../event.js";
 import logger from "./../logger.js";
 
-async function makeInviteGraph(guild: Guild): Promise<Buffer> {
+async function makeInviteGraph(guild: Guild, invites: Record<Snowflake, Snowflake>): Promise<Buffer> {
 	const graph = createGraph<string>();
 	await parallel(
-		Object.entries(await database.getInviteRecord()).map(async ([invitee, inviter]) => {
+		Object.entries(invites).map(async ([invitee, inviter]) => {
 			const [inviterMember, inviteeMember] = await parallel(
 				guild.members.fetch(inviter).catch(() => undefined),
 				guild.members.fetch(invitee).catch(() => undefined),
@@ -84,7 +84,10 @@ async function makeInviteGraph(guild: Guild): Promise<Buffer> {
 
 export async function updateStatsMessage(client: Client<true>) {
 	const members = membersWithRoles([client.memberRole]);
+	const invites = await database.getInviteRecord();
 	const colorRoles = await getLowerRolesInSameCategory(client.colorsRoleCategory);
+	// members - invites
+	const toBeAdded = [...members.keys()].filter((v) => !invites[v]);
 	await updateStaticMessage(client.statsChannel, "stats-message", {
 		...(await embeds(
 			(b) =>
@@ -109,14 +112,25 @@ export async function updateStatsMessage(client: Client<true>) {
 			(b) =>
 				b
 					.setTitle("Member statistics")
-					.addFields({
-						name: "Member count",
-						value: `${members.size} ${pluralize("member", members.size)}`,
-						inline: true,
-					})
+					.addFields(
+						{
+							name: "Member count",
+							value: `${members.size} ${pluralize("member", members.size)}`,
+							inline: true,
+						},
+
+						...(toBeAdded.length
+							? [
+									{
+										name: "To be added",
+										value: toBeAdded.map((v) => userMention(v)).join(" "),
+									},
+							  ]
+							: []),
+					)
 					.setImage("attachment://invites.png"),
 		)),
-		files: [new AttachmentBuilder(await makeInviteGraph(client.guild)).setName("invites.png")],
+		files: [new AttachmentBuilder(await makeInviteGraph(client.guild, invites)).setName("invites.png")],
 	});
 }
 
