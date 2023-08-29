@@ -18,14 +18,14 @@
 	"Event": {
 		"prefix": "event",
 		"body": [
-			"import type Event from \"./../event.js\";",
+			"import createEvent from \"./../event.js\";",
 			"",
-			"export default {",
+			"export default createEvent({",
 			"\tevent: \"${1:event}\",",
 			"\tasync on({ client }) {",
 			"\t\t${0}",
 			"\t},",
-			"} as Event<\"${1:event}\">;",
+			"});",
 			""
 		],
 		"description": "Event"
@@ -33,14 +33,14 @@
 	"Command": {
 		"prefix": "command",
 		"body": [
-			"import type Command from \"../command.js\";",
+			"import createCommand from \"../command.js\";",
 			"",
-			"export default {",
+			"export default createCommand({",
 			"\tdata: (b) => b.setDescription(\"${1}\"),",
 			"\tasync execute({ client, interaction }) {",
 			"\t\t${0}",
 			"\t},",
-			"} as Command;",
+			"});",
 			""
 		],
 		"description": "Command"
@@ -48,15 +48,15 @@
 	"ContextMenuItem": {
 		"prefix": "contextMenuItem",
 		"body": [
-			"import type { ContextMenuItem } from \"../contextMenuItem.js\";",
+			"import createContextMenuItem from \"../contextMenuItem.js\";",
 			"",
-			"export default {",
+			"export default createContextMenuItem({",
 			"\ttype: \"${1|Message,User|}\",",
 			"\tdata: (b) => b,",
 			"\tasync execute({ client, interaction }) {",
 			"\t\t${0}",
 			"\t}",
-			"} as ContextMenuItem<\"${1}\">;",
+			"});",
 			""
 		],
 		"description": "Context Menu Item"
