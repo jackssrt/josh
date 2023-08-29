@@ -17,7 +17,7 @@ export class PoppingTimePeriodCollection<T extends TimePeriod | undefined> exten
 		while (this.periods[0].ended) {
 			// first node has ended, remove it from the array
 			this.periods.shift();
-			if (this.periods.length === 0) return;
+			if (this.periods.length === 0 || this.periods[0] === undefined) return;
 		}
 	}
 }
