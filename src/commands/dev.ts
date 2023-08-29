@@ -196,6 +196,7 @@ export default createCommand({
 			const inviter = interaction.options.getUser("inviter", true).id;
 			const invitee = interaction.options.getUser("invitee", true).id;
 			await database.setInviteRecord(inviter, invitee);
+			await updateStatsMessage(client);
 			await interaction.editReply(`done, ${userMention(inviter)} => ${userMention(invitee)}`);
 		} else if (subcommand === "splatfest") {
 			const {
