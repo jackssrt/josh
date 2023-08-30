@@ -11,6 +11,8 @@ export default createEvent({
 	async on({ client }, message) {
 		if (
 			!message.inGuild() ||
+			message.guild !== client.guild ||
+			message.author.bot ||
 			message.channel.isThread() ||
 			!(await database.getBooleanFlag("message.fxtwitter.enabled"))
 		)
