@@ -6,8 +6,10 @@ import type {
 	MessageEditOptions,
 	RepliableInteraction,
 	Role,
+	TextBasedChannel,
 	TextChannel,
 	User,
+	Webhook,
 	WebhookMessageCreateOptions,
 } from "discord.js";
 import { Collection, EmbedBuilder, GuildMember, TimestampStyles, codeBlock, normalizeArray, time } from "discord.js";
@@ -229,9 +231,9 @@ const WEBHOOK_NAME = "josh impersonation webhook";
 export async function impersonate(
 	client: Client<true>,
 	user: GuildMember | User,
-	channel: TextChannel,
+	channel: Extract<TextBasedChannel, { fetchWebhooks: unknown }>,
 	message: string | WebhookMessageCreateOptions,
-) {
+): Promise<[Message<boolean>, Webhook]> {
 	const webhook =
 		(await channel.fetchWebhooks()).find((v) => v.token !== null && v.name === WEBHOOK_NAME) ??
 		(await channel.createWebhook({
@@ -239,11 +241,14 @@ export async function impersonate(
 			reason: "impersonation webhook",
 			avatar: client.user.displayAvatarURL({ size: 128 }),
 		}));
-	await webhook.send({
-		...(typeof message === "string" ? { content: message } : message),
-		username: `${user instanceof GuildMember ? user.displayName : user.username}`,
-		avatarURL: user.displayAvatarURL({ size: 128 }),
-	} satisfies WebhookMessageCreateOptions);
+	return [
+		await webhook.send({
+			...(typeof message === "string" ? { content: message } : message),
+			username: `${user instanceof GuildMember ? user.displayName : user.username}`,
+			avatarURL: user.displayAvatarURL({ size: 128 }),
+		} satisfies WebhookMessageCreateOptions),
+		webhook,
+	];
 }
 export function messageHiddenText(text: string) {
 	// eslint-disable-next-line no-irregular-whitespace
