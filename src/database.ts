@@ -17,6 +17,7 @@ export const DEFAULT_FLAGS = {
 	"log.contextMenuItems": "true",
 	"log.discord.warn": "false",
 	"log.discord.debug": "false",
+	"message.fxtwitter.enabled": "true",
 } satisfies Record<string, string>;
 export type Flag = keyof typeof DEFAULT_FLAGS;
 export interface DatabaseData {

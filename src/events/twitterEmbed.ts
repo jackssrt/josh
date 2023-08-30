@@ -1,4 +1,5 @@
 import type { TextBasedChannel } from "discord.js";
+import database from "../database.js";
 import { SQUID_SHUFFLE_EMOJI } from "../emojis.js";
 import { impersonate, parallel } from "../utils.js";
 import createEvent from "./../event.js";
@@ -8,7 +9,12 @@ const REGEX = /(?:https?:)?\/\/(?:[A-z]+\.)?(twitter|x)\.com\/@?([A-z0-9_]+)\/st
 export default createEvent({
 	event: "messageCreate",
 	async on({ client }, message) {
-		if (!message.inGuild() || message.channel.isThread()) return;
+		if (
+			!message.inGuild() ||
+			message.channel.isThread() ||
+			!(await database.getBooleanFlag("message.fxtwitter.enabled"))
+		)
+			return;
 		const newContent = message.content.replace(REGEX, (match, url: string) => match.replace(url, "fxtwitter"));
 		if (newContent === message.content) return;
 
