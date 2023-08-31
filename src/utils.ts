@@ -24,7 +24,7 @@ import type Client from "./client.js";
 import database from "./database.js";
 import logger from "./logger.js";
 
-export type StrictOmit<T extends Record<string, unknown>, K extends keyof T> = Omit<T, K>;
+export type StrictOmit<T, K extends keyof T> = Omit<T, K>;
 
 export type StrictExclude<T, K extends T> = Exclude<T, K>;
 

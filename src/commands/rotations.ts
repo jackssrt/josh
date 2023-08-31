@@ -43,8 +43,6 @@ export default createCommand({
 		});
 		return b.setDescription("Shows rotations");
 	},
-	defer: "standard",
-
 	async execute({ interaction }) {
 		const subcommandGroup = interaction.options.getSubcommandGroup() as "list" | "search";
 		if (subcommandGroup === "list") {
