@@ -10,18 +10,23 @@ import type {
 import type Client from "./client.js";
 
 export type Deferred<T extends Interaction> = Omit<T, "reply" | "deferReply">;
+export type GuildOnly = ChatInputCommandInteraction<"cached" | "raw">;
 
-export interface Command<Defer extends "ephemeral" | "standard" | null = null, GuildOnly extends boolean = boolean> {
+export interface Command<D extends "ephemeral" | "standard" | null = null, G extends boolean = boolean> {
 	data: (builder: SlashCommandBuilder) => SharedNameAndDescription & { toJSON: () => object };
-	defer?: Defer;
+	defer?: D;
 	ownerOnly?: boolean;
 	userAllowList?: Snowflake[];
 	aliases?: string[];
-	guildOnly?: GuildOnly;
+	guildOnly?: G;
 	autocomplete?: (param: { client: Client<true>; interaction: AutocompleteInteraction }) => Awaitable<unknown>;
 	execute: (param: {
 		client: Client<true>;
-		interaction: Defer extends null ? ChatInputCommandInteraction : Deferred<ChatInputCommandInteraction>;
+		interaction: D extends null
+			? G extends true
+				? GuildOnly
+				: ChatInputCommandInteraction
+			: Deferred<G extends true ? GuildOnly : ChatInputCommandInteraction>;
 	}) => Awaitable<unknown>;
 }
 /**
