@@ -25,3 +25,4 @@ export const GONE_FISSION_HYDROPLANT_EMOJI = "<:goneFissionHydroplant:1087077100
 export const MAROONERS_BAY_EMOJI = "<:maroonersBay:1087077102559432894>";
 export const SOCKEYE_STATION_EMOJI = "<:sockeyeStation:1087077104274911292>";
 export const JAMMIN_SALMON_JUNCTION_EMOJI = "<:jamminSalmonJunction:1114180647129456693>";
+export const SALMONID_SMOKEYARD_EMOJI = "<:salmonidSmokeyard:1147635163052916808>";

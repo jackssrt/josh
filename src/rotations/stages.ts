@@ -3,6 +3,7 @@ import {
 	GONE_FISSION_HYDROPLANT_EMOJI,
 	JAMMIN_SALMON_JUNCTION_EMOJI,
 	MAROONERS_BAY_EMOJI,
+	SALMONID_SMOKEYARD_EMOJI,
 	SOCKEYE_STATION_EMOJI,
 	SPAWNING_GROUNDS_EMOJI,
 } from "../emojis.js";
@@ -37,6 +38,7 @@ export class CoopStage {
 		| "Marooner's Bay"
 		| "Gone Fission Hydroplant"
 		| "Jammin' Salmon Junction"
+		| "Salmonid Smokeyard"
 		| "???";
 	public image: string;
 	public id: string;
@@ -53,6 +55,7 @@ export class CoopStage {
 				"Marooner's Bay": MAROONERS_BAY_EMOJI,
 				"Sockeye Station": SOCKEYE_STATION_EMOJI,
 				"Jammin' Salmon Junction": JAMMIN_SALMON_JUNCTION_EMOJI,
+				"Salmonid Smokeyard": SALMONID_SMOKEYARD_EMOJI,
 				"???": BULLET_EMOJI,
 			} as const satisfies Record<CoopStage["name"], string>
 		)[this.name];

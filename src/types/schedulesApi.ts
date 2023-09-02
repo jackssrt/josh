@@ -54,6 +54,7 @@ export interface CoopRegularStage {
 		| "Marooner's Bay"
 		| "Gone Fission Hydroplant"
 		| "Jammin' Salmon Junction"
+		| "Salmonid Smokeyard"
 		| "";
 	thumbnailImage: {
 		url: string;
