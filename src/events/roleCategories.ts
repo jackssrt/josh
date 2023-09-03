@@ -29,7 +29,8 @@ export async function updateRoleCategories(member: GuildMember) {
 
 export default createEvent({
 	event: "guildMemberUpdate",
-	async on(_, __, member) {
+	async on({ client }, _, member) {
+		if (member.guild !== client.guild) return;
 		await updateRoleCategories(member);
 	},
 });
