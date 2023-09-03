@@ -85,9 +85,10 @@ async function makeInviteGraph(guild: Guild, invites: Record<Snowflake, Snowflak
 export async function updateStatsMessage(client: Client<true>) {
 	const members = membersWithRoles([client.memberRole]);
 	const invites = await database.getInviteRecord();
+	const invitesSet = new Set([...Object.keys(invites), ...Object.values(invites)]);
 	const colorRoles = await getLowerRolesInSameCategory(client.colorsRoleCategory);
 	// members - invites
-	const toBeAdded = [...members.keys()].filter((v) => !invites[v]);
+	const toBeAdded = [...members.keys()].filter((v) => !invitesSet.has(v));
 	await updateStaticMessage(client.statsChannel, "stats-message", {
 		...(await embeds(
 			(b) =>
@@ -116,7 +117,6 @@ export async function updateStatsMessage(client: Client<true>) {
 						{
 							name: "Member count",
 							value: `${members.size} ${pluralize("member", members.size)}`,
-							inline: true,
 						},
 
 						...(toBeAdded.length
