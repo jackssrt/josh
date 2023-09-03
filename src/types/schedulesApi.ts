@@ -7,7 +7,7 @@ export interface Response {
 		coopGroupingSchedule: {
 			bannerImage: null;
 			regularSchedules: { nodes: CoopGroupingRegularNode[] };
-			bigRunSchedules: { nodes: never[] };
+			bigRunSchedules: { nodes: CoopBigRunNode[] };
 			teamContestSchedules: { nodes: TeamContestNode[] };
 		};
 		festSchedules: { nodes: FestNode[] };
@@ -43,19 +43,21 @@ export interface CoopGroupingRegularNode extends BaseNode {
 	setting: BaseCoopRegularSetting;
 	__splatoon3ink_king_salmonid_guess: "Horrorboros" | "Cohozuna";
 }
-export interface BaseCoopRegularSetting {
-	coopStage: CoopRegularStage;
+export interface BaseCoopRegularSetting<BigRun extends boolean = false> {
+	coopStage: CoopStage<BigRun>;
 	weapons: [CoopWeapon, CoopWeapon, CoopWeapon, CoopWeapon];
 }
-export interface CoopRegularStage {
-	name:
-		| "Spawning Grounds"
-		| "Sockeye Station"
-		| "Marooner's Bay"
-		| "Gone Fission Hydroplant"
-		| "Jammin' Salmon Junction"
-		| "Salmonid Smokeyard"
-		| "";
+export interface CoopStage<BigRun extends boolean = false> {
+	name: BigRun extends false
+		?
+				| "Spawning Grounds"
+				| "Sockeye Station"
+				| "Marooner's Bay"
+				| "Gone Fission Hydroplant"
+				| "Jammin' Salmon Junction"
+				| "Salmonid Smokeyard"
+				| ""
+		: string;
 	thumbnailImage: {
 		url: string;
 	};
@@ -69,6 +71,13 @@ export interface TeamContestNode extends BaseNode {
 }
 export interface TeamContestSetting extends BaseCoopRegularSetting {
 	rule: "TEAM_CONTEST";
+}
+export interface CoopBigRunNode extends BaseNode {
+	setting: CoopBigRunSetting;
+	__splatoon3ink_king_salmonid_guess: "Horrorboros" | "Cohozuna";
+}
+export interface CoopBigRunSetting extends BaseCoopRegularSetting<true> {
+	rule: "BIG_RUN";
 }
 export interface CoopWeapon {
 	__splatoon3ink_id: string;

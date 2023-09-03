@@ -8,6 +8,7 @@ import { LARGEST_DATE, formatTime, iteratorToArray, parallel } from "../utils.js
 import logger from "./../logger.js";
 import { PoppingTimePeriodCollection } from "./TimePeriodCollection.js";
 import {
+	BigRunNode,
 	ChallengeNode,
 	CurrentFest,
 	EggstraWorkNode,
@@ -27,7 +28,8 @@ export interface FetchedRotations {
 	xBattle: PoppingTimePeriodCollection<XBattleNode | undefined>;
 	challenges: PoppingTimePeriodCollection<ChallengeNode | undefined>;
 	salmonRun: PoppingTimePeriodCollection<SalmonRunNode>;
-	eggstraWork: PoppingTimePeriodCollection<EggstraWorkNode>;
+	bigRun: PoppingTimePeriodCollection<BigRunNode | undefined>;
+	eggstraWork: PoppingTimePeriodCollection<EggstraWorkNode | undefined>;
 	startTime: Date;
 	endTime: Date;
 	salmonStartTime: Date;
@@ -48,6 +50,7 @@ export class Rotations {
 		public xBattle: PoppingTimePeriodCollection<XBattleNode | undefined>,
 		public salmonRun: PoppingTimePeriodCollection<SalmonRunNode>,
 		public splatfest: PoppingTimePeriodCollection<SplatfestNode | undefined>,
+		public bigRun: PoppingTimePeriodCollection<BigRunNode | undefined>,
 		public eggstraWork: PoppingTimePeriodCollection<EggstraWorkNode | undefined>,
 		public currentFest: CurrentFest<"FIRST_HALF" | "SECOND_HALF"> | undefined,
 		public startTime: Date,
@@ -68,6 +71,7 @@ export class Rotations {
 			fetched.xBattle,
 			fetched.salmonRun,
 			fetched.splatfest,
+			fetched.bigRun,
 			fetched.eggstraWork,
 			fetched.currentFest,
 			fetched.startTime,
@@ -140,6 +144,7 @@ export class Rotations {
 				rankedSeries: new PoppingTimePeriodCollection([]),
 				xBattle: new PoppingTimePeriodCollection([]),
 				salmonRun: new PoppingTimePeriodCollection([]),
+				bigRun: new PoppingTimePeriodCollection([]),
 				eggstraWork: new PoppingTimePeriodCollection([]),
 				startTime: LARGEST_DATE,
 				endTime: LARGEST_DATE,
@@ -168,6 +173,7 @@ export class Rotations {
 				eventSchedules: { nodes: rawChallenges },
 				coopGroupingSchedule: {
 					regularSchedules: { nodes: rawSalmonRun },
+					bigRunSchedules: { nodes: rawBigRun },
 					teamContestSchedules: { nodes: rawEggstraWork },
 				},
 				festSchedules: { nodes: rawSplatfest },
@@ -202,6 +208,7 @@ export class Rotations {
 			rawXBattle.map((x) => (x.xMatchSetting ? new XBattleNode(x, x.xMatchSetting, vsStages) : undefined)),
 		);
 		const salmonRun = new PoppingTimePeriodCollection(rawSalmonRun.map((x) => new SalmonRunNode(x, x.setting)));
+		const bigRun = new PoppingTimePeriodCollection(rawBigRun.map((x) => new BigRunNode(x, x.setting)));
 		const eggstraWork = new PoppingTimePeriodCollection(
 			rawEggstraWork.map((x) => new EggstraWorkNode(x, x.setting)),
 		);
@@ -217,10 +224,10 @@ export class Rotations {
 		);
 		const endTime = new Date(Math.min(...[turfWar, splatfest].flatMap((x) => x.active?.endTime.getTime() ?? [])));
 		const salmonStartTime = new Date(
-			Math.min(...[salmonRun, eggstraWork].flatMap((x) => x.active?.endTime.getTime() ?? [])),
+			Math.min(...[salmonRun, bigRun, eggstraWork].flatMap((x) => x.active?.endTime.getTime() ?? [])),
 		);
 		const salmonEndTime = new Date(
-			Math.min(...[salmonRun, eggstraWork].flatMap((x) => x.active?.endTime.getTime() ?? [])),
+			Math.min(...[salmonRun, bigRun, eggstraWork].flatMap((x) => x.active?.endTime.getTime() ?? [])),
 		);
 		const lastSalmonEndTime = await database.getSalmonRunEndTime();
 		if (!cached)
@@ -236,6 +243,7 @@ export class Rotations {
 			rankedSeries,
 			xBattle,
 			salmonRun,
+			bigRun,
 			eggstraWork,
 			startTime,
 			endTime,

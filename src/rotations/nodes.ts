@@ -8,6 +8,7 @@ import sharp from "sharp";
 import { USER_AGENT } from "../client.js";
 import {
 	ANARCHY_BATTLE_EMOJI,
+	BIG_RUN_EMOJI,
 	CHALLENGES_EMOJI,
 	COHOZUNA_EMOJI,
 	HORRORBOROS_EMOJI,
@@ -23,6 +24,7 @@ import TimePeriodCollection from "./TimePeriodCollection.js";
 import { Rotations } from "./index.js";
 import type { APIRuleToRule, Rule } from "./rules.js";
 import { RULE_MAP, turfWarRule } from "./rules.js";
+import type { BaseCoopStage } from "./stages.js";
 import { CoopStage, Stage } from "./stages.js";
 
 interface Shortable {
@@ -397,9 +399,9 @@ export class CurrentFest<State extends "FIRST_HALF" | "SECOND_HALF"> extends Dis
 const TEXT_BLUR_SIGMA = 1.00005;
 abstract class BaseCoopNode<
 	NodeType extends SchedulesAPI.BaseNode,
-	SettingType extends SchedulesAPI.BaseCoopRegularSetting | SchedulesAPI.TeamContestSetting,
+	SettingType extends SchedulesAPI.BaseCoopRegularSetting<boolean>,
 > extends BaseNode {
-	public stage: CoopStage;
+	public stage: BaseCoopStage;
 	public weapons: [
 		SchedulesAPI.CoopWeapon,
 		SchedulesAPI.CoopWeapon,
@@ -595,4 +597,11 @@ export class EggstraWorkNode extends BaseCoopNode<SchedulesAPI.TeamContestNode, 
 	public color = "#FDD400" as const;
 	public emoji = "🥇";
 	public name = "Eggstra Work";
+}
+
+export class BigRunNode extends BaseCoopNode<SchedulesAPI.CoopBigRunNode, SchedulesAPI.CoopBigRunSetting> {
+	public rule = "BIG_RUN";
+	public color = "#B322FF" as const;
+	public emoji = BIG_RUN_EMOJI;
+	public name = "Big Run";
 }

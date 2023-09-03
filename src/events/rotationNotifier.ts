@@ -42,6 +42,7 @@ export async function sendSalmonRunRotation(client: Client<true>) {
 	await sendRotation(client.salmonRunChannel, async () => ({
 		...(await embeds(
 			(b) => rotations.eggstraWork.active?.embed(b),
+			(b) => rotations.bigRun.active?.embed(b),
 			(b) =>
 				rotations.salmonRun.active?.embed(
 					b.setAuthor({ name: "Data provided by splatoon3.ink", url: "https://splatoon3.ink/" }),
@@ -57,7 +58,11 @@ export async function sendSalmonRunRotation(client: Client<true>) {
 			),
 		)),
 		files: (
-			await parallel(rotations.salmonRun.active?.attachments(), rotations.eggstraWork.active?.attachments())
+			await parallel(
+				rotations.salmonRun.active?.attachments(),
+				rotations.bigRun.active?.attachments(),
+				rotations.eggstraWork.active?.attachments(),
+			)
 		).flatMap((x) => x ?? []),
 	}));
 }
