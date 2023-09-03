@@ -9,7 +9,7 @@ import createEvent from "./../event.js";
 const FUTURE_ROTATIONS_COUNT = 3;
 function generateChannelTopic(): string {
 	const parts = [
-		`Next ${time(rotations.endTime, TimestampStyles.RelativeTime)}`,
+		`↻ ${time(rotations.endTime, TimestampStyles.RelativeTime)}`,
 		rotations.splatfest.active?.channelTopic(rotations.splatfest.future()[0]),
 		rotations.currentFest?.state === "SECOND_HALF" && rotations.currentFest.channelTopic(undefined),
 		rotations.challenges.active?.channelTopic(undefined),
