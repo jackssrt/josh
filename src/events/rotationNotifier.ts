@@ -12,7 +12,7 @@ function generateChannelTopic(): string {
 		`Next ${time(rotations.endTime, TimestampStyles.RelativeTime)}`,
 		rotations.splatfest.active?.channelTopic(rotations.splatfest.future()[0]),
 		rotations.currentFest?.state === "SECOND_HALF" && rotations.currentFest.channelTopic(undefined),
-		rotations.challenges.active?.channelTopic(rotations.challenges.future()[0]),
+		rotations.challenges.active?.channelTopic(undefined),
 		rotations.turfWar.active?.channelTopic(rotations.turfWar.future()[0]),
 		rotations.rankedSeries.active?.channelTopic(rotations.rankedSeries.future()[0]),
 		rotations.rankedOpen.active?.channelTopic(rotations.rankedOpen.future()[0]),
