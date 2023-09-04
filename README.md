@@ -25,12 +25,12 @@ A Splatoon-oriented discord bot for my server! Josh is written in typescript wit
 <details>
 <summary>Open</summary>
 <ul>
-<li><img alt="Maps and modes rotation" src="https://github.com/jackssrt/josh/tree/main/docs/images/mapsAndModes.png" /></li>
-<li><img alt="Salmon run rotation" src="https://github.com/jackssrt/josh/tree/main/docs/images/salmonRun.png" /></li>
-<li><img alt="Maps and modes rotation in channel topic" src="https://github.com/jackssrt/josh/tree/main/docs/images/channelTopic.png"></li>
-<li><img alt="Splatfest Event" src="https://github.com/jackssrt/josh/tree/main/docs/images/splatfestEvent.png"></li>
-<li><img alt="Challenge Event" src="https://github.com/jackssrt/josh/tree/main/docs/images/challengeEvent.png"></li>
-<li><img alt="Hide and seek" src="https://github.com/jackssrt/josh/tree/main/docs/images/hideAndSeek.png"></li>
+<li><img alt="Maps and modes rotation" src="https://raw.githubusercontent.com/jackssrt/josh/main/docs/images/mapsAndModes.png" /></li>
+<li><img alt="Salmon run rotation" src="https://raw.githubusercontent.com/jackssrt/josh/main/docs/images/salmonRun.png" /></li>
+<li><img alt="Maps and modes rotation in channel topic" src="https://raw.githubusercontent.com/jackssrt/josh/main/docs/images/channelTopic.png"></li>
+<li><img alt="Splatfest Event" src="https://raw.githubusercontent.com/jackssrt/josh/main/docs/images/splatfestEvent.png"></li>
+<li><img alt="Challenge Event" src="https://raw.githubusercontent.com/jackssrt/josh/main/docs/images/challengeEvent.png"></li>
+<li><img alt="Hide and seek" src="https://raw.githubusercontent.com/jackssrt/josh/main/docs/images/hideAndSeek.png"></li>
 </ul>
 </details>
 
