@@ -10,7 +10,8 @@ const FUTURE_ROTATIONS_COUNT = 3;
 function generateChannelTopic(): string {
 	const parts = [
 		`↻ ${time(rotations.endTime, TimestampStyles.RelativeTime)}`,
-		rotations.splatfest.active?.channelTopic(rotations.splatfest.future()[0]),
+		rotations.splatfestOpen.active?.channelTopic(rotations.splatfestOpen.future()[0]),
+		rotations.splatfestPro.active?.channelTopic(rotations.splatfestPro.future()[0]),
 		rotations.currentFest?.state === "SECOND_HALF" && rotations.currentFest.channelTopic(undefined),
 		rotations.challenges.active?.channelTopic(undefined),
 		rotations.turfWar.active?.channelTopic(rotations.turfWar.future()[0]),
@@ -83,7 +84,8 @@ export async function sendRegularRotations(client: Client<true>) {
 								TimestampStyles.ShortTime,
 							)}`,
 						),
-				(b) => rotations.splatfest.active?.embed(b, rotations.splatfest.future(FUTURE_ROTATIONS_COUNT)),
+				(b) => rotations.splatfestOpen.active?.embed(b, rotations.splatfestOpen.future(FUTURE_ROTATIONS_COUNT)),
+				(b) => rotations.splatfestPro.active?.embed(b, rotations.splatfestPro.future(FUTURE_ROTATIONS_COUNT)),
 				(b) => rotations.currentFest?.state === "SECOND_HALF" && rotations.currentFest.embed(b, []),
 				(b) => rotations.challenges.active?.embed(b, []),
 				(b) => rotations.turfWar.active?.embed(b, rotations.turfWar.future(FUTURE_ROTATIONS_COUNT)),
@@ -93,7 +95,8 @@ export async function sendRegularRotations(client: Client<true>) {
 			)),
 			files: (
 				await parallel(
-					rotations.splatfest.active?.attachments(),
+					rotations.splatfestOpen.active?.attachments(),
+					rotations.splatfestPro.active?.attachments(),
 					rotations.currentFest?.state === "SECOND_HALF" && rotations.currentFest?.attachments(),
 					rotations.challenges.active?.attachments(),
 					rotations.turfWar.active?.attachments(),

@@ -15,13 +15,15 @@ import {
 	RankedOpenNode,
 	RankedSeriesNode,
 	SalmonRunNode,
-	SplatfestNode,
+	SplatfestOpenNode,
+	SplatfestProNode,
 	TurfWarNode,
 	XBattleNode,
 } from "./nodes.js";
 
 export interface FetchedRotations {
-	splatfest: PoppingTimePeriodCollection<SplatfestNode | undefined>;
+	splatfestPro: PoppingTimePeriodCollection<SplatfestProNode | undefined>;
+	splatfestOpen: PoppingTimePeriodCollection<SplatfestOpenNode | undefined>;
 	turfWar: PoppingTimePeriodCollection<TurfWarNode | undefined>;
 	rankedOpen: PoppingTimePeriodCollection<RankedOpenNode | undefined>;
 	rankedSeries: PoppingTimePeriodCollection<RankedSeriesNode | undefined>;
@@ -49,7 +51,8 @@ export class Rotations {
 		public rankedSeries: PoppingTimePeriodCollection<RankedSeriesNode | undefined>,
 		public xBattle: PoppingTimePeriodCollection<XBattleNode | undefined>,
 		public salmonRun: PoppingTimePeriodCollection<SalmonRunNode>,
-		public splatfest: PoppingTimePeriodCollection<SplatfestNode | undefined>,
+		public splatfestPro: PoppingTimePeriodCollection<SplatfestOpenNode | undefined>,
+		public splatfestOpen: PoppingTimePeriodCollection<SplatfestOpenNode | undefined>,
 		public bigRun: PoppingTimePeriodCollection<BigRunNode | undefined>,
 		public eggstraWork: PoppingTimePeriodCollection<EggstraWorkNode | undefined>,
 		public currentFest: CurrentFest<"FIRST_HALF" | "SECOND_HALF"> | undefined,
@@ -70,7 +73,8 @@ export class Rotations {
 			fetched.rankedSeries,
 			fetched.xBattle,
 			fetched.salmonRun,
-			fetched.splatfest,
+			fetched.splatfestPro,
+			fetched.splatfestOpen,
 			fetched.bigRun,
 			fetched.eggstraWork,
 			fetched.currentFest,
@@ -137,7 +141,8 @@ export class Rotations {
 	private static async fetch(ignoreCache = false): Promise<FetchedRotations> {
 		if (process.env.NODE_ENV === "test")
 			return {
-				splatfest: new PoppingTimePeriodCollection([]),
+				splatfestOpen: new PoppingTimePeriodCollection([]),
+				splatfestPro: new PoppingTimePeriodCollection([]),
 				challenges: new PoppingTimePeriodCollection([]),
 				turfWar: new PoppingTimePeriodCollection([]),
 				rankedOpen: new PoppingTimePeriodCollection([]),
@@ -212,17 +217,24 @@ export class Rotations {
 		const eggstraWork = new PoppingTimePeriodCollection(
 			rawEggstraWork.map((x) => new EggstraWorkNode(x, x.setting)),
 		);
-		const splatfest = new PoppingTimePeriodCollection(
+		const splatfestPro = new PoppingTimePeriodCollection(
 			rawSplatfest.map((x) =>
-				x.festMatchSetting ? new SplatfestNode(x, x.festMatchSetting, vsStages) : undefined,
+				x.festMatchSettings ? new SplatfestProNode(x, x.festMatchSettings[0], vsStages) : undefined,
+			),
+		);
+		const splatfestOpen = new PoppingTimePeriodCollection(
+			rawSplatfest.map((x) =>
+				x.festMatchSettings ? new SplatfestOpenNode(x, x.festMatchSettings[1], vsStages) : undefined,
 			),
 		);
 		const currentFest = rawCurrentFest ? new CurrentFest(rawCurrentFest, vsStages) : undefined;
 		// gets the earliest normal rotation endTime
 		const startTime = new Date(
-			Math.min(...[turfWar, splatfest].flatMap((x) => x.active?.startTime.getTime() ?? [])),
+			Math.min(...[turfWar, splatfestPro, splatfestOpen].flatMap((x) => x.active?.startTime.getTime() ?? [])),
 		);
-		const endTime = new Date(Math.min(...[turfWar, splatfest].flatMap((x) => x.active?.endTime.getTime() ?? [])));
+		const endTime = new Date(
+			Math.min(...[turfWar, splatfestPro, splatfestOpen].flatMap((x) => x.active?.endTime.getTime() ?? [])),
+		);
 		const salmonStartTime = new Date(
 			Math.min(...[salmonRun, bigRun, eggstraWork].flatMap((x) => x.active?.endTime.getTime() ?? [])),
 		);
@@ -236,7 +248,8 @@ export class Rotations {
 				database.setSalmonRunEndTime(salmonEndTime),
 			);
 		return {
-			splatfest,
+			splatfestOpen,
+			splatfestPro,
 			challenges,
 			turfWar,
 			rankedOpen,

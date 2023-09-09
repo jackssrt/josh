@@ -87,7 +87,7 @@ export interface CoopWeapon {
 	};
 }
 export interface FestNode extends BaseNode {
-	festMatchSetting: FestSetting | null;
+	festMatchSettings: [FestSetting<"CHALLENGE">, FestSetting<"REGULAR">] | null;
 }
 export interface CurrentFest<State extends "FIRST_HALF" | "SECOND_HALF"> extends BaseNode {
 	id: string;
@@ -166,7 +166,11 @@ export interface ChallengeSetting extends BaseMatchSetting<TurfWarVsRule, false>
 	__isVsSetting: "LeagueMatchSetting";
 	__typename: "LeagueMatchSetting";
 }
-export type FestSetting = BaseMatchSetting<TurfWarVsRule>;
+export interface FestSetting<Mode extends "REGULAR" | "CHALLENGE" = "REGULAR" | "CHALLENGE">
+	extends BaseMatchSetting<TurfWarVsRule> {
+	festMode: Mode;
+	__typename: "FestMatchSetting";
+}
 export interface Stage<Quality extends "high" | "low" = "low"> {
 	vsStageId: number;
 	name: string;

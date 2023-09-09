@@ -1,3 +1,4 @@
+import { match } from "ts-pattern";
 import type { PoppingTimePeriodCollection } from "../rotations/TimePeriodCollection.js";
 import rotations from "../rotations/index.js";
 import type { BaseNode } from "../rotations/nodes.js";
@@ -11,7 +12,8 @@ const listSubcommands = [
 	"anarchyseries",
 	"anarchyopen",
 	"xbattle",
-	"splatfest",
+	"splatfestopen",
+	"splatfestpro",
 	"salmonrun",
 ] as const;
 type ListSubcommand = (typeof listSubcommands)[number];
@@ -47,16 +49,17 @@ export default createCommand({
 		const subcommandGroup = interaction.options.getSubcommandGroup() as "list" | "search";
 		if (subcommandGroup === "list") {
 			const subcommand = interaction.options.getSubcommand(true) as ListSubcommand;
-			const subcommandMap = {
-				anarchyopen: rotations.rankedOpen,
-				anarchyseries: rotations.rankedSeries,
-				splatfest: rotations.splatfest,
-				turfwar: rotations.turfWar,
-				challenges: rotations.challenges,
-				xbattle: rotations.xBattle,
-				salmonrun: rotations.salmonRun,
-			} as const satisfies Record<ListSubcommand, PoppingTimePeriodCollection<BaseNode | undefined>>;
-			const nodes = subcommandMap[subcommand];
+
+			const nodes = match(subcommand)
+				.with("splatfestpro", () => rotations.splatfestPro)
+				.with("splatfestopen", () => rotations.splatfestOpen)
+				.with("challenges", () => rotations.challenges)
+				.with("turfwar", () => rotations.turfWar)
+				.with("anarchyopen", () => rotations.rankedOpen)
+				.with("anarchyseries", () => rotations.rankedSeries)
+				.with("xbattle", () => rotations.xBattle)
+				.with("salmonrun", () => rotations.salmonRun)
+				.exhaustive();
 			const displayNode = (nodes as PoppingTimePeriodCollection<BaseNode | undefined>).periods.find((v) => !!v);
 			if (!displayNode) throw new Error("Couldn't find rotation type, try again later...");
 			await interaction.editReply(

@@ -361,17 +361,27 @@ export class ChallengeTimePeriod extends TimePeriod implements Shortable {
 	}
 }
 
-export class SplatfestNode extends BaseMatchNode<
+export class SplatfestOpenNode extends BaseMatchNode<
 	SchedulesAPI.TurfWarVsRule,
 	SchedulesAPI.FestNode,
-	SchedulesAPI.FestSetting
+	SchedulesAPI.FestSetting<"REGULAR">
 > {
 	public color = "#0033FF" as const;
 	public emoji = SPLATFEST_EMOJI;
-	public name = "Splatfest Open & Pro";
-	public override channelTopicLabel = "Open & Pro";
+	public name = "Splatfest Open";
+	public override channelTopicLabel = "Open";
 }
 
+export class SplatfestProNode extends BaseMatchNode<
+	SchedulesAPI.TurfWarVsRule,
+	SchedulesAPI.FestNode,
+	SchedulesAPI.FestSetting<"CHALLENGE">
+> {
+	public color = "#0033FF" as const;
+	public emoji = SPLATFEST_EMOJI;
+	public name = "Splatfest Pro";
+	public override channelTopicLabel = "Pro";
+}
 export class CurrentFest<State extends "FIRST_HALF" | "SECOND_HALF"> extends DisplayableMatchNode {
 	public id: string;
 	public title: string;
