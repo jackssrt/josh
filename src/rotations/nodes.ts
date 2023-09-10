@@ -393,6 +393,7 @@ export class CurrentFest<State extends "FIRST_HALF" | "SECOND_HALF"> extends Dis
 	public color = "#0033FF" as const;
 	public emoji = SPLATFEST_EMOJI;
 	public name = "Tricolor";
+	public override channelTopicLabel = "Tricolor";
 	public stages: [Stage];
 	constructor(data: SchedulesAPI.CurrentFest<State>, vsStages: SchedulesAPI.Stage<"high">[]) {
 		super(data);
