@@ -1,8 +1,9 @@
 import axios from "axios";
 import { inlineCode, type Awaitable } from "discord.js";
+import type { ZodError } from "zod";
 import { USER_AGENT, bootErrors } from "../client.js";
 import database from "../database.js";
-import type * as SalmonRunAPI from "../types/salmonRunApi.js";
+import * as SalmonRunAPI from "../types/salmonRunApi.js";
 import * as SchedulesAPI from "../types/schedulesApi.js";
 import { LARGEST_DATE, dedent, formatTime, iteratorToArray, parallel } from "../utils.js";
 import logger from "./../logger.js";
@@ -20,6 +21,17 @@ import {
 	TurfWarNode,
 	XBattleNode,
 } from "./nodes.js";
+
+function reportSchemaFail(name: string, code: string, error: ZodError) {
+	bootErrors.push({
+		title: `${name} API response failed schema validation`,
+		error: error,
+		description: dedent`${inlineCode(code)} failed, this may be caused by:
+				- Incorrect schema design
+				- The API changing
+				The invalid data will still be used, this is just a forewarning.`,
+	});
+}
 
 export interface FetchedRotations {
 	splatfestPro: PoppingTimePeriodCollection<SplatfestProNode | undefined>;
@@ -129,10 +141,27 @@ export class Rotations {
 	public static async fetchSalmonRunGear(): Promise<SalmonRunAPI.MonthlyGear> {
 		const [cachedGearMonth, cachedGear] = await database.getCachedSalmonRunGear();
 		logger.info("salmon run gear fetched, cached:", cachedGearMonth === new Date().getMonth() && cachedGear);
-		if (cachedGearMonth === new Date().getMonth() && cachedGear) return cachedGear;
+		if (cachedGearMonth === new Date().getMonth() && cachedGear) {
+			const validationResult = SalmonRunAPI.monthlyGearSchema.safeParse(cachedGear);
+			if (!validationResult.success)
+				reportSchemaFail(
+					"Cached Salmon Run",
+					"SalmonRunAPI.monthlyGearSchema.safeParse(cachedGear)",
+					validationResult.error,
+				);
+			return cachedGear;
+		}
 		const response = await axios.get<SalmonRunAPI.Response>("https://splatoon3.ink/data/coop.json", {
 			headers: { "User-Agent": USER_AGENT },
 		});
+		// validate response
+		const validationResult = SalmonRunAPI.responseSchema.safeParse(response.data);
+		if (!validationResult.success)
+			reportSchemaFail(
+				"Fetched Salmon Run",
+				"SalmonRunAPI.responseSchema.safeParse(response.data)",
+				validationResult.error,
+			);
 		const monthlyGear = response.data.data.coopResult.monthlyGear;
 		await database.setCachedSalmonRunGear(monthlyGear);
 		return monthlyGear;
@@ -173,16 +202,7 @@ export class Rotations {
 		// validate with zod
 		const validationResult = SchedulesAPI.responseSchema.safeParse(response);
 		if (!validationResult.success)
-			bootErrors.push({
-				title: "Schedule API response failed Schema validation",
-				error: validationResult.error,
-				description: dedent`${inlineCode(
-					"SchedulesAPI.responseSchema.safeParse",
-				)} failed, this may be caused by:
-				- Invalid schema design
-				- The API changing
-				The invalid data will still be used, this is just a forewarning.`,
-			});
+			reportSchemaFail("Schedules", "SchedulesAPI.responseSchema.safeParse()", validationResult.error);
 		const {
 			data: {
 				regularSchedules: { nodes: rawTurfWar },
