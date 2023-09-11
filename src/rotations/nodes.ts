@@ -226,22 +226,18 @@ export abstract class DisplayableMatchNode extends BaseNode {
 export abstract class BaseMatchNode<
 	VsRule extends SchedulesAPI.VsRule,
 	NodeType extends SchedulesAPI.BaseNode,
-	SettingType extends SchedulesAPI.BaseMatchSetting<VsRule>,
+	SettingType extends SchedulesAPI.BaseMatchSetting,
 > extends DisplayableMatchNode {
 	public rule: APIRuleToRule<VsRule>;
 	public stages: [Stage, Stage];
 
-	constructor(data: NodeType, setting: SettingType, vsStages: SchedulesAPI.Stage<"high">[]) {
+	constructor(data: NodeType, setting: SettingType, vsStages: SchedulesAPI.HighImageQualityStage[]) {
 		super(data);
 		this.stages = setting.vsStages.map((v) => new Stage(v, vsStages)) as [Stage, Stage];
 		this.rule = RULE_MAP[setting.vsRule.rule] as APIRuleToRule<VsRule>;
 	}
 }
-export type GenericMatchNode = BaseMatchNode<
-	SchedulesAPI.VsRule,
-	SchedulesAPI.BaseNode,
-	SchedulesAPI.BaseMatchSetting<SchedulesAPI.VsRule>
->;
+export type GenericMatchNode = BaseMatchNode<SchedulesAPI.VsRule, SchedulesAPI.BaseNode, SchedulesAPI.BaseMatchSetting>;
 
 export class TurfWarNode extends BaseMatchNode<
 	SchedulesAPI.TurfWarVsRule,
@@ -315,7 +311,7 @@ export class ChallengeNode extends BaseMatchNode<
 	constructor(
 		data: SchedulesAPI.ChallengeNode,
 		setting: SchedulesAPI.ChallengeSetting,
-		vsStages: SchedulesAPI.Stage<"high">[],
+		vsStages: SchedulesAPI.HighImageQualityStage[],
 	) {
 		const timePeriods = data.timePeriods.map((v) => new ChallengeTimePeriod(v));
 		const startTime = timePeriods.map((v) => v.startTime).sort((a, b) => a.getTime() - b.getTime())[0]!;
@@ -395,12 +391,12 @@ export class CurrentFest<State extends "FIRST_HALF" | "SECOND_HALF"> extends Dis
 	public name = "Tricolor";
 	public override channelTopicLabel = "Tricolor";
 	public stages: [Stage];
-	constructor(data: SchedulesAPI.CurrentFest<State>, vsStages: SchedulesAPI.Stage<"high">[]) {
+	constructor(data: SchedulesAPI.CurrentFest<State>, vsStages: SchedulesAPI.HighImageQualityStage[]) {
 		super(data);
 		this.id = data.id;
 		this.title = data.title;
 		this.midtermTime = new Date(Date.parse(data.midtermTime));
-		this.state = data.state;
+		this.state = data.state as State;
 		this.teams = data.teams;
 		this.tricolorStage = new Stage(data.tricolorStage, vsStages);
 		this.stages = [this.tricolorStage];
@@ -410,7 +406,7 @@ export class CurrentFest<State extends "FIRST_HALF" | "SECOND_HALF"> extends Dis
 const TEXT_BLUR_SIGMA = 1.00005;
 abstract class BaseCoopNode<
 	NodeType extends SchedulesAPI.BaseNode,
-	SettingType extends SchedulesAPI.BaseCoopRegularSetting<boolean>,
+	SettingType extends SchedulesAPI.BaseCoopRegularSetting,
 > extends BaseNode {
 	public stage: BaseCoopStage;
 	public weapons: [

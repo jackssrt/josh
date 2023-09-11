@@ -16,11 +16,16 @@
 		"sourceType": "module",
 		"project": "./tsconfig.eslint.json"
 	},
-	"plugins": ["@typescript-eslint", "prettier"],
+	"plugins": [
+		"@typescript-eslint",
+		"prettier"
+	],
 	"reportUnusedDisableDirectives": true,
 	"rules": {
-		"linebreak-style": ["error", "unix"],
-		"func-style": ["warn", "declaration"],
+		"linebreak-style": [
+			"error",
+			"unix"
+		],
 		"camelcase": "warn",
 		"eqeqeq": "warn",
 		"no-console": "warn",
@@ -29,7 +34,10 @@
 		"@typescript-eslint/no-invalid-void-type": [
 			"warn",
 			{
-				"allowInGenericTypeArguments": ["Promise", "Awaitable"]
+				"allowInGenericTypeArguments": [
+					"Promise",
+					"Awaitable"
+				]
 			}
 		],
 		"@typescript-eslint/explicit-member-accessibility": [
@@ -41,18 +49,22 @@
 				}
 			}
 		],
-		
 		"@typescript-eslint/method-signature-style": "error",
 		"@typescript-eslint/no-duplicate-type-constituents": "error",
 		"@typescript-eslint/no-import-type-side-effects": "error",
 		"@typescript-eslint/no-redundant-type-constituents": "error",
 		"@typescript-eslint/no-require-imports": "error",
 		"@typescript-eslint/no-unnecessary-qualifier": "error",
- 		"@typescript-eslint/no-useless-empty-export": "error",
- 		"@typescript-eslint/parameter-properties": ["error", {"prefer": "parameter-property"}],
- 		"@typescript-eslint/prefer-readonly": "error",
- 		"@typescript-eslint/require-array-sort-compare": "error",
- 		"@typescript-eslint/switch-exhaustiveness-check": "error",
+		"@typescript-eslint/no-useless-empty-export": "error",
+		"@typescript-eslint/parameter-properties": [
+			"error",
+			{
+				"prefer": "parameter-property"
+			}
+		],
+		"@typescript-eslint/prefer-readonly": "error",
+		"@typescript-eslint/require-array-sort-compare": "error",
+		"@typescript-eslint/switch-exhaustiveness-check": "error",
 		"@typescript-eslint/no-unused-vars": "warn",
 		"prettier/prettier": [
 			"warn",

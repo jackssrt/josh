@@ -25,7 +25,7 @@ export abstract class BaseStage {
 
 export class Stage extends BaseStage {
 	public vsStageId: number;
-	constructor(data: SchedulesAPI.Stage, vsStages: SchedulesAPI.Stage<"high">[]) {
+	constructor(data: SchedulesAPI.LowImageQualityStage, vsStages: SchedulesAPI.HighImageQualityStage[]) {
 		super(
 			data.name,
 			vsStages[data.vsStageId - 1]?.originalImage.url ??

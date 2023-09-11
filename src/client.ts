@@ -31,9 +31,12 @@ import { IS_BUILT, IS_DEV } from "./env.js";
 import type { Event } from "./event.js";
 import logger from "./logger.js";
 import Registry from "./registry.js";
+import type { ErrorData } from "./utils.js";
 import { formatTime, parallel, pluralize, reportError } from "./utils.js";
 
 export const USER_AGENT = "Josh (source code: https://github.com/jackssrt/josh , make an issue if it's misbehaving)";
+export const bootErrors: ErrorData[] = [];
+
 export default class Client<Ready extends boolean = false, Loaded extends boolean = true> extends DiscordClient<Ready> {
 	public commandRegistry = new Registry<Command>();
 	public eventRegistry = new Registry<Event<keyof ClientEvents>>();
@@ -184,6 +187,7 @@ export default class Client<Ready extends boolean = false, Loaded extends boolea
 				this.guild.roles.fetch(process.env.SPLATFEST_TEAM_CATEGORY_ROLE_ID) as Promise<Role>,
 			);
 			logger.info(`Fetching discord objects took ${formatTime((new Date().getTime() - start.getTime()) / 1000)}`);
+			if (bootErrors.length) await parallel(bootErrors.map(async (v) => await reportError(this, v)));
 			this.loadedSyncSignal.fire();
 			if (IS_DEV && platform === "win32")
 				spawn(`powershell.exe`, [

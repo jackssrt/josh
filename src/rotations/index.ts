@@ -1,10 +1,10 @@
 import axios from "axios";
-import type { Awaitable } from "discord.js";
-import { USER_AGENT } from "../client.js";
+import { inlineCode, type Awaitable } from "discord.js";
+import { USER_AGENT, bootErrors } from "../client.js";
 import database from "../database.js";
 import type * as SalmonRunAPI from "../types/salmonRunApi.js";
-import type * as SchedulesAPI from "../types/schedulesApi.js";
-import { LARGEST_DATE, formatTime, iteratorToArray, parallel } from "../utils.js";
+import * as SchedulesAPI from "../types/schedulesApi.js";
+import { LARGEST_DATE, dedent, formatTime, iteratorToArray, parallel } from "../utils.js";
 import logger from "./../logger.js";
 import { PoppingTimePeriodCollection } from "./TimePeriodCollection.js";
 import {
@@ -170,6 +170,19 @@ export class Rotations {
 					},
 				})
 			).data;
+		// validate with zod
+		const validationResult = SchedulesAPI.responseSchema.safeParse(response);
+		if (!validationResult.success)
+			bootErrors.push({
+				title: "Schedule API response failed Schema validation",
+				error: validationResult.error,
+				description: dedent`${inlineCode(
+					"SchedulesAPI.responseSchema.safeParse",
+				)} failed, this may be caused by:
+				- Invalid schema design
+				- The API changing
+				The invalid data will still be used, this is just a forewarning.`,
+			});
 		const {
 			data: {
 				regularSchedules: { nodes: rawTurfWar },

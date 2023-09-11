@@ -24,13 +24,6 @@ import type Client from "./client.js";
 import database from "./database.js";
 import logger from "./logger.js";
 
-export type StrictOmit<T, K extends keyof T> = Omit<T, K>;
-
-export type StrictExclude<T, K extends T> = Exclude<T, K>;
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type AnyFunction = (...args: any[]) => any;
-
 export const SMALLEST_DATE = new Date(-8640000000000000);
 export const LARGEST_DATE = new Date(8640000000000000);
 
@@ -165,7 +158,7 @@ export function scaleNumber(val: number, src: [number, number], dst: [number, nu
 	return ((val - src[0]) / (src[1] - src[0])) * (dst[1] - dst[0]) + dst[0];
 }
 
-interface ErrorData {
+export interface ErrorData {
 	title: string;
 	affectedUser?: GuildMember | User | undefined;
 	interaction?: RepliableInteraction | undefined;
