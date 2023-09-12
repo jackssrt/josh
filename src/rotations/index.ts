@@ -1,11 +1,10 @@
 import axios from "axios";
-import { inlineCode, type Awaitable } from "discord.js";
-import type { ZodError } from "zod";
-import { USER_AGENT, bootErrors } from "../client.js";
+import type { Awaitable } from "discord.js";
+import { USER_AGENT } from "../client.js";
 import database from "../database.js";
 import * as SalmonRunAPI from "../types/salmonRunApi.js";
 import * as SchedulesAPI from "../types/schedulesApi.js";
-import { LARGEST_DATE, dedent, formatTime, iteratorToArray, parallel } from "../utils.js";
+import { LARGEST_DATE, formatTime, iteratorToArray, parallel, reportSchemaFail } from "../utils.js";
 import logger from "./../logger.js";
 import { PoppingTimePeriodCollection } from "./TimePeriodCollection.js";
 import {
@@ -21,17 +20,6 @@ import {
 	TurfWarNode,
 	XBattleNode,
 } from "./nodes.js";
-
-function reportSchemaFail(name: string, code: string, error: ZodError) {
-	bootErrors.push({
-		title: `${name} API response failed schema validation`,
-		error: error,
-		description: dedent`${inlineCode(code)} failed, this may be caused by:
-				- Incorrect schema design
-				- The API changing
-				The invalid data will still be used, this is just a forewarning.`,
-	});
-}
 
 export interface FetchedRotations {
 	splatfestPro: PoppingTimePeriodCollection<SplatfestProNode | undefined>;

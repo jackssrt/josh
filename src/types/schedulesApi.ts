@@ -1,5 +1,6 @@
 /* eslint-disable camelcase */
 import { z } from "zod";
+import { baseNodeSchema } from "./common.js";
 import type { Call } from "./utils.js";
 import { literalUnion, nodes, repeatedTuple } from "./utils.js";
 
@@ -190,11 +191,6 @@ export const currentFestSchema = (state: "FIRST_HALF" | "SECOND_HALF") =>
 	});
 export type CurrentFest<State extends "FIRST_HALF" | "SECOND_HALF"> = z.infer<Call<typeof currentFestSchema, [State]>>;
 
-export const baseNodeSchema = z.object({
-	startTime: z.string(),
-	endTime: z.string(),
-});
-export type BaseNode = z.infer<typeof baseNodeSchema>;
 export const festNodeSchema = baseNodeSchema.extend({
 	festMatchSettings: z.tuple([festSettingSchema("CHALLENGE"), festSettingSchema("REGULAR")]).nullable(),
 });

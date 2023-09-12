@@ -22,8 +22,16 @@ import { updateRoleCategories } from "../events/roleCategories.js";
 import { updateStatsMessage } from "../events/statsMessage.js";
 import logger from "../logger.js";
 import rotations from "../rotations/index.js";
-import type * as FestivalsAPI from "../types/festivalsApi.js";
-import { colorLuminance, hexToRGB, iteratorToArray, parallel, pluralize, textImage } from "../utils.js";
+import * as FestivalsAPI from "../types/festivalsApi.js";
+import {
+	colorLuminance,
+	hexToRGB,
+	iteratorToArray,
+	parallel,
+	pluralize,
+	reportSchemaFail,
+	textImage,
+} from "../utils.js";
 import createCommand from "./../command.js";
 import { COLOR_DATA } from "./color.js";
 
@@ -199,20 +207,20 @@ export default createCommand({
 			await updateStatsMessage(client);
 			await interaction.editReply(`done, ${userMention(inviter)} => ${userMention(invitee)}`);
 		} else if (subcommand === "splatfest") {
-			const {
-				data: {
-					EU: {
-						data: {
-							festRecords: { nodes: fests },
-						},
-					},
-				},
-			} = await axios.get<FestivalsAPI.Response>("https://splatoon3.ink/data/festivals.json", {
+			const response = await axios.get<FestivalsAPI.Response>("https://splatoon3.ink/data/festivals.json", {
 				headers: {
 					"User-Agent": USER_AGENT,
 				},
 			});
-			const fest = fests.find((v) => v.state !== "CLOSED");
+			const validationResult = FestivalsAPI.responseSchema.safeParse(response.data);
+			if (!validationResult.success)
+				reportSchemaFail(
+					"Festivals",
+					`FestivalsAPI.responseSchema.safeParse(response)`,
+					validationResult.error,
+				);
+
+			const fest = response.data.EU.data.festRecords.nodes.find((v) => v.state !== "CLOSED");
 			if (!fest) return await interaction.editReply("No active splatfest");
 			await parallel(
 				async () => {

@@ -13,10 +13,8 @@ export const nodes = <T extends ZodTypeAny>(value: T) =>
 	z.object({
 		nodes: z.array(value),
 	});
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type Call<F extends (...params: any[]) => any, P extends Parameters<F>> = F extends (...params: P) => infer R
-	? R
-	: never;
+export type Call<F extends AnyFunction, P extends Parameters<F>> = F extends (...params: P) => infer R ? R : never;
+
 export type StrictOmit<T, K extends keyof T> = Omit<T, K>;
 
 export type StrictExclude<T, K extends T> = Exclude<T, K>;

@@ -1,52 +1,74 @@
-import type { BaseNode, CurrentFestTeam } from "./schedulesApi.js";
+import { z } from "zod";
+import { baseNodeSchema } from "./common.js";
+import type { Call } from "./utils.js";
+import { literalUnion, nodes } from "./utils.js";
 
-type FestState = "FIRST_HALF" | "SECOND_HALF" | "CLOSED" | "SCHEDULED";
+const festStates = ["FIRST_HALF", "SECOND_HALF", "CLOSED", "SCHEDULED"] as const;
+type FestState = (typeof festStates)[number];
+const festivalTeamSchema = (state: FestState) =>
+	z.object({
+		result:
+			state === "CLOSED"
+				? z.object({
+						isWinner: z.boolean(),
+						horagaiRatio: z.number(),
+						isHoragaiRatioTop: z.boolean(),
+						voteRatio: z.number(),
+						isVoteRatioTop: z.boolean(),
+						regularContributionRatio: z.number(),
+						isRegularContributionRatioTop: z.boolean(),
+						challengeContributionRatio: z.number(),
+						isChallengeContributionRatioTop: z.boolean(),
+						tricolorContributionRatio: z.number().nullable(),
+						isTricolorContributionRatioTop: z.boolean().nullable(),
+				  })
+				: z.null(),
+		teamName: z.string(),
+		image: z.object({
+			url: z.string(),
+		}),
+		role:
+			state === "FIRST_HALF" || state === "SECOND_HALF" ? literalUnion("ATTACK", "DEFENSE").nullable() : z.null(),
+		color: z.object({
+			r: z.number(),
+			g: z.number(),
+			b: z.number(),
+			a: z.number(),
+		}),
+	});
+export type FestivalTeam<State extends FestState> = z.infer<Call<typeof festivalTeamSchema, [State]>>;
 
-export interface Response {
-	US: RegionalFestivalData;
-	EU: RegionalFestivalData;
-	JP: RegionalFestivalData;
-	AP: RegionalFestivalData;
-}
-export interface RegionalFestivalData {
-	data: {
-		festRecords: {
-			nodes: FestivalNode<FestState>[];
-		};
-	};
-}
-
-export interface FestivalNode<State extends FestState> extends BaseNode {
-	id: string;
-	state: State;
-	title: string;
-	lang: string;
-	image: { url: string };
-	teams: [FestivalTeam<State>, FestivalTeam<State>, FestivalTeam<State>];
-}
-export interface FestivalTeam<State extends FestState> extends CurrentFestTeam {
-	result: State extends "CLOSED"
-		? {
-				isWinner: boolean;
-				// horagai is japanese for conch
-				// this is the ratio of how conch shells the team got
-				horagaiRatio: number;
-				isHoragaiRatioTop: boolean;
-				voteRatio: number;
-				isVoteRatioTop: boolean;
-				regularContributionRatio: number;
-				isRegularContributionRatioTop: boolean;
-				challengeContributionRatio: number;
-				isChallengeContributionRatioTop: boolean;
-				tricolorContributionRatio: number | null;
-				isTricolorContributionRatioTop: boolean | null;
-		  }
-		: null;
-	teamName: string;
-	image: {
-		url: string;
-	};
-	// tricolor was changed to have teams randomized for each match,
-	// so new splatfests will always have this as null
-	role: State extends "FIRST_HALF" | "SECOND_HALF" ? "ATTACK" | "DEFENSE" | null : null;
-}
+export const festivalNodeSchema = <State extends FestState>(state: State) =>
+	baseNodeSchema.extend({
+		id: z.string(),
+		state: z.literal(state),
+		title: z.string(),
+		lang: z.string(),
+		image: z.object({
+			url: z.string(),
+		}),
+		teams: z.tuple([festivalTeamSchema(state), festivalTeamSchema(state), festivalTeamSchema(state)]),
+	});
+export type FestivalNode<State extends FestState> = z.infer<Call<typeof festivalNodeSchema, [State]>>;
+export const regionalFestivalDataSchema = z.object({
+	data: z.object({
+		festRecords: nodes(
+			z.union(
+				festStates.map((v) => festivalNodeSchema(v)) as [
+					Call<typeof festivalNodeSchema, ["FIRST_HALF"]>,
+					Call<typeof festivalNodeSchema, ["SECOND_HALF"]>,
+					Call<typeof festivalNodeSchema, ["CLOSED"]>,
+					Call<typeof festivalNodeSchema, ["SCHEDULED"]>,
+				],
+			),
+		),
+	}),
+});
+export type RegionalFestivalData = z.infer<typeof regionalFestivalDataSchema>;
+export const responseSchema = z.object({
+	US: regionalFestivalDataSchema,
+	EU: regionalFestivalDataSchema,
+	JP: regionalFestivalDataSchema,
+	AP: regionalFestivalDataSchema,
+});
+export type Response = z.infer<typeof responseSchema>;

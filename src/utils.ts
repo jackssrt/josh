@@ -12,7 +12,16 @@ import type {
 	Webhook,
 	WebhookMessageCreateOptions,
 } from "discord.js";
-import { Collection, EmbedBuilder, GuildMember, TimestampStyles, codeBlock, normalizeArray, time } from "discord.js";
+import {
+	Collection,
+	EmbedBuilder,
+	GuildMember,
+	TimestampStyles,
+	codeBlock,
+	inlineCode,
+	normalizeArray,
+	time,
+} from "discord.js";
 import levenshtein from "js-levenshtein";
 import type EventEmitter from "node:events";
 import { existsSync } from "node:fs";
@@ -20,7 +29,9 @@ import { readFile } from "node:fs/promises";
 import { inspect } from "node:util";
 import type { Sharp } from "sharp";
 import sharp from "sharp";
+import type { ZodError } from "zod";
 import type Client from "./client.js";
+import { bootErrors } from "./client.js";
 import database from "./database.js";
 import logger from "./logger.js";
 
@@ -218,6 +229,17 @@ export async function reportError(
 		logger.error(
 			`Failed to send error report: ${title}\n${embed.embeds[0]?.data.description}\n<@${affectedUser?.id}>`,
 		);
+}
+
+export function reportSchemaFail(name: string, code: string, error: ZodError) {
+	bootErrors.push({
+		title: `${name} API response failed schema validation`,
+		error: error,
+		description: dedent`${inlineCode(code)} failed, this may be caused by:
+				- Incorrect schema design
+				- The API changing
+				The invalid data will still be used, this is just a forewarning.`,
+	});
 }
 
 const WEBHOOK_NAME = "josh impersonation webhook";
