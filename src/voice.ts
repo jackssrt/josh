@@ -98,7 +98,7 @@ function spawnWorker(client: Client<true>) {
 				player.play(currentSound.resource);
 				await awaitEvent(player, AudioPlayerStatus.Idle, 30);
 			} catch (error) {
-				await reportError(client, {
+				reportError({
 					title: "Voice worker error",
 					description: `The worker spawned by ${inlineCode("queueSound()")} threw an error.`,
 					error: error as Error,

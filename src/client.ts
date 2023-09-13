@@ -31,13 +31,12 @@ import { IS_BUILT, IS_DEV } from "./env.js";
 import type { Event } from "./event.js";
 import logger from "./logger.js";
 import Registry from "./registry.js";
-import type { ErrorData } from "./utils.js";
 import { formatTime, parallel, pluralize, reportError } from "./utils.js";
 
 export const USER_AGENT = "Josh (source code: https://github.com/jackssrt/josh , make an issue if it's misbehaving)";
-export const bootErrors: ErrorData[] = [];
 
 export default class Client<Ready extends boolean = false, Loaded extends boolean = true> extends DiscordClient<Ready> {
+	public static instance: Client<true> | undefined = undefined;
 	public commandRegistry = new Registry<Command>();
 	public eventRegistry = new Registry<Event<keyof ClientEvents>>();
 	public contextMenuItemsRegistry = new Registry<ContextMenuItem<"User" | "Message">>();
@@ -54,7 +53,7 @@ export default class Client<Ready extends boolean = false, Loaded extends boolea
 	public colorsRoleCategory = undefined as Loaded extends true ? Role : undefined;
 	public statsChannel = undefined as Loaded extends true ? TextChannel : undefined;
 	public splatfestTeamRoleCategory = undefined as Loaded extends true ? Role : undefined;
-	public loadedSyncSignal = new SyncSignal();
+	public static loadedSyncSignal = new SyncSignal();
 	public static readonly defaultPresence = {
 		status: "online",
 		activities: [{ type: ActivityType.Competing, name: "Splatoon 3" }],
@@ -187,8 +186,8 @@ export default class Client<Ready extends boolean = false, Loaded extends boolea
 				this.guild.roles.fetch(process.env.SPLATFEST_TEAM_CATEGORY_ROLE_ID) as Promise<Role>,
 			);
 			logger.info(`Fetching discord objects took ${formatTime((new Date().getTime() - start.getTime()) / 1000)}`);
-			if (bootErrors.length) await parallel(bootErrors.map(async (v) => await reportError(this, v)));
-			this.loadedSyncSignal.fire();
+			Client.instance = this;
+			Client.loadedSyncSignal.fire();
 			if (IS_DEV && platform === "win32")
 				spawn(`powershell.exe`, [
 					"-c",
@@ -201,16 +200,15 @@ export default class Client<Ready extends boolean = false, Loaded extends boolea
 
 		for (const event of this.eventRegistry.values()) {
 			this[event.isOnetime ? "once" : "on"](event.event, async (...params: ClientEvents[typeof event.event]) => {
-				await this.loadedSyncSignal.await();
+				await Client.loadedSyncSignal.await();
 				if (await database.getBooleanFlag("log.events")) this.logEvent(event);
 				await event.on({ client: this }, ...params);
 			});
 		}
 		logger.info(`Hooked ${this.eventRegistry.size} event${this.eventRegistry.size === 1 ? "" : "s"}`);
 
-		this.on("error", async (error) => {
-			await this.loadedSyncSignal.await();
-			await reportError(this, {
+		this.on("error", (error) => {
+			reportError({
 				title: "Generic Error",
 				description: `${inlineCode('client.on("error", () => {...}))')} caught an error.`,
 				error,
@@ -225,7 +223,7 @@ export default class Client<Ready extends boolean = false, Loaded extends boolea
 			const command = this.commandRegistry.get(interaction.commandName);
 			if (!command) return;
 
-			await this.loadedSyncSignal.await();
+			await Client.loadedSyncSignal.await();
 
 			await this.runCommand(interaction, command);
 		});
@@ -237,7 +235,7 @@ export default class Client<Ready extends boolean = false, Loaded extends boolea
 			const item = this.contextMenuItemsRegistry.get(interaction.commandName);
 			if (!item) return;
 
-			await this.loadedSyncSignal.await();
+			await Client.loadedSyncSignal.await();
 
 			await this.runContextMenuItem(interaction, item);
 		});
@@ -248,7 +246,7 @@ export default class Client<Ready extends boolean = false, Loaded extends boolea
 			const command = this.commandRegistry.get(interaction.commandName);
 			if (!command) return;
 
-			await this.loadedSyncSignal.await();
+			await Client.loadedSyncSignal.await();
 
 			await this.autocompleteCommand(interaction, command);
 		});
@@ -335,7 +333,7 @@ export default class Client<Ready extends boolean = false, Loaded extends boolea
 		try {
 			await command.execute({ client: this, interaction });
 		} catch (e) {
-			await reportError(this, {
+			reportError({
 				title: `Command error: /${interaction.commandName}`,
 				description: "An error was thrown while running a command.",
 				error: e as Error,

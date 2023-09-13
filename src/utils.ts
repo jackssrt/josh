@@ -30,8 +30,7 @@ import { inspect } from "node:util";
 import type { Sharp } from "sharp";
 import sharp from "sharp";
 import type { ZodError } from "zod";
-import type Client from "./client.js";
-import { bootErrors } from "./client.js";
+import Client from "./client.js";
 import database from "./database.js";
 import logger from "./logger.js";
 
@@ -177,7 +176,7 @@ export interface ErrorData {
 	error?: Error | undefined;
 }
 
-export async function reportError(
+async function reportErrorInner(
 	client: Client<true>,
 	{ title, description, error, affectedUser, interaction }: ErrorData,
 ) {
@@ -230,11 +229,18 @@ export async function reportError(
 			`Failed to send error report: ${title}\n${embed.embeds[0]?.data.description}\n<@${affectedUser?.id}>`,
 		);
 }
+export function reportError(data: ErrorData) {
+	// wait for client to be ready
+	void (async () => {
+		await Client.loadedSyncSignal.await();
+		await reportErrorInner(Client.instance!, data);
+	})();
+}
 
 export function reportSchemaFail(name: string, code: string, error: ZodError) {
-	bootErrors.push({
+	reportError({
 		title: `${name} API response failed schema validation`,
-		error: error,
+		error,
 		description: dedent`${inlineCode(code)} failed, this may be caused by:
 				- Incorrect schema design
 				- The API changing
