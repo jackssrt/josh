@@ -16,6 +16,7 @@ import {
 	SPLATFEST_EMOJI,
 	X_BATTLE_EMOJI,
 } from "../emojis.js";
+import type * as CommonAPI from "../types/common.js";
 import type * as SchedulesAPI from "../types/schedulesApi.js";
 import { dedent, parallel, textImage } from "../utils.js";
 import logger from "./../logger.js";
@@ -43,7 +44,7 @@ export abstract class BaseNode extends TimePeriod implements Shortable {
 		return this.name.toLowerCase().replace(/&/g, "and").replace(/ /g, "_");
 	}
 
-	constructor(data: SchedulesAPI.BaseNode) {
+	constructor(data: CommonAPI.BaseNode) {
 		super(data.startTime, data.endTime);
 	}
 	public short(options?: BaseNodeShortOptions | undefined) {
@@ -225,7 +226,7 @@ export abstract class DisplayableMatchNode extends BaseNode {
 
 export abstract class BaseMatchNode<
 	VsRule extends SchedulesAPI.VsRule,
-	NodeType extends SchedulesAPI.BaseNode,
+	NodeType extends CommonAPI.BaseNode,
 	SettingType extends SchedulesAPI.BaseMatchSetting,
 > extends DisplayableMatchNode {
 	public rule: APIRuleToRule<VsRule>;
@@ -237,7 +238,7 @@ export abstract class BaseMatchNode<
 		this.rule = RULE_MAP[setting.vsRule.rule] as APIRuleToRule<VsRule>;
 	}
 }
-export type GenericMatchNode = BaseMatchNode<SchedulesAPI.VsRule, SchedulesAPI.BaseNode, SchedulesAPI.BaseMatchSetting>;
+export type GenericMatchNode = BaseMatchNode<SchedulesAPI.VsRule, CommonAPI.BaseNode, SchedulesAPI.BaseMatchSetting>;
 
 export class TurfWarNode extends BaseMatchNode<
 	SchedulesAPI.TurfWarVsRule,
@@ -279,7 +280,7 @@ export class XBattleNode extends BaseMatchNode<
 }
 export class ChallengeNode extends BaseMatchNode<
 	SchedulesAPI.VsRule,
-	SchedulesAPI.ChallengeNode & SchedulesAPI.BaseNode,
+	SchedulesAPI.ChallengeNode & CommonAPI.BaseNode,
 	SchedulesAPI.ChallengeSetting
 > {
 	public color = "#F02D7D" as const;
@@ -405,7 +406,7 @@ export class CurrentFest<State extends "FIRST_HALF" | "SECOND_HALF"> extends Dis
 
 const TEXT_BLUR_SIGMA = 1.00005;
 abstract class BaseCoopNode<
-	NodeType extends SchedulesAPI.BaseNode,
+	NodeType extends CommonAPI.BaseNode,
 	SettingType extends SchedulesAPI.BaseCoopRegularSetting,
 > extends BaseNode {
 	public stage: BaseCoopStage;
