@@ -1,9 +1,10 @@
 /* eslint-disable camelcase */
 import { z } from "zod";
+import { literalUnion } from "./utils.js";
 
 export const monthlyGearSchema = z.object({
 	__splatoon3ink_id: z.string(),
-	__typename: z.literal("ClothingGear"),
+	__typename: literalUnion("ClothingGear", "HeadGear"),
 	name: z.string(),
 	image: z.object({
 		url: z.string(),
