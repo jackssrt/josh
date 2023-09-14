@@ -11,6 +11,7 @@ export const DEFAULT_FLAGS = {
 	"tts.enabled": "true",
 	"tts.mutedOnly": "false",
 	"tts.playFiles": "true",
+	"tts.channelLock": "true",
 	"log.ratelimits": "false",
 	"log.events": "false",
 	"log.commands": "true",
