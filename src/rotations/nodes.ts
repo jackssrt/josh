@@ -8,7 +8,6 @@ import sharp from "sharp";
 import { USER_AGENT } from "../client.js";
 import {
 	ANARCHY_BATTLE_EMOJI,
-	BIG_RUN_EMOJI,
 	CHALLENGES_EMOJI,
 	COHOZUNA_EMOJI,
 	HORRORBOROS_EMOJI,
@@ -409,6 +408,7 @@ abstract class BaseCoopNode<
 	NodeType extends CommonAPI.BaseNode,
 	SettingType extends SchedulesAPI.BaseCoopRegularSetting,
 > extends BaseNode {
+	public emoji = "🐟";
 	public stage: BaseCoopStage;
 	public weapons: [
 		SchedulesAPI.CoopWeapon,
@@ -568,7 +568,6 @@ export class SalmonRunNode extends BaseCoopNode<
 	SchedulesAPI.BaseCoopRegularSetting
 > {
 	public color = "#ff5033" as const;
-	public emoji = "🐟";
 	public name = "Salmon Run";
 	public kingSalmonid: "Horrorboros" | "Cohozuna";
 	public get kingSalmonidEmoji() {
@@ -603,13 +602,12 @@ export class SalmonRunNode extends BaseCoopNode<
 export class EggstraWorkNode extends BaseCoopNode<SchedulesAPI.TeamContestNode, SchedulesAPI.TeamContestSetting> {
 	public rule = "TEAM_CONTEST";
 	public color = "#FDD400" as const;
-	public emoji = "🥇";
+	public override emoji = "🥇";
 	public name = "Eggstra Work";
 }
 
 export class BigRunNode extends BaseCoopNode<SchedulesAPI.CoopBigRunNode, SchedulesAPI.CoopBigRunSetting> {
 	public rule = "BIG_RUN";
 	public color = "#B322FF" as const;
-	public emoji = BIG_RUN_EMOJI;
 	public name = "Big Run";
 }
