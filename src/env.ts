@@ -26,8 +26,6 @@ export const processEnvSchema = z.object({
 	GREETER_ROLE_ID: snowflakeSchema,
 	MEMBER_ROLE_ID: snowflakeSchema,
 	JOIN_LEAVE_CHANNEL_ID: snowflakeSchema,
-	REPLIT_DB_URL: z.string().optional(),
-	REPL_ID: z.string().optional(),
 	CREATE_MATCH_CHANNEL_ID: snowflakeSchema,
 	MATCH_CHANNEL_CATEGORY_ID: snowflakeSchema,
 	TTS_CHANNEL_ID: snowflakeSchema,

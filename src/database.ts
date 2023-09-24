@@ -1,4 +1,3 @@
-import axios from "axios";
 import type { PresenceData, Snowflake } from "discord.js";
 import { existsSync } from "fs";
 import { readFile, writeFile } from "fs/promises";
@@ -35,7 +34,6 @@ export interface DatabaseData {
 	activePresence: PresenceData;
 }
 class DatabaseBackend<T extends Record<K, unknown>, K extends string> {
-	private readonly replitDatabaseUrl = process.env.REPLIT_DB_URL;
 	private data: T | undefined = undefined;
 	private static readonly PATH = "./database.json";
 	private async load() {
@@ -49,30 +47,13 @@ class DatabaseBackend<T extends Record<K, unknown>, K extends string> {
 		key: K,
 		defaultValue?: D | undefined,
 	): Promise<T[K] | NonNullable<D> | undefined> {
-		if (this.replitDatabaseUrl)
-			try {
-				return (await axios.get<T[K]>(`${this.replitDatabaseUrl}/${String(key)}`)).data;
-			} catch (e) {
-				return defaultValue ?? undefined;
-			}
-		else {
-			if (this.data === undefined) await this.load();
-			return this.data![key] ?? defaultValue;
-		}
+		if (this.data === undefined) await this.load();
+		return this.data![key] ?? defaultValue;
 	}
 	public async set<K extends keyof T>(key: K, value: T[K]): Promise<void> {
-		if (this.replitDatabaseUrl)
-			await axios.post(
-				this.replitDatabaseUrl,
-				// typescript thinks `keyof T` can be `Symbol` for some reason
-				`${encodeURIComponent(String(key))}=${encodeURIComponent(JSON.stringify(value))}`,
-				{ headers: { "Content-Type": "application/x-www-form-urlencoded" } },
-			);
-		else {
-			if (this.data === undefined) await this.load();
-			this.data![key] = value;
-			await writeFile(DatabaseBackend.PATH, JSON.stringify(this.data), { encoding: "utf-8" });
-		}
+		if (this.data === undefined) await this.load();
+		this.data![key] = value;
+		await writeFile(DatabaseBackend.PATH, JSON.stringify(this.data), { encoding: "utf-8" });
 	}
 }
 const madeChallengeEventsLock = new Lock();
