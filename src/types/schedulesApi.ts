@@ -2,7 +2,7 @@
 import { z } from "zod";
 import { baseNodeSchema } from "./common.js";
 import type { Call } from "./utils.js";
-import { literalUnion, nodes, repeatedTuple } from "./utils.js";
+import { nodes, repeatedTuple } from "./utils.js";
 
 // functions that return a schema are "generic" schemas.
 
@@ -133,7 +133,7 @@ export type CoopWeapon = z.infer<typeof coopWeaponSchema>;
 export const coopStageSchema = (bigRun = false) =>
 	z.object({
 		name: !bigRun
-			? literalUnion(
+			? z.enum([
 					"Spawning Grounds",
 					"Sockeye Station",
 					"Marooner's Bay",
@@ -141,7 +141,7 @@ export const coopStageSchema = (bigRun = false) =>
 					"Jammin' Salmon Junction",
 					"Salmonid Smokeyard",
 					"",
-			  )
+			  ])
 			: z.string(),
 		thumbnailImage: z.object({
 			url: z.string(),
@@ -155,7 +155,7 @@ export type CoopStage<BigRun extends boolean = false> = z.infer<Call<typeof coop
 export const baseCoopRegularSettingSchema = (bigRun = false) =>
 	z.object({
 		coopStage: coopStageSchema(bigRun),
-		weapons: z.tuple([coopWeaponSchema, coopWeaponSchema, coopWeaponSchema, coopWeaponSchema]),
+		weapons: repeatedTuple(coopWeaponSchema, 4),
 	});
 export type BaseCoopRegularSetting = z.infer<ReturnType<typeof baseCoopRegularSettingSchema>>;
 
@@ -223,7 +223,7 @@ export const challengeNodeSchema = z.object({
 export type ChallengeNode = z.infer<typeof challengeNodeSchema>;
 
 export const kingSalmoidGuessSchema = z.object({
-	__splatoon3ink_king_salmonid_guess: literalUnion("Horrorboros", "Cohozuna"),
+	__splatoon3ink_king_salmonid_guess: z.enum(["Horrorboros", "Cohozuna"]),
 });
 
 export const coopGroupingRegularNodeSchema = baseNodeSchema.extend(kingSalmoidGuessSchema.shape).extend({

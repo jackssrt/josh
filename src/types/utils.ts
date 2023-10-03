@@ -1,14 +1,29 @@
-import type { Primitive, ZodLiteral, ZodTuple, ZodTypeAny } from "zod";
+import type { ZodTuple, ZodTypeAny } from "zod";
 import { z } from "zod";
 
-export const literalUnion = <T extends Primitive>(first: T, second: T, ...rest: T[]) =>
-	z.union([first, second, ...rest].map((v) => z.literal(v)) as [ZodLiteral<T>, ZodLiteral<T>, ...ZodLiteral<T>[]]);
 export type TupleOf<T, N extends number, A extends unknown[] = []> = A["length"] extends N
 	? A
 	: TupleOf<T, N, [T, ...A]>;
-
-export const repeatedTuple = <T extends ZodTypeAny, N extends number>(value: T, length: N): ZodTuple<TupleOf<T, N>> =>
-	z.tuple(new Array(length).fill(value) as TupleOf<T, N>);
+export function repeatedTuple<T extends ZodTypeAny, N extends number>(
+	value: AnyFunctionReturning<T>,
+	length: N,
+	args: Parameters<typeof value>,
+): ZodTuple<TupleOf<T, N>>;
+export function repeatedTuple<T extends ZodTypeAny, N extends number>(value: T, length: N): ZodTuple<TupleOf<T, N>>;
+export function repeatedTuple<T extends ZodTypeAny | AnyFunctionReturning<ZodTypeAny>, N extends number>(
+	value: T,
+	length: N,
+	args: T extends AnyFunction ? Parameters<typeof value> | undefined : undefined = undefined as T extends AnyFunction
+		? Parameters<typeof value> | undefined
+		: undefined,
+): ZodTuple<TupleOf<T extends AnyFunction ? ReturnType<typeof value> : T, N>> {
+	return z.tuple(
+		new Array(length).fill(typeof value === "function" ? value(...(args ?? [])) : value) as TupleOf<
+			T extends AnyFunction ? ReturnType<typeof value> : T,
+			N
+		>,
+	);
+}
 export const nodes = <T extends ZodTypeAny>(value: T) =>
 	z.object({
 		nodes: z.array(value),
@@ -21,3 +36,5 @@ export type StrictExclude<T, K extends T> = Exclude<T, K>;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type AnyFunction = (...args: any[]) => any;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type AnyFunctionReturning<T> = (...args: any[]) => T;

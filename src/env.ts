@@ -9,7 +9,7 @@ const snowflakeListSchema = z.string().refine((value) => {
 }, "Invalid Discord Snowflake List");
 
 export const processEnvSchema = z.object({
-	NODE_ENV: z.union([z.literal("test"), z.literal("development"), z.literal("production")]),
+	NODE_ENV: z.enum(["test", "development", "production"]),
 	TOKEN: z.string(),
 	OWNER_ID: snowflakeSchema,
 	CLIENT_ID: snowflakeSchema,
