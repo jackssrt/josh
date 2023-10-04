@@ -10,7 +10,9 @@ export async function makeChallengeEvents(guild: Guild, overrideDatabase = false
 	await Promise.all(
 		rotations.challenges.periods.map(async (challenge) => {
 			if (challenge === undefined) return;
-			if (!(await database.shouldMakeChallengeEvent(challenge.id)) && !overrideDatabase) return;
+			// ~~ is a faster version of Math.floor()
+			const id = `${challenge.id}-${~~(challenge.startTime.getTime() / 1000)}`;
+			if (!(await database.shouldMakeChallengeEvent(id)) && !overrideDatabase) return;
 			await guild.scheduledEvents.create({
 				entityType: GuildScheduledEventEntityType.External,
 				entityMetadata: {
@@ -43,7 +45,7 @@ export async function makeChallengeEvents(guild: Guild, overrideDatabase = false
 									
 									${CHALLENGES_EMOJI} Data provided by splatoon3.ink`,
 			});
-			await database.setMadeChallengeEvent(challenge.id);
+			await database.setMadeChallengeEvent(id);
 		}),
 	);
 }
