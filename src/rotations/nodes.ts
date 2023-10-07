@@ -34,7 +34,6 @@ interface Shortable {
 interface BaseNodeShortOptions {
 	showDate: boolean;
 }
-
 export abstract class BaseNode extends TimePeriod implements Shortable {
 	public abstract color: HexColorString;
 	public abstract emoji: string;
@@ -54,7 +53,8 @@ export abstract class BaseNode extends TimePeriod implements Shortable {
 			parts[0]!.push(time(this.startTime, TimestampStyles.ShortDate));
 		return parts;
 	}
-	public abstract embed(b: EmbedBuilder, future: (this | undefined)[]): Promise<EmbedBuilder>;
+	public abstract notificationText(): string;
+	public abstract embed(b: EmbedBuilder, future: readonly (this | undefined)[]): Promise<EmbedBuilder>;
 	public abstract images(width: number, height: number): Promise<Sharp[]>;
 	public abstract attachments(): Promise<AttachmentBuilder[]>;
 }
@@ -75,7 +75,7 @@ export abstract class DisplayableMatchNode extends BaseNode {
 		];
 	}
 	public channelTopicLabel: string | undefined = undefined;
-	public channelTopic(future: this | undefined) {
+	public channelTopic(future: DisplayableMatchNode | undefined) {
 		const parts: string[] = [this.emoji];
 		if (this.channelTopicLabel) parts.push(`**${this.channelTopicLabel}**`);
 		parts.push(":");
@@ -87,8 +87,14 @@ export abstract class DisplayableMatchNode extends BaseNode {
 		}
 		return parts.join(" ");
 	}
+	public notificationText() {
+		const parts: string[] = [`${this.name}:`];
+		if (this.rule.rule === "TURF_WAR") parts.push(this.stages.map((v) => v.short()).join(", "));
+		else parts.push(this.rule.name);
+		return parts.join(" ");
+	}
 
-	public async embed(b: EmbedBuilder, future: (this | undefined)[]): Promise<EmbedBuilder> {
+	public async embed(b: EmbedBuilder, future: readonly (DisplayableMatchNode | undefined)[]): Promise<EmbedBuilder> {
 		return b
 			.setTitle(`${this.emoji} ${this.name}`)
 			.setDescription(this.embedDescription(future) || null)
@@ -96,7 +102,7 @@ export abstract class DisplayableMatchNode extends BaseNode {
 			.setColor(this.color)
 			.setImage(`attachment://${this.imageName}.png`);
 	}
-	public embedDescription(future: (this | undefined)[]): string {
+	public embedDescription(future: readonly (DisplayableMatchNode | undefined)[]): string {
 		return future
 			.flatMap((v) =>
 				v
@@ -237,7 +243,6 @@ export abstract class BaseMatchNode<
 		this.rule = RULE_MAP[setting.vsRule.rule] as APIRuleToRule<VsRule>;
 	}
 }
-export type GenericMatchNode = BaseMatchNode<SchedulesAPI.VsRule, CommonAPI.BaseNode, SchedulesAPI.BaseMatchSetting>;
 
 export class TurfWarNode extends BaseMatchNode<
 	SchedulesAPI.TurfWarVsRule,
@@ -246,7 +251,7 @@ export class TurfWarNode extends BaseMatchNode<
 > {
 	public color = "#CFF622" as const;
 	public emoji = REGULAR_BATTLE_EMOJI;
-	public name = "Turf War";
+	public name = "Turf War" as const;
 }
 export class RankedOpenNode extends BaseMatchNode<
 	SchedulesAPI.RankedVsRule,
@@ -255,7 +260,7 @@ export class RankedOpenNode extends BaseMatchNode<
 > {
 	public color = "#F54910" as const;
 	public emoji = ANARCHY_BATTLE_EMOJI;
-	public name = "Anarchy Open";
+	public name = "Anarchy Open" as const;
 	public override channelTopicLabel = "Open";
 }
 export class RankedSeriesNode extends BaseMatchNode<
@@ -265,7 +270,7 @@ export class RankedSeriesNode extends BaseMatchNode<
 > {
 	public color = "#F54910" as const;
 	public emoji = ANARCHY_BATTLE_EMOJI;
-	public name = "Anarchy Series";
+	public name = "Anarchy Series" as const;
 	public override channelTopicLabel = "Series";
 }
 export class XBattleNode extends BaseMatchNode<
@@ -275,7 +280,7 @@ export class XBattleNode extends BaseMatchNode<
 > {
 	public color = "#0FDB9B" as const;
 	public emoji = X_BATTLE_EMOJI;
-	public name = "X Battle";
+	public name = "X Battle" as const;
 }
 export class ChallengeNode extends BaseMatchNode<
 	SchedulesAPI.VsRule,
@@ -284,7 +289,7 @@ export class ChallengeNode extends BaseMatchNode<
 > {
 	public color = "#F02D7D" as const;
 	public emoji = CHALLENGES_EMOJI;
-	public name = "Challenges";
+	public name = "Challenges" as const;
 	public timePeriods: TimePeriodCollection<ChallengeTimePeriod>;
 	/**
 	 * @example "NewSeasonCup"
@@ -319,11 +324,13 @@ export class ChallengeNode extends BaseMatchNode<
 
 		super({ startTime: startTime.toISOString(), endTime: endTime.toISOString(), ...data }, setting, vsStages);
 		this.timePeriods = new TimePeriodCollection(timePeriods);
-		this.leagueId = setting.leagueMatchEvent.leagueMatchEventId;
-		this.challengeName = setting.leagueMatchEvent.name;
-		this.shortDescription = setting.leagueMatchEvent.desc;
-		this.longDescription = setting.leagueMatchEvent.regulation.replace(/<br \/>/g, "\n");
-		this.id = setting.leagueMatchEvent.id;
+
+		const { leagueMatchEventId, name, desc, regulation, id } = setting.leagueMatchEvent;
+		this.leagueId = leagueMatchEventId;
+		this.challengeName = name;
+		this.shortDescription = desc;
+		this.longDescription = regulation.replace(/<br \/>/g, "\n");
+		this.id = id;
 	}
 	public override embedDescription(): string {
 		return this.timePeriods
@@ -364,7 +371,7 @@ export class SplatfestOpenNode extends BaseMatchNode<
 > {
 	public color = "#0033FF" as const;
 	public emoji = SPLATFEST_EMOJI;
-	public name = "Splatfest Open";
+	public name = "Splatfest Open" as const;
 	public override channelTopicLabel = "Open";
 }
 
@@ -375,7 +382,7 @@ export class SplatfestProNode extends BaseMatchNode<
 > {
 	public color = "#0033FF" as const;
 	public emoji = SPLATFEST_EMOJI;
-	public name = "Splatfest Pro";
+	public name = "Splatfest Pro" as const;
 	public override channelTopicLabel = "Pro";
 }
 export class CurrentFest<State extends "FIRST_HALF" | "SECOND_HALF"> extends DisplayableMatchNode {
@@ -388,7 +395,7 @@ export class CurrentFest<State extends "FIRST_HALF" | "SECOND_HALF"> extends Dis
 	public rule = turfWarRule;
 	public color = "#0033FF" as const;
 	public emoji = SPLATFEST_EMOJI;
-	public name = "Tricolor";
+	public name = "Tricolor" as const;
 	public override channelTopicLabel = "Tricolor";
 	public stages: [Stage];
 	constructor(data: SchedulesAPI.CurrentFest<State>, vsStages: SchedulesAPI.HighImageQualityStage[]) {
@@ -403,8 +410,18 @@ export class CurrentFest<State extends "FIRST_HALF" | "SECOND_HALF"> extends Dis
 	}
 }
 
+export type GenericMatchNode =
+	| ChallengeNode
+	| SplatfestOpenNode
+	| SplatfestProNode
+	| CurrentFest<"FIRST_HALF" | "SECOND_HALF">
+	| TurfWarNode
+	| RankedOpenNode
+	| RankedSeriesNode
+	| XBattleNode;
+
 const TEXT_BLUR_SIGMA = 1.00005;
-abstract class BaseCoopNode<
+export abstract class BaseCoopNode<
 	NodeType extends CommonAPI.BaseNode,
 	SettingType extends SchedulesAPI.BaseCoopRegularSetting,
 > extends BaseNode {
@@ -432,6 +449,16 @@ abstract class BaseCoopNode<
 					.join("\n"),
 			],
 		];
+	}
+	protected readonly notificationSpecial: boolean = true;
+	public notificationText(): string {
+		const parts: string[] = [];
+		if (this.notificationSpecial)
+			parts.push(`** ${this.name} ${"*".repeat(Math.max(40 - 4 - this.name.length, 0))}`);
+
+		parts.push(`${this.notificationSpecial ? "* " : ""}${this.stage.name}:`);
+		parts.push(`${this.notificationSpecial ? "* " : ""}${this.weapons.map((v) => v.name).join(", ")}`);
+		return parts.join("\n");
 	}
 
 	public async embed(b: EmbedBuilder): Promise<EmbedBuilder> {
@@ -568,7 +595,7 @@ export class SalmonRunNode extends BaseCoopNode<
 	SchedulesAPI.BaseCoopRegularSetting
 > {
 	public color = "#ff5033" as const;
-	public name = "Salmon Run";
+	public name = "Salmon Run" as const;
 	public kingSalmonid: "Horrorboros" | "Cohozuna";
 	public get kingSalmonidEmoji() {
 		return this.kingSalmonid === "Horrorboros" ? HORRORBOROS_EMOJI : COHOZUNA_EMOJI;
@@ -582,6 +609,7 @@ export class SalmonRunNode extends BaseCoopNode<
 		shortSuper[0]?.push(this.kingSalmonidEmoji);
 		return shortSuper;
 	}
+	protected override readonly notificationSpecial = false;
 	public override async embed(b: EmbedBuilder): Promise<EmbedBuilder> {
 		const gear = await Rotations.fetchSalmonRunGear();
 		b.addFields({
@@ -603,11 +631,12 @@ export class EggstraWorkNode extends BaseCoopNode<SchedulesAPI.TeamContestNode, 
 	public rule = "TEAM_CONTEST";
 	public color = "#FDD400" as const;
 	public override emoji = "🥇";
-	public name = "Eggstra Work";
+	public name = "Eggstra Work" as const;
 }
 
 export class BigRunNode extends BaseCoopNode<SchedulesAPI.CoopBigRunNode, SchedulesAPI.CoopBigRunSetting> {
 	public rule = "BIG_RUN";
 	public color = "#B322FF" as const;
-	public name = "Big Run";
+	public name = "Big Run" as const;
 }
+export type GenericCoopNode = SalmonRunNode | EggstraWorkNode | BigRunNode;

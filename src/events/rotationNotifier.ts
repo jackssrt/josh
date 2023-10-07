@@ -1,79 +1,114 @@
-import type { MessageCreateOptions, NewsChannel } from "discord.js";
+import type { MessageCreateOptions, MessageEditOptions, NewsChannel } from "discord.js";
 import { TimestampStyles, time } from "discord.js";
 import rotations from "../rotations/index.js";
-import type { OptionalEmbedFactory } from "../utils.js";
+import type { GenericCoopNode, GenericMatchNode } from "../rotations/nodes.js";
+import type { EmbedFactory } from "../utils.js";
 import { embeds, parallel } from "../utils.js";
 import type Client from "./../client.js";
 import createEvent from "./../event.js";
 
 const FUTURE_ROTATIONS_COUNT = 3;
-function generateChannelTopic(): string {
+
+type NodePair<T> = readonly [T, readonly T[]];
+
+type MatchNodePair<T extends GenericMatchNode = GenericMatchNode> = NodePair<T>;
+type CoopNodePair<T extends GenericCoopNode = GenericCoopNode> = NodePair<T>;
+
+function generateChannelTopic(nodes: readonly MatchNodePair[]): string {
 	const parts = [
 		`↻ ${time(rotations.endTime, TimestampStyles.RelativeTime)}`,
-		rotations.splatfestOpen.active?.channelTopic(rotations.splatfestOpen.future()[0]),
-		rotations.splatfestPro.active?.channelTopic(rotations.splatfestPro.future()[0]),
-		rotations.currentFest?.state === "SECOND_HALF" && rotations.currentFest.channelTopic(undefined),
-		rotations.challenges.active?.channelTopic(undefined),
-		rotations.turfWar.active?.channelTopic(rotations.turfWar.future()[0]),
-		rotations.rankedSeries.active?.channelTopic(rotations.rankedSeries.future()[0]),
-		rotations.rankedOpen.active?.channelTopic(rotations.rankedOpen.future()[0]),
-		rotations.xBattle.active?.channelTopic(rotations.xBattle.future()[0]),
+		...nodes.map(([active, future]) => active.channelTopic(future[0])),
 	];
-
-	return parts.flatMap((v) => v || []).join("\n・\n");
+	return parts.join("\n・\n");
 }
 
-async function sendRotation(channel: NewsChannel, dataCreator: () => Promise<MessageCreateOptions>) {
+async function sendRotation(
+	channel: NewsChannel,
+	notificationText: MessageCreateOptions | string,
+	mainMessageCreator: () => Promise<MessageEditOptions>,
+) {
 	// get message data
 	// get previous message
-	const [messageData, oldMessage] = await parallel(dataCreator, channel.messages.fetch({ limit: 1 }));
+	const [mainMessageData, oldMessage] = await parallel(mainMessageCreator, channel.messages.fetch({ limit: 1 }));
 	// delete old message
 	// send message
 	// crosspost message
 	await parallel(
 		async () => {
-			const message = await channel.send(messageData);
-			await message.crosspost();
+			const message = await channel.send(notificationText);
+			await parallel(message.crosspost(), message.edit({ content: "", ...mainMessageData }));
 		},
 		oldMessage.first()?.delete(),
 	);
 }
 
 export async function sendSalmonRunRotation(client: Client<true>) {
-	await sendRotation(client.salmonRunChannel, async () => ({
-		...(await embeds(
-			(b) => rotations.eggstraWork.active?.embed(b),
-			(b) => rotations.bigRun.active?.embed(b),
-			(b) =>
-				rotations.salmonRun.active?.embed(
-					b.setAuthor({ name: "Data provided by splatoon3.ink", url: "https://splatoon3.ink/" }),
+	const nodes = (
+		[
+			[rotations.eggstraWork.active, []],
+			[rotations.bigRun.active, []],
+			[rotations.salmonRun.active, rotations.salmonRun.future(FUTURE_ROTATIONS_COUNT)],
+		] as const satisfies readonly (readonly [
+			GenericCoopNode | undefined,
+			readonly (GenericCoopNode | undefined)[],
+		])[]
+	).filter((v) => v[0]) as readonly CoopNodePair[];
+
+	await sendRotation(
+		client.salmonRunChannel,
+		nodes.map(([active]) => active.notificationText()).join("\n"),
+		async () => ({
+			...(await embeds(
+				...nodes.flatMap<EmbedFactory>(([active, future]) =>
+					active.name === "Salmon Run"
+						? [
+								(b) =>
+									active.embed(
+										b.setAuthor({
+											name: "Data provided by splatoon3.ink",
+											url: "https://splatoon3.ink/",
+										}),
+									),
+								...future.map<EmbedFactory>(
+									(v, i) => (b) =>
+										b.setAuthor(i === 0 ? { name: "Future rotations" } : null).setDescription(
+											v
+												.short()
+												.map((v) => v.join(" "))
+												.join("\n"),
+										),
+								),
+						  ]
+						: (b) => active.embed(b),
 				),
-			...rotations.salmonRun.future(FUTURE_ROTATIONS_COUNT).map<OptionalEmbedFactory>(
-				(v, i) => (b) =>
-					b.setAuthor(i === 0 ? { name: "Future rotations" } : null).setDescription(
-						v
-							.short()
-							.map((v) => v.join(" "))
-							.join("\n"),
-					),
-			),
-		)),
-		files: (
-			await parallel(
-				rotations.salmonRun.active?.attachments(),
-				rotations.bigRun.active?.attachments(),
-				rotations.eggstraWork.active?.attachments(),
-			)
-		).flatMap((x) => x ?? []),
-	}));
+			)),
+			files: (await parallel(nodes.map(([active]) => active.attachments()))).flat(),
+		}),
+	);
 }
 
 export async function sendRegularRotations(client: Client<true>) {
+	const nodes = (
+		[
+			[rotations.splatfestOpen.active, rotations.splatfestOpen.future(FUTURE_ROTATIONS_COUNT)] as const,
+			[rotations.splatfestPro.active, rotations.splatfestPro.future(FUTURE_ROTATIONS_COUNT)] as const,
+			[rotations.currentFest?.state === "SECOND_HALF" && rotations.currentFest, []] as const,
+			[rotations.challenges.active, []] as const,
+			[rotations.turfWar.active, rotations.turfWar.future(FUTURE_ROTATIONS_COUNT)] as const,
+			[rotations.rankedSeries.active, rotations.rankedSeries.future(FUTURE_ROTATIONS_COUNT)] as const,
+			[rotations.rankedOpen.active, rotations.rankedOpen.future(FUTURE_ROTATIONS_COUNT)] as const,
+			[rotations.xBattle.active, rotations.xBattle.future(FUTURE_ROTATIONS_COUNT)] as const,
+		] as const satisfies readonly (readonly [
+			GenericMatchNode | false | undefined,
+			readonly (GenericMatchNode | undefined)[],
+		])[]
+	).filter((v) => v[0]) as readonly MatchNodePair[];
+
 	await parallel(
 		// set channel topic
-		async () => await client.generalChannel.setTopic(generateChannelTopic()),
+		async () => await client.generalChannel.setTopic(generateChannelTopic(nodes)),
 
-		sendRotation(client.mapsChannel, async () => ({
+		sendRotation(client.mapsChannel, nodes.map(([active]) => active.notificationText()).join("\n"), async () => ({
 			...(await embeds(
 				(b) =>
 					b
@@ -84,27 +119,13 @@ export async function sendRegularRotations(client: Client<true>) {
 								TimestampStyles.ShortTime,
 							)}`,
 						),
-				(b) => rotations.splatfestOpen.active?.embed(b, rotations.splatfestOpen.future(FUTURE_ROTATIONS_COUNT)),
-				(b) => rotations.splatfestPro.active?.embed(b, rotations.splatfestPro.future(FUTURE_ROTATIONS_COUNT)),
-				(b) => rotations.currentFest?.state === "SECOND_HALF" && rotations.currentFest.embed(b, []),
-				(b) => rotations.challenges.active?.embed(b, []),
-				(b) => rotations.turfWar.active?.embed(b, rotations.turfWar.future(FUTURE_ROTATIONS_COUNT)),
-				(b) => rotations.rankedSeries.active?.embed(b, rotations.rankedSeries.future(FUTURE_ROTATIONS_COUNT)),
-				(b) => rotations.rankedOpen.active?.embed(b, rotations.rankedOpen.future(FUTURE_ROTATIONS_COUNT)),
-				(b) => rotations.xBattle.active?.embed(b, rotations.xBattle.future(FUTURE_ROTATIONS_COUNT)),
+				...nodes.map<EmbedFactory>(
+					([active, future]) =>
+						(b) =>
+							active.embed(b, future),
+				),
 			)),
-			files: (
-				await parallel(
-					rotations.splatfestOpen.active?.attachments(),
-					rotations.splatfestPro.active?.attachments(),
-					rotations.currentFest?.state === "SECOND_HALF" && rotations.currentFest?.attachments(),
-					rotations.challenges.active?.attachments(),
-					rotations.turfWar.active?.attachments(),
-					rotations.rankedOpen.active?.attachments(),
-					rotations.rankedSeries.active?.attachments(),
-					rotations.xBattle.active?.attachments(),
-				)
-			).flatMap((x) => x || []),
+			files: (await parallel(nodes.map(([active]) => active.attachments()))).flat(),
 		})),
 	);
 }
