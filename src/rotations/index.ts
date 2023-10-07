@@ -51,7 +51,7 @@ export class Rotations {
 		public rankedSeries: PoppingTimePeriodCollection<RankedSeriesNode | undefined>,
 		public xBattle: PoppingTimePeriodCollection<XBattleNode | undefined>,
 		public salmonRun: PoppingTimePeriodCollection<SalmonRunNode>,
-		public splatfestPro: PoppingTimePeriodCollection<SplatfestOpenNode | undefined>,
+		public splatfestPro: PoppingTimePeriodCollection<SplatfestProNode | undefined>,
 		public splatfestOpen: PoppingTimePeriodCollection<SplatfestOpenNode | undefined>,
 		public bigRun: PoppingTimePeriodCollection<BigRunNode | undefined>,
 		public eggstraWork: PoppingTimePeriodCollection<EggstraWorkNode | undefined>,
