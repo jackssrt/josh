@@ -29,7 +29,7 @@
 		"sodium-native": "^4.0.4",
 		"ts-pattern": "^5.0.5",
 		"utf-8-validate": "^6.0.3",
-		"zod": "^3.22.2"
+		"zod": "^3.22.4"
 	},
 	"devDependencies": {
 		"@types/js-levenshtein": "^1.1.1",
