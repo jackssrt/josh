@@ -1,0 +1,5 @@
+{
+	"*.{js,mjs,cjs,jsx,ts,mts,cts,tsx}": [
+		"eslint --fix"
+	]
+}
