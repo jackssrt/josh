@@ -1,5 +1,6 @@
 import type { ZodTuple, ZodTypeAny } from "zod";
 import { z } from "zod";
+import { fillArray } from "../utils.js";
 
 export type TupleOf<T, N extends number, A extends unknown[] = []> = A["length"] extends N
 	? A
@@ -18,7 +19,7 @@ export function repeatedTuple<T extends ZodTypeAny | AnyFunctionReturning<ZodTyp
 		: undefined,
 ): ZodTuple<TupleOf<T extends AnyFunction ? ReturnType<typeof value> : T, N>> {
 	return z.tuple(
-		new Array(length).fill(typeof value === "function" ? value(...(args ?? [])) : value) as TupleOf<
+		fillArray(length, typeof value === "function" ? value(...(args ?? [])) : value) as TupleOf<
 			T extends AnyFunction ? ReturnType<typeof value> : T,
 			N
 		>,

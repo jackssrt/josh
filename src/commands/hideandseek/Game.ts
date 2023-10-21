@@ -26,6 +26,7 @@ import {
 	constructEmbedsWrapper,
 	dedent,
 	embeds,
+	fillArray,
 	futureTimestamp,
 	getRandomValues,
 	messageHiddenText,
@@ -297,17 +298,15 @@ export default class Game<State extends GameState = GameState.WaitingForPlayers>
 									.setCustomId("rotate")
 									.setPlaceholder("🔄 Rotate seekers...")
 									.addOptions(
-										new Array(maxNumSeekers)
-											.fill(false)
-											.map((_, i) =>
-												new StringSelectMenuOptionBuilder()
-													.setLabel(
-														`Rotate players and pick ${i + 1} seeker${
-															i + 1 !== 1 ? "s" : ""
-														}${i + 1 === fairestNumSeekers ? " [FAIREST]" : ""}`,
-													)
-													.setValue(`${i + 1}`),
-											),
+										fillArray(maxNumSeekers, (i) =>
+											new StringSelectMenuOptionBuilder()
+												.setLabel(
+													`Rotate players and pick ${i + 1} seeker${i + 1 !== 1 ? "s" : ""}${
+														i + 1 === fairestNumSeekers ? " [FAIREST]" : ""
+													}`,
+												)
+												.setValue(`${i + 1}`),
+										),
 									),
 							),
 					  ]
@@ -317,17 +316,15 @@ export default class Game<State extends GameState = GameState.WaitingForPlayers>
 						.setCustomId("random")
 						.setPlaceholder("🎲 Pick number of random seekers...")
 						.addOptions(
-							new Array(maxNumSeekers)
-								.fill(false)
-								.map((_, i) =>
-									new StringSelectMenuOptionBuilder()
-										.setLabel(
-											`Pick ${i + 1} random seeker${i + 1 !== 1 ? "s" : ""} for me${
-												i + 1 === fairestNumSeekers ? " [FAIREST]" : ""
-											}`,
-										)
-										.setValue(`${i + 1}`),
-								),
+							fillArray(maxNumSeekers, (i) =>
+								new StringSelectMenuOptionBuilder()
+									.setLabel(
+										`Pick ${i + 1} random seeker${i + 1 !== 1 ? "s" : ""} for me${
+											i + 1 === fairestNumSeekers ? " [FAIREST]" : ""
+										}`,
+									)
+									.setValue(`${i + 1}`),
+							),
 						),
 				),
 				new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(

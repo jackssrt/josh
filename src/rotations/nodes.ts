@@ -17,7 +17,7 @@ import {
 } from "../emojis.js";
 import type * as CommonAPI from "../types/common.js";
 import type * as SchedulesAPI from "../types/schedulesApi.js";
-import { dedent, parallel, textImage } from "../utils.js";
+import { dedent, fillArrayAsync, parallel, textImage } from "../utils.js";
 import logger from "./../logger.js";
 import TimePeriod from "./TimePeriod.js";
 import TimePeriodCollection from "./TimePeriodCollection.js";
@@ -534,24 +534,20 @@ export abstract class BaseCoopNode<
 							}),
 						)
 					).flat(),
-					...(await parallel(
-						new Array(this.weapons.length - 1)
-							.fill(false)
-							.map<Promise<sharp.OverlayOptions>>(async (_, i) => ({
-								input: await sharp({
-									create: {
-										background: "#ffffff80",
-										channels: 4,
-										height: HEIGHT - 450 - 16 - 32 - 16,
-										width: 2,
-									},
-								})
-									.png()
-									.toBuffer(),
-								top: 450 + 16 + 16 + 8,
-								left: (WIDTH / 4) * (i + 1) - 1,
-							})),
-					)),
+					...(await fillArrayAsync<sharp.OverlayOptions>(this.weapons.length - 1, async (i) => ({
+						input: await sharp({
+							create: {
+								background: "#ffffff80",
+								channels: 4,
+								height: HEIGHT - 450 - 16 - 32 - 16,
+								width: 2,
+							},
+						})
+							.png()
+							.toBuffer(),
+						top: 450 + 16 + 16 + 8,
+						left: (WIDTH / 4) * (i + 1) - 1,
+					}))),
 					{
 						input: await (async () => {
 							logger.debug("baseCoopNode stage image");

@@ -33,6 +33,7 @@ import type { ZodError } from "zod";
 import Client from "./client.js";
 import database from "./database.js";
 import logger from "./logger.js";
+import type { AnyFunction } from "./types/utils.js";
 
 export const SMALLEST_DATE = new Date(-8640000000000000);
 export const LARGEST_DATE = new Date(8640000000000000);
@@ -356,6 +357,25 @@ export function search<T extends string[]>(source: T, term: string): T[number][]
 		);
 	});
 }
+
+export type Uncallable<T> = T extends AnyFunction ? never : T;
+
+export function fillArray<T>(count: number, value: Uncallable<T> | ((i: number) => T)): T[] {
+	const array = new Array<T>(count);
+	// checked early for performance, value doesn't change value between each item
+	// prettier-ignore
+	if (typeof value === "function")
+		for (let i = 0; i < count; i++)
+			array[i] = (value as (i: number) => T)(i);
+	else
+		for (let i = 0; i < count; i++)
+			array[i] = value
+	return array;
+}
+export async function fillArrayAsync<T>(count: number, creator: (i: number) => Promise<T>): Promise<T[]> {
+	return await parallel(fillArray(count, creator));
+}
+
 export async function textImage(text: string, color: string, size: number): Promise<Sharp> {
 	// adding "Dg" forces the text image to be as tall as possible,
 	logger.debug("TextImage");

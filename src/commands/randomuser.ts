@@ -1,11 +1,11 @@
 import { userMention } from "discord.js";
-import { getRandomValues } from "../utils.js";
+import { fillArray, getRandomValues } from "../utils.js";
 import createCommand from "./../command.js";
 
 export default createCommand({
 	data(b) {
 		b.setDescription("Picks a random user for you");
-		new Array(25).fill(false).map((_, i) =>
+		fillArray(25, (i) =>
 			b.addUserOption((b) =>
 				b
 					.setName(`user${i + 1 === 1 ? "" : i + 1}`)
@@ -16,9 +16,10 @@ export default createCommand({
 		return b;
 	},
 	async execute({ interaction }) {
-		const users = new Array(25)
-			.fill(false)
-			.flatMap((_, i) => interaction.options.getUser(`user${i + 1 === 1 ? "" : i + 1}`, i < 2) ?? []);
+		const users = fillArray(
+			25,
+			(i) => interaction.options.getUser(`user${i + 1 === 1 ? "" : i + 1}`, i < 2) ?? [],
+		).flat();
 		await interaction.reply(`Your random user is: ${userMention(getRandomValues(users, 1)[0]!.id)}`);
 	},
 });
