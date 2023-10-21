@@ -1,5 +1,5 @@
 import type { Guild, Snowflake } from "discord.js";
-import { AttachmentBuilder, TimestampStyles, roleMention, time, userMention } from "discord.js";
+import { AttachmentBuilder, TimestampStyles, inlineCode, roleMention, time, userMention } from "discord.js";
 import type { Vector } from "ngraph.forcelayout";
 import createLayout from "ngraph.forcelayout";
 import createGraph from "ngraph.graph";
@@ -13,6 +13,7 @@ import {
 	membersWithRoles,
 	parallel,
 	pluralize,
+	reportError,
 	scaleNumber,
 	updateStaticMessage,
 } from "../utils.js";
@@ -34,10 +35,17 @@ async function makeInviteGraph(guild: Guild, invites: Record<Snowflake, Snowflak
 			graph.addLink(inviter, invitee);
 		}),
 	);
+
 	const layout = createLayout(graph);
-	for (let i = 0; i < 100 && !layout.step(); i++) {
+	for (let i = 0; i < 1000 && !layout.step(); i++) {
 		// pass
 	}
+	if (!layout.step())
+		reportError({
+			title: "Member graph simulation uncompleted",
+			description: dedent`${inlineCode("for (let i = 0; i < INCREMENT_THIS && !layout.step(); i++) {")}
+				Increment the number to increase the cap.`,
+		});
 	const nodes: Vector[] = [];
 	graph.forEachNode((v) => {
 		nodes.push(layout.getNodePosition(v.id));
