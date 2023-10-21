@@ -32,6 +32,8 @@
 		"zod": "^3.22.4"
 	},
 	"devDependencies": {
+		"@commitlint/cli": "^18.0.0",
+		"@commitlint/config-conventional": "^18.0.0",
 		"@types/js-levenshtein": "^1.1.2",
 		"@types/node": "^20.8.7",
 		"@typescript-eslint/eslint-plugin": "^6.8.0",

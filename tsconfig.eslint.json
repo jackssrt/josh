@@ -1,6 +1,8 @@
 {
 	"compilerOptions": {
-		"types": ["@types/node"],
+		"types": [
+			"@types/node"
+		],
 		"noEmit": true,
 		"allowJs": true
 	},
@@ -10,6 +12,7 @@
 		"src/**/*.ts.disabled",
 		"src/**/*.d.ts",
 		"vitest.config.ts",
+		"commitlint.config.js",
 		"tests/**/*.ts",
 		"tests/**/*.d.ts"
 	]
