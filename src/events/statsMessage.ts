@@ -1,7 +1,10 @@
-import type { Guild, Snowflake } from "discord.js";
+import { renderAsync } from "@resvg/resvg-js";
+import axios from "axios";
+import type { Guild, GuildMember, Snowflake } from "discord.js";
 import { AttachmentBuilder, TimestampStyles, inlineCode, roleMention, time, userMention } from "discord.js";
-import type { Vector } from "ngraph.forcelayout";
+import type { Layout, Vector } from "ngraph.forcelayout";
 import createLayout from "ngraph.forcelayout";
+import type { Graph, Node } from "ngraph.graph";
 import createGraph from "ngraph.graph";
 import sharp from "sharp";
 import database from "../database.js";
@@ -21,8 +24,11 @@ import type Client from "./../client.js";
 import createEvent from "./../event.js";
 import logger from "./../logger.js";
 
-async function makeInviteGraph(guild: Guild, invites: Record<Snowflake, Snowflake>): Promise<Buffer> {
-	const graph = createGraph<string>();
+function filterName(name: string): string {
+	return name.replace(/[^a-zA-Z]|\(.*\)/g, "");
+}
+
+async function populateGraph(graph: Graph<GuildMember>, guild: Guild, invites: Record<Snowflake, Snowflake>) {
 	await parallel(
 		Object.entries(invites).map(async ([invitee, inviter]) => {
 			const [inviterMember, inviteeMember] = await parallel(
@@ -30,12 +36,17 @@ async function makeInviteGraph(guild: Guild, invites: Record<Snowflake, Snowflak
 				guild.members.fetch(invitee).catch(() => undefined),
 			);
 			if (!inviterMember || !inviteeMember) return;
-			graph.addNode(inviter, inviterMember.displayName);
-			graph.addNode(invitee, inviteeMember.displayName);
+			graph.addNode(inviter, inviterMember);
+			graph.addNode(invitee, inviteeMember);
 			graph.addLink(inviter, invitee);
 		}),
 	);
+	const nodes: Node<GuildMember>[] = [];
+	graph.forEachNode((v) => void nodes.push(v));
+	return nodes;
+}
 
+function layoutGraph(graph: Graph<GuildMember>) {
 	const layout = createLayout(graph);
 	for (let i = 0; i < 1000 && !layout.step(); i++) {
 		// pass
@@ -46,16 +57,46 @@ async function makeInviteGraph(guild: Guild, invites: Record<Snowflake, Snowflak
 			description: dedent`${inlineCode("for (let i = 0; i < INCREMENT_THIS && !layout.step(); i++) {")}
 				Increment the number to increase the cap.`,
 		});
-	const nodes: Vector[] = [];
+	return layout;
+}
+
+async function downloadAvatars(nodes: Node<GuildMember>[]) {
+	const avatars = new Map<GuildMember, string>();
+	await parallel(
+		nodes.map(async (v) =>
+			avatars.set(
+				v.data,
+				(
+					await sharp(
+						(await axios.get<ArrayBuffer>(v.data.displayAvatarURL(), { responseType: "arraybuffer" })).data,
+					)
+						.png({ force: true })
+						.toBuffer()
+				).toString("base64"),
+			),
+		),
+	);
+	return avatars;
+}
+
+async function renderGraph(
+	graph: Graph<GuildMember>,
+	layout: Layout<Graph<GuildMember>>,
+	nodes: Node<GuildMember>[],
+	avatars: Map<GuildMember, string>,
+) {
+	const nodePositions: Vector[] = [];
 	graph.forEachNode((v) => {
-		nodes.push(layout.getNodePosition(v.id));
+		nodePositions.push(layout.getNodePosition(v.id));
 	});
-	const smallestX = Math.min(...nodes.map((v) => v.x));
-	const largestX = Math.max(...nodes.map((v) => v.x));
-	const smallestY = Math.min(...nodes.map((v) => v.y));
-	const largestY = Math.max(...nodes.map((v) => v.y));
+	const smallestX = Math.min(...nodePositions.map((v) => v.x));
+	const largestX = Math.max(...nodePositions.map((v) => v.x));
+	const smallestY = Math.min(...nodePositions.map((v) => v.y));
+	const largestY = Math.max(...nodePositions.map((v) => v.y));
 	const width = 1000;
 	const height = 1000;
+	const scale = ((largestX - smallestX) / width) * 250;
+
 	const paddingWidth = 128;
 	const paddingHeight = 128;
 	function scaleVector(a: Vector): Vector {
@@ -64,30 +105,58 @@ async function makeInviteGraph(guild: Guild, invites: Record<Snowflake, Snowflak
 			y: scaleNumber(a.y, [smallestY, largestY], [paddingHeight, height - paddingHeight]) - smallestY,
 		};
 	}
-	let svg = `<svg version="1.1" width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">`;
+
+	let svg = dedent`<svg version="1.1" width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+	<defs>
+        ${nodes.map((v) => {
+			const pos = scaleVector(layout.getNodePosition(v.id));
+			return `<clipPath id="circleView-${v.id}">
+            			<circle cx="${pos.x}" cy="${pos.y}" r="${30 * scale}" fill="#FFFFFF" />
+        			</clipPath>`;
+		})}
+    </defs>`;
 
 	// Draw edges
 	graph.forEachLink((link) => {
 		const posA = scaleVector(layout.getNodePosition(link.fromId));
 		const posB = scaleVector(layout.getNodePosition(link.toId));
 
-		svg += `<line x1="${posA.x}" y1="${posA.y}" x2="${posB.x}" y2="${posB.y}" stroke="#0e7008" stroke-width="10" />`;
+		svg += `<line x1="${posA.x}" y1="${posA.y}" x2="${posB.x}" y2="${posB.y}" stroke="#0e7008" stroke-width="${
+			10 * scale
+		}" />`;
 	});
 	let text = "";
-	graph.forEachNode((v) => {
-		const pos = layout.getNodePosition(v.id);
-		const scaledPos = scaleVector(pos);
+	nodes.forEach((v) => {
+		const pos = scaleVector(layout.getNodePosition(v.id));
 		// Draw a node as a circle
-		svg += dedent`<circle cx="${scaledPos.x}" cy="${scaledPos.y}" r="30" fill="#17a80d"/>`;
-		text += `<text x="${scaledPos.x}" y="${
-			scaledPos.y + 5
-		}" text-anchor="middle" dominant-baseline="middle" fill="white" font-family="splatoon2
-			" font-size="30px">${escapeXml(v.data)}</text>`;
+		const colorScale = 1 + (v.links?.size ?? 0) / 3;
+		const color = [23 * colorScale, 168 * colorScale, 13 * colorScale] as const;
+
+		svg += `<circle cx="${pos.x}" cy="${pos.y}" r="${30 * colorScale * scale}" fill="rgb(${color[0]}, ${
+			color[1]
+		}, ${color[2]})"/>`;
+		text += `<text x="${pos.x}" y="${
+			pos.y + 30 * colorScale * scale
+		}" text-anchor="middle" dominant-baseline="middle" fill="white" font-family="splatoon2" font-size="${
+			30 * scale
+		}px">${escapeXml(filterName(v.data.displayName))}</text>`;
+		svg += `<image xlink:href="data:image/png;base64,${avatars.get(v.data)}" height="${60 * scale}" width="${
+			60 * scale
+		}" x="${pos.x - 30 * scale}" y="${pos.y - 30 * scale}" clip-path="url(#circleView-${v.id})"/>`;
 	});
 	svg += text;
 	svg += "</svg>";
 	logger.debug("statsMessage image");
-	return sharp(Buffer.from(svg)).png({ force: true }).toBuffer();
+	logger.debug(svg);
+	return (await renderAsync(svg, { font: { fontFiles: ["./assets/splatoon2.otf"] } })).asPng();
+}
+
+async function makeInviteGraph(guild: Guild, invites: Record<Snowflake, Snowflake>): Promise<Buffer> {
+	const graph = createGraph<GuildMember>();
+	const nodes = await populateGraph(graph, guild, invites);
+	const avatars = await downloadAvatars(nodes);
+	const layout = layoutGraph(graph);
+	return await renderGraph(graph, layout, nodes, avatars);
 }
 
 export async function updateStatsMessage(client: Client<true>) {

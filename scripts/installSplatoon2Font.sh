@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
-cd ~
-mkdir -p .fonts
-cd .fonts
-curl https://frozenpandaman.github.io/Splatoon2.otf -o Splatoon2.otf
+curl https://frozenpandaman.github.io/Splatoon2.otf -o assets/Splatoon2.otf
+mkdir -p ~/.fonts
+cp ./assets/Splatoon2.otf ~/.fonts/
 fc-cache -vf
