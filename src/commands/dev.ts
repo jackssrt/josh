@@ -238,7 +238,7 @@ export default createCommand({
 					});
 				},
 				async () => {
-					for (const [i, team] of Object.entries(fest.teams)) {
+					for (const team of fest.teams) {
 						await client.guild.roles.create({
 							name: `⚽・${team.teamName}`,
 							color: [team.color.r * 255, team.color.g * 255, team.color.b * 255],
