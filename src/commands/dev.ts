@@ -220,7 +220,7 @@ export default createCommand({
 					validationResult.error,
 				);
 
-			const fest = response.data.EU.data.festRecords.nodes.find((v) => v.state !== "CLOSED");
+			const fest = response.data.US.data.festRecords.nodes.find((v) => v.state !== "CLOSED");
 			if (!fest) return await interaction.editReply("No active splatfest");
 			await parallel(
 				async () => {
@@ -244,7 +244,7 @@ export default createCommand({
 							color: [team.color.r * 255, team.color.g * 255, team.color.b * 255],
 							permissions: [],
 							mentionable: false,
-							position: +i + client.splatfestTeamRoleCategory.position,
+							position: client.splatfestTeamRoleCategory.position,
 						});
 					}
 				},
