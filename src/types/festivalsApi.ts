@@ -27,7 +27,7 @@ const festivalTeamSchema = (state: FestState) =>
 		image: z.object({
 			url: z.string(),
 		}),
-		role: state === "FIRST_HALF" || state === "SECOND_HALF" ? z.enum(["ATTACK", "DEFENSE"]).nullable() : z.null(),
+		role: state === "SCHEDULED" ? z.null() : z.enum(["ATTACK", "DEFENSE"]).nullable(),
 		color: z.object({
 			r: z.number(),
 			g: z.number(),
@@ -52,7 +52,8 @@ export type FestivalNode<State extends FestState> = z.infer<Call<typeof festival
 export const regionalFestivalDataSchema = z.object({
 	data: z.object({
 		festRecords: nodes(
-			z.union(
+			z.discriminatedUnion(
+				"state",
 				festStates.map((v) => festivalNodeSchema(v)) as [
 					Call<typeof festivalNodeSchema, ["FIRST_HALF"]>,
 					Call<typeof festivalNodeSchema, ["SECOND_HALF"]>,
