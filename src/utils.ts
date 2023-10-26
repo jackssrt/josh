@@ -102,6 +102,11 @@ export function iteratorToArray<T>(iter: IterableIterator<T>): T[] {
 	return out;
 }
 
+export function truncateString(text: string, maxLength: number) {
+	maxLength = Math.max(maxLength, 3);
+	return text.length > maxLength ? text.slice(0, maxLength - 3) + "..." : text;
+}
+
 export type EmbedFactory = (b: EmbedBuilder) => Awaitable<EmbedBuilder>;
 export type OptionalEmbedFactory = (b: EmbedBuilder) => Awaitable<EmbedBuilder | false | undefined>;
 
@@ -197,7 +202,8 @@ async function reportErrorInner(
 			.setColor("#ff0000")
 			.setTitle(title)
 			.setDescription(
-				dedent`${description}
+				truncateString(
+					dedent`${description}
 				${
 					error
 						? codeBlock(
@@ -206,6 +212,8 @@ async function reportErrorInner(
 						  )
 						: ""
 				}`.trim(),
+					4096,
+				),
 			)
 			.setFooter({ text: "An error occurred 😭" })
 			.setTimestamp(new Date());
