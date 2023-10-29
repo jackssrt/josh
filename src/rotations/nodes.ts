@@ -25,7 +25,7 @@ import { Rotations } from "./index.js";
 import type { APIRuleToRule, Rule } from "./rules.js";
 import { RULE_MAP, turfWarRule } from "./rules.js";
 import type { BaseCoopStage } from "./stages.js";
-import { CoopStage, Stage } from "./stages.js";
+import { CoopStage, Stage, TricolorStage } from "./stages.js";
 
 interface Shortable {
 	short: () => string[][];
@@ -61,7 +61,7 @@ export abstract class BaseNode extends TimePeriod implements Shortable {
 
 export abstract class DisplayableMatchNode extends BaseNode {
 	public abstract rule: Rule;
-	public abstract stages: Stage[];
+	public abstract stages: (Stage | TricolorStage)[];
 	public override short(options?: BaseNodeShortOptions | undefined) {
 		return [
 			[
@@ -391,21 +391,21 @@ export class CurrentFest<State extends "FIRST_HALF" | "SECOND_HALF"> extends Dis
 	public midtermTime: Date;
 	public state: State;
 	public teams: [SchedulesAPI.CurrentFestTeam, SchedulesAPI.CurrentFestTeam, SchedulesAPI.CurrentFestTeam];
-	public tricolorStage: Stage;
+	public tricolorStage: TricolorStage;
 	public rule = turfWarRule;
 	public color = "#0033FF" as const;
 	public emoji = SPLATFEST_EMOJI;
 	public name = "Tricolor" as const;
 	public override channelTopicLabel = "Tricolor";
-	public stages: [Stage];
-	constructor(data: SchedulesAPI.CurrentFest<State>, vsStages: SchedulesAPI.HighImageQualityStage[]) {
+	public stages: [TricolorStage];
+	constructor(data: SchedulesAPI.CurrentFest<State>) {
 		super(data);
 		this.id = data.id;
 		this.title = data.title;
 		this.midtermTime = new Date(Date.parse(data.midtermTime));
 		this.state = data.state as State;
 		this.teams = data.teams;
-		this.tricolorStage = new Stage(data.tricolorStage, vsStages);
+		this.tricolorStage = new TricolorStage(data.tricolorStage);
 		this.stages = [this.tricolorStage];
 	}
 }

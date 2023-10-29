@@ -37,6 +37,12 @@ export class Stage extends BaseStage {
 	}
 }
 
+export class TricolorStage extends BaseStage {
+	constructor(data: SchedulesAPI.TricolorStage) {
+		super(data.name, data.image.url, data.id);
+	}
+}
+
 export class BaseCoopStage extends BaseStage {
 	public emoji = BULLET_EMOJI;
 }

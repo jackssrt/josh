@@ -248,7 +248,7 @@ export class Rotations {
 				x.festMatchSettings ? new SplatfestOpenNode(x, x.festMatchSettings[1], vsStages) : undefined,
 			),
 		);
-		const currentFest = rawCurrentFest ? new CurrentFest(rawCurrentFest, vsStages) : undefined;
+		const currentFest = rawCurrentFest ? new CurrentFest(rawCurrentFest) : undefined;
 		// gets the earliest normal rotation endTime
 		const startTime = new Date(
 			Math.min(...[turfWar, splatfestPro, splatfestOpen].flatMap((x) => x.active?.startTime.getTime() ?? [])),

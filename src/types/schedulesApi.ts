@@ -27,14 +27,14 @@ export const lowImageQualityStageSchema = baseStageSchema.extend({
 });
 export type LowImageQualityStage = z.infer<typeof lowImageQualityStageSchema>;
 
-export const triColorStageSchema = z.object({
+export const tricolorStageSchema = z.object({
 	name: z.string(),
 	image: z.object({
 		url: z.string(),
 	}),
 	id: z.string(),
 });
-export type TriColorStage = z.infer<typeof triColorStageSchema>;
+export type TricolorStage = z.infer<typeof tricolorStageSchema>;
 
 export const turfWarVsRuleSchema = z.object({
 	name: z.literal("Turf War"),
@@ -196,7 +196,7 @@ export const currentFestSchema = (state: "FIRST_HALF" | "SECOND_HALF") =>
 		midtermTime: z.string(),
 		state: z.literal(state),
 		teams: repeatedTuple(currentFestTeamSchema, 3),
-		tricolorStage: triColorStageSchema,
+		tricolorStage: tricolorStageSchema,
 	});
 export type CurrentFest<State extends "FIRST_HALF" | "SECOND_HALF"> = z.infer<Call<typeof currentFestSchema, [State]>>;
 
