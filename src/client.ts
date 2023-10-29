@@ -141,7 +141,6 @@ export default class Client<Ready extends boolean = false, Loaded extends boolea
 			if (!v.execute) fail("execute()");
 			if (!v.type) fail("type");
 		});
-		/* eslint-enable @typescript-eslint/no-unnecessary-condition */
 		const end = new Date();
 		logger.info(`Loaded ${this.eventRegistry.size} ${pluralize("event", this.eventRegistry.size)}`);
 		logger.info(
