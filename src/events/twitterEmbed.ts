@@ -1,6 +1,4 @@
-import type { TextBasedChannel } from "discord.js";
 import database from "../database.js";
-import { SQUID_SHUFFLE_EMOJI } from "../emojis.js";
 import { impersonate, parallel } from "../utils.js";
 import createEvent from "./../event.js";
 
@@ -20,25 +18,12 @@ export default createEvent({
 		const newContent = message.content.replace(REGEX, (match, url: string) => match.replace(url, "fxtwitter"));
 		if (newContent === message.content) return;
 
-		await parallel(message.delete(), async () => {
-			if (message.mentions.users.size || message.mentions.roles.size || message.mentions.everyone) {
-				const [msg, webhook] = await impersonate(
-					client,
-					message.member ?? message.author,
-					// already checked before
-					message.channel as Extract<TextBasedChannel, { fetchWebhooks: unknown }>,
-					`${SQUID_SHUFFLE_EMOJI} Editing this message to avoid double pings...`,
-				);
-				await webhook.editMessage(msg.id, newContent);
-			} else {
-				await impersonate(
-					client,
-					message.member ?? message.author,
-					// already checked before
-					message.channel as Extract<TextBasedChannel, { fetchWebhooks: unknown }>,
-					newContent,
-				);
-			}
-		});
+		await parallel(
+			message.delete(),
+			impersonate(client, message.member ?? message.author, message.channel, {
+				content: newContent,
+				allowedMentions: {},
+			}),
+		);
 	},
 });
