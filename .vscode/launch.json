@@ -5,11 +5,9 @@
 			"outputCapture": "std",
 			"request": "launch",
 			"name": "Debug josh",
-			"runtimeExecutable": "${workspaceFolder}/node_modules/.bin/esno.CMD",
-			"args": [
-				"${workspaceFolder}/src/index.ts"
-			],
+			"program": "${workspaceFolder}/build/index.js",
 			"cwd": "${workspaceFolder}",
+			"preLaunchTask": "tsc: debug build - tsconfig.json",
 			"outFiles": [
 				"${workspaceFolder}/build/**/*.js"
 			]
