@@ -37,7 +37,7 @@ export default createEvent({
 		const filesToPlay = message.attachments.filter(
 			(v) => !!v.contentType && (v.contentType.startsWith("video") || v.contentType.startsWith("audio")),
 		);
-		const memberVoiceChannel = message.member?.voice.channel;
+		const memberVoiceChannel = message.member.voice.channel;
 		const channels = memberVoiceChannel
 			? new Collection([[memberVoiceChannel.id, memberVoiceChannel]])
 			: client.voiceCategory.children.cache.filter((v) => v.isVoiceBased());

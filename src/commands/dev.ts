@@ -13,6 +13,7 @@ import {
 	userMention,
 } from "discord.js";
 import sharp from "sharp";
+import { P, match } from "ts-pattern";
 import { USER_AGENT } from "../client.js";
 import database from "../database.js";
 import { makeChallengeEvents } from "../events/challengeEvent.js";
@@ -156,136 +157,146 @@ export default createCommand({
 	defer: "ephemeral",
 	async execute({ interaction, client }) {
 		if (!interaction.inCachedGuild()) return;
-		const subcommand = interaction.options.getSubcommand() as Subcommand;
-		if (subcommand === "forcerotations") {
-			await rotations.forceUpdate();
-			await interaction.editReply("done");
-		} else if (subcommand === "mapsandmodesrotation" || subcommand === "salmonrunrotation") {
-			if (subcommand === "mapsandmodesrotation") await rotations.notifyChanged();
-			else await rotations.notifySalmonChanged();
-			await interaction.editReply("done");
-		} else if (subcommand === "rolecategories") {
-			const mentionable = interaction.options.getMentionable("users", true);
-			const users =
-				mentionable instanceof Role
-					? mentionable.members
-					: mentionable instanceof GuildMember
-					? new Collection([[mentionable.id, mentionable]])
-					: undefined;
-			if (!users) return await interaction.editReply("no users passed in");
-			await parallel(
-				// typescript stupid moment
-				(
-					users.map as (
-						fn: (
-							value: GuildMember,
-							key: string,
-							collection: Collection<string, GuildMember>,
-						) => Promise<void>,
-					) => Promise<void>[]
-				)(async (v) => await updateRoleCategories(v)),
-			);
-			await interaction.editReply(`done, affected ${users.size} ${pluralize("member", users.size)}`);
-		} else if (subcommand === "colorrolesimage") {
-			await interaction.editReply({
-				content: `done:`,
-				files: [new AttachmentBuilder(await makeColorRolesImage()).setName("color-roles.png")],
-			});
-		} else if (subcommand === "memberjoin" || subcommand === "memberleave") {
-			const member = interaction.options.getMember("member");
-			if (!(member instanceof GuildMember)) return;
-			if (subcommand === "memberjoin") await onMemberJoin(client, member);
-			else await onMemberLeave(client, member);
-			await interaction.editReply("done");
-		} else if (subcommand === "stats") {
-			await updateStatsMessage(client);
-			await interaction.editReply("done");
-		} else if (subcommand === "setinvite") {
-			const inviter = interaction.options.getUser("inviter", true).id;
-			const invitee = interaction.options.getUser("invitee", true).id;
-			await database.setInviteRecord(inviter, invitee);
-			await updateStatsMessage(client);
-			await interaction.editReply(`done, ${userMention(inviter)} => ${userMention(invitee)}`);
-		} else if (subcommand === "splatfest") {
-			const response = await axios.get<FestivalsAPI.Response>("https://splatoon3.ink/data/festivals.json", {
-				headers: {
-					"User-Agent": USER_AGENT,
-				},
-			});
-			const validationResult = FestivalsAPI.responseSchema.safeParse(response.data);
-			if (!validationResult.success)
-				reportSchemaFail(
-					"Festivals",
-					`FestivalsAPI.responseSchema.safeParse(response)`,
-					validationResult.error,
+		await match(interaction.options.getSubcommand() as Subcommand)
+			.with("forcerotations", async () => {
+				await rotations.forceUpdate();
+				await interaction.editReply("done");
+			})
+			.with(P.select(P.union("mapsandmodesrotation", "salmonrunrotation")), async (subcommand) => {
+				if (subcommand === "mapsandmodesrotation") await rotations.notifyChanged();
+				else await rotations.notifySalmonChanged();
+				await interaction.editReply("done");
+			})
+			.with("rolecategories", async () => {
+				const mentionable = interaction.options.getMentionable("users", true);
+				const users =
+					mentionable instanceof Role
+						? mentionable.members
+						: mentionable instanceof GuildMember
+						? new Collection([[mentionable.id, mentionable]])
+						: undefined;
+				if (!users) return await interaction.editReply("no users passed in");
+				await parallel(
+					// typescript stupid moment
+					(
+						users.map as (
+							fn: (
+								value: GuildMember,
+								key: string,
+								collection: Collection<string, GuildMember>,
+							) => Promise<void>,
+						) => Promise<void>[]
+					)(async (v) => await updateRoleCategories(v)),
 				);
+				await interaction.editReply(`done, affected ${users.size} ${pluralize("member", users.size)}`);
+			})
+			.with("colorrolesimage", async () => {
+				await interaction.editReply({
+					content: `done:`,
+					files: [new AttachmentBuilder(await makeColorRolesImage()).setName("color-roles.png")],
+				});
+			})
+			.with(P.select(P.union("memberjoin", "memberleave")), async (subcommand) => {
+				const member = interaction.options.getMember("member");
+				if (!(member instanceof GuildMember)) return;
+				if (subcommand === "memberjoin") await onMemberJoin(client, member);
+				else await onMemberLeave(client, member);
+				await interaction.editReply("done");
+			})
+			.with("stats", async () => {
+				await updateStatsMessage(client);
+				await interaction.editReply("done");
+			})
+			.with("setinvite", async () => {
+				const inviter = interaction.options.getUser("inviter", true).id;
+				const invitee = interaction.options.getUser("invitee", true).id;
+				await database.setInviteRecord(inviter, invitee);
+				await updateStatsMessage(client);
+				await interaction.editReply(`done, ${userMention(inviter)} => ${userMention(invitee)}`);
+			})
+			.with("splatfest", async () => {
+				const response = await axios.get<FestivalsAPI.Response>("https://splatoon3.ink/data/festivals.json", {
+					headers: {
+						"User-Agent": USER_AGENT,
+					},
+				});
+				const validationResult = FestivalsAPI.responseSchema.safeParse(response.data);
+				if (!validationResult.success)
+					reportSchemaFail(
+						"Festivals",
+						`FestivalsAPI.responseSchema.safeParse(response)`,
+						validationResult.error,
+					);
 
-			const fest = response.data.US.data.festRecords.nodes.find((v) => v.state !== "CLOSED");
-			if (!fest) return await interaction.editReply("No active splatfest");
-			await parallel(
-				async () => {
-					await client.guild.scheduledEvents.create({
-						entityType: GuildScheduledEventEntityType.External,
-						name: fest.title,
-						privacyLevel: GuildScheduledEventPrivacyLevel.GuildOnly,
-						scheduledStartTime: new Date(Date.parse(fest.startTime)),
-						scheduledEndTime: new Date(Date.parse(fest.endTime)),
-						entityMetadata: { location: "Splatoon 3" },
-						image: fest.image.url,
-						description: `Automatically created event for the upcoming splatfest.\n<t:${Math.floor(
-							new Date(Date.parse(fest.startTime)).getTime() / 1000,
-						)}:${TimestampStyles.RelativeTime}>\nData provided by https://splatoon3.ink`,
-					});
-				},
-				async () => {
-					for (const team of fest.teams) {
-						await client.guild.roles.create({
-							name: `⚽・${team.teamName}`,
-							color: [team.color.r * 255, team.color.g * 255, team.color.b * 255],
-							permissions: [],
-							mentionable: false,
-							position: client.splatfestTeamRoleCategory.position,
+				const fest = response.data.US.data.festRecords.nodes.find((v) => v.state !== "CLOSED");
+				if (!fest) return await interaction.editReply("No active splatfest");
+				await parallel(
+					async () => {
+						await client.guild.scheduledEvents.create({
+							entityType: GuildScheduledEventEntityType.External,
+							name: fest.title,
+							privacyLevel: GuildScheduledEventPrivacyLevel.GuildOnly,
+							scheduledStartTime: new Date(Date.parse(fest.startTime)),
+							scheduledEndTime: new Date(Date.parse(fest.endTime)),
+							entityMetadata: { location: "Splatoon 3" },
+							image: fest.image.url,
+							description: `Automatically created event for the upcoming splatfest.\n<t:${Math.floor(
+								new Date(Date.parse(fest.startTime)).getTime() / 1000,
+							)}:${TimestampStyles.RelativeTime}>\nData provided by https://splatoon3.ink`,
 						});
-					}
-				},
-			);
-			await interaction.editReply("done");
-		} else if (subcommand === "challenges") {
-			await makeChallengeEvents(
-				interaction.guild,
-				interaction.options.getBoolean("overridedatabase", false) ?? false,
-			);
-			await interaction.editReply("done");
-		} else if (subcommand === "cancelallevents") {
-			await parallel(
-				interaction.guild.scheduledEvents.cache.map((v) => interaction.guild.scheduledEvents.delete(v)),
-			);
-			await interaction.editReply("done");
-		} else if (subcommand === "expandingvoicechannels") {
-			await updateChannels(client.voiceCategory, client.unusedVoiceCategory);
-			await interaction.editReply("done");
-		} else if (subcommand === "renamevoicechannels") {
-			const result = await parallel(
-				...iteratorToArray(
-					client.voiceCategory.children.cache
-						.filter((v): v is VoiceChannel => v.type === ChannelType.GuildVoice)
-						.sort((a, b) => a.position - b.position)
-						.values(),
-				).map(async (v, i) => {
-					await updateChannelName(v, i + 1);
-				}),
-				...iteratorToArray(
-					client.unusedVoiceCategory.children.cache
-						.filter((v): v is VoiceChannel => v.type === ChannelType.GuildVoice)
-						.sort((a, b) => a.position - b.position)
-						.values(),
-				).map(async (v, i) => {
-					await updateChannelName(v, i + 1 + client.voiceCategory.children.cache.size);
-				}),
-			);
-			await interaction.editReply(`done, renamed ${result.length} ${pluralize("channel", result.length)}`);
-		} else {
-			await interaction.editReply("unimplemented");
-		}
+					},
+					async () => {
+						for (const team of fest.teams) {
+							await client.guild.roles.create({
+								name: `⚽・${team.teamName}`,
+								color: [team.color.r * 255, team.color.g * 255, team.color.b * 255],
+								permissions: [],
+								mentionable: false,
+								position: client.splatfestTeamRoleCategory.position,
+							});
+						}
+					},
+				);
+				await interaction.editReply("done");
+			})
+			.with("challenges", async () => {
+				await makeChallengeEvents(
+					interaction.guild,
+					interaction.options.getBoolean("overridedatabase", false) ?? false,
+				);
+				await interaction.editReply("done");
+			})
+			.with("cancelallevents", async () => {
+				await parallel(
+					interaction.guild.scheduledEvents.cache.map((v) => interaction.guild.scheduledEvents.delete(v)),
+				);
+				await interaction.editReply("done");
+			})
+			.with("expandingvoicechannels", async () => {
+				await updateChannels(client.voiceCategory, client.unusedVoiceCategory);
+				await interaction.editReply("done");
+			})
+			.with("renamevoicechannels", async () => {
+				const result = await parallel(
+					...iteratorToArray(
+						client.voiceCategory.children.cache
+							.filter((v): v is VoiceChannel => v.type === ChannelType.GuildVoice)
+							.sort((a, b) => a.position - b.position)
+							.values(),
+					).map(async (v, i) => {
+						await updateChannelName(v, i + 1);
+					}),
+					...iteratorToArray(
+						client.unusedVoiceCategory.children.cache
+							.filter((v): v is VoiceChannel => v.type === ChannelType.GuildVoice)
+							.sort((a, b) => a.position - b.position)
+							.values(),
+					).map(async (v, i) => {
+						await updateChannelName(v, i + 1 + client.voiceCategory.children.cache.size);
+					}),
+				);
+				await interaction.editReply(`done, renamed ${result.length} ${pluralize("channel", result.length)}`);
+			})
+			.otherwise(async () => await interaction.editReply("unimplemented"));
 	},
 });

@@ -183,7 +183,7 @@ export interface ErrorData {
 	error?: Error | undefined;
 }
 
-function formatIssues(issues: ZodIssue[], indentLevel: number = 0): string[] {
+function formatIssues(issues: ZodIssue[], indentLevel = 0): string[] {
 	logger.debug(indentLevel);
 	return issues
 		.map((v) => [
@@ -278,7 +278,7 @@ export async function impersonate(
 	user: GuildMember | User,
 	channel: Extract<TextBasedChannel, { fetchWebhooks: unknown }>,
 	message: string | WebhookMessageCreateOptions,
-): Promise<[Message<boolean>, Webhook]> {
+): Promise<[Message, Webhook]> {
 	const webhook =
 		(await channel.fetchWebhooks()).find((v) => v.token !== null && v.name === WEBHOOK_NAME) ??
 		(await channel.createWebhook({

@@ -192,7 +192,10 @@ export default class Game<State extends GameState = GameState.WaitingForPlayers>
 			if (hostActionInteraction.customId === "start") {
 				joinCollector.stop("started");
 				startedEe.emit("started");
-			} else return await this.abort();
+			} else {
+				await this.abort();
+				return;
+			}
 		});
 		const joinCollector = this.mainMessage.createMessageComponentCollector({
 			componentType: ComponentType.Button,
@@ -237,7 +240,10 @@ export default class Game<State extends GameState = GameState.WaitingForPlayers>
 				} catch {
 					return;
 				}
-				if (leaveConfirmationInteraction.customId === "no") return await interaction.deleteReply();
+				if (leaveConfirmationInteraction.customId === "no") {
+					await interaction.deleteReply();
+					return;
+				}
 
 				const player = this.players.get(interaction.member) as Player<false>;
 				this.players.delete(interaction.member);
@@ -541,7 +547,6 @@ export default class Game<State extends GameState = GameState.WaitingForPlayers>
 	}
 
 	public async start() {
-		// eslint-disable-next-line no-constant-condition
 		while (true) {
 			if ((await (this as Game).awaitPlayers()) === false) break;
 			if (!(await (this as Game<GameState.DecidingTeams>).decideTeams())) break;

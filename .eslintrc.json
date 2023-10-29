@@ -7,8 +7,11 @@
 		"eslint:recommended",
 		"plugin:prettier/recommended",
 		"plugin:@typescript-eslint/recommended",
-		"plugin:@typescript-eslint/recommended-requiring-type-checking",
-		"plugin:@typescript-eslint/strict"
+		"plugin:@typescript-eslint/recommended-type-checked",
+		"plugin:@typescript-eslint/strict",
+		"plugin:@typescript-eslint/strict-type-checked",
+		"plugin:@typescript-eslint/stylistic",
+		"plugin:@typescript-eslint/stylistic-type-checked"
 	],
 	"parser": "@typescript-eslint/parser",
 	"parserOptions": {
@@ -66,6 +69,25 @@
 		"@typescript-eslint/require-array-sort-compare": "error",
 		"@typescript-eslint/switch-exhaustiveness-check": "error",
 		"@typescript-eslint/no-unused-vars": "warn",
+		"@typescript-eslint/prefer-nullish-coalescing": "off",
+		"@typescript-eslint/no-confusing-void-expression": [
+			"error",
+			{
+				"ignoreArrowShorthand": true
+			}
+		],
+		"@typescript-eslint/no-unnecessary-condition": [
+			"error",
+			{
+				"allowConstantLoopConditions": true
+			}
+		],
+		"no-constant-condition": [
+			"error",
+			{
+				"checkLoops": false
+			}
+		],
 		"prettier/prettier": [
 			"warn",
 			{

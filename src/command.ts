@@ -12,7 +12,9 @@ import type Client from "./client.js";
 export type Deferred<T extends Interaction> = Omit<T, "reply" | "deferReply">;
 export type GuildOnly = ChatInputCommandInteraction<"cached" | "raw">;
 
-export interface Command<D extends "ephemeral" | "standard" | null = null, G extends boolean = boolean> {
+export type DeferType = "ephemeral" | "standard" | null;
+
+export interface Command<D extends DeferType = null, G extends boolean = boolean> {
 	data: (builder: SlashCommandBuilder) => SharedNameAndDescription & { toJSON: () => object };
 	defer?: D;
 	ownerOnly?: boolean;

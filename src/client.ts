@@ -24,7 +24,7 @@ import { spawn } from "node:child_process";
 import path from "node:path";
 import { platform } from "node:process";
 import SyncSignal from "./SyncSignal.js";
-import type { Command } from "./command.js";
+import type { Command, DeferType } from "./command.js";
 import type { ContextMenuItem } from "./contextMenuItem.js";
 import database from "./database.js";
 import { IS_BUILT, IS_DEV } from "./env.js";
@@ -37,7 +37,7 @@ export const USER_AGENT = "Josh (source code: https://github.com/jackssrt/josh ,
 
 export default class Client<Ready extends boolean = false, Loaded extends boolean = true> extends DiscordClient<Ready> {
 	public static instance: Client<true> | undefined = undefined;
-	public commandRegistry = new Registry<Command>();
+	public commandRegistry = new Registry<Command<DeferType>>();
 	public eventRegistry = new Registry<Event<keyof ClientEvents>>();
 	public contextMenuItemsRegistry = new Registry<ContextMenuItem<"User" | "Message">>();
 	public guild = undefined as Loaded extends true ? Guild : undefined;
@@ -118,7 +118,7 @@ export default class Client<Ready extends boolean = false, Loaded extends boolea
 		});
 
 		// sanity checks
-
+		/* eslint-disable @typescript-eslint/no-unnecessary-condition */
 		this.commandRegistry.forEach((v, k) => {
 			function fail(reason: string) {
 				logger.error(`${k} command failed sanity check, ${reason} not defined`);
@@ -141,6 +141,7 @@ export default class Client<Ready extends boolean = false, Loaded extends boolea
 			if (!v.execute) fail("execute()");
 			if (!v.type) fail("type");
 		});
+		/* eslint-enable @typescript-eslint/no-unnecessary-condition */
 		const end = new Date();
 		logger.info(`Loaded ${this.eventRegistry.size} ${pluralize("event", this.eventRegistry.size)}`);
 		logger.info(
@@ -286,7 +287,11 @@ export default class Client<Ready extends boolean = false, Loaded extends boolea
 			await item.execute({ client: this, interaction });
 	}
 
-	private async autocompleteCommand(this: Client<true>, interaction: AutocompleteInteraction, command: Command) {
+	private async autocompleteCommand(
+		this: Client<true>,
+		interaction: AutocompleteInteraction,
+		command: Command<DeferType>,
+	) {
 		await command.autocomplete?.({ client: this, interaction });
 	}
 
@@ -316,7 +321,11 @@ export default class Client<Ready extends boolean = false, Loaded extends boolea
 		logger.debug(parts.join(" "));
 	}
 
-	private async runCommand(this: Client<true>, interaction: ChatInputCommandInteraction, command: Command) {
+	private async runCommand(
+		this: Client<true>,
+		interaction: ChatInputCommandInteraction,
+		command: Command<DeferType>,
+	) {
 		if (
 			(command.ownerOnly && interaction.user !== this.owner.user) ||
 			(command.userAllowList &&

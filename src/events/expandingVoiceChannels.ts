@@ -40,7 +40,10 @@ async function addChannel(category: CategoryChannel) {
 	await channel.channel.setParent(category);
 }
 async function removeChannel(channel: ChannelData, unusedCategory: CategoryChannel) {
-	if (!channel.used) return logger.warn("Attempted to remove unused channel");
+	if (!channel.used) {
+		logger.warn("Attempted to remove unused channel");
+		return;
+	}
 	channel.used = false;
 	await channel.channel.setParent(unusedCategory);
 }

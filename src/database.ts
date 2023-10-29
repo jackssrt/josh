@@ -121,7 +121,7 @@ export class Database {
 		return await this.backend.get("inviteRecords", {});
 	}
 	public async setFlag<T extends Flag>(flag: T, value: (typeof DEFAULT_FLAGS)[T]) {
-		return await this.backend.set("flags", { ...(await this.backend.get("flags")), [flag]: value });
+		await this.backend.set("flags", { ...(await this.backend.get("flags")), [flag]: value });
 	}
 	public async getAllFlags(): Promise<DatabaseData["flags"]> {
 		return await this.backend.get("flags", {} as DatabaseData["flags"]);

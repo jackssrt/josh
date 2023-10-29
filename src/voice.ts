@@ -71,7 +71,6 @@ function spawnWorker(client: Client<true>) {
 	if (workerSpawned) return;
 	workerSpawned = true;
 	void (async () => {
-		// eslint-disable-next-line no-constant-condition
 		while (true) {
 			const currentSound = queue.dequeue();
 			if (!currentSound) {
