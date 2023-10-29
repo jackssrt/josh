@@ -257,7 +257,11 @@ export const responseSchema = z.object({
 		xSchedules: nodes(xBattleNodeSchema),
 		eventSchedules: nodes(challengeNodeSchema),
 		coopGroupingSchedule: z.object({
-			bannerImage: z.null(),
+			bannerImage: z
+				.object({
+					url: z.string(),
+				})
+				.nullable(),
 			regularSchedules: nodes(coopGroupingRegularNodeSchema),
 			bigRunSchedules: nodes(coopBigRunNodeSchema),
 			teamContestSchedules: nodes(teamContestNodeSchema),
