@@ -29,7 +29,8 @@ import { readFile } from "node:fs/promises";
 import { inspect } from "node:util";
 import type { Sharp } from "sharp";
 import sharp from "sharp";
-import type { ZodError } from "zod";
+import type { ZodIssue } from "zod";
+import { ZodError } from "zod";
 import Client from "./client.js";
 import database from "./database.js";
 import logger from "./logger.js";
@@ -182,6 +183,17 @@ export interface ErrorData {
 	error?: Error | undefined;
 }
 
+function formatIssues(issues: ZodIssue[], indentLevel: number = 0): string[] {
+	logger.debug(indentLevel);
+	return issues
+		.map((v) => [
+			`${"\xa0".repeat(indentLevel * 4)}${v.path.join(".")}: ${v.code}, ${v.message}`,
+			v.code === "invalid_union"
+				? v.unionErrors.map((v, i) => [i !== 0 ? "----" : [], formatIssues(v.errors, indentLevel + 1)])
+				: [],
+		])
+		.flat(4);
+}
 async function reportErrorInner(
 	client: Client<true>,
 	{ title, description, error, affectedUser, interaction }: ErrorData,
@@ -208,7 +220,10 @@ async function reportErrorInner(
 					error
 						? codeBlock(
 								"ts",
-								error.stack?.replace(/(?<=\().*(?=josh)/gm, "") ?? `${error.name}(${error.message})`,
+								error instanceof ZodError
+									? formatIssues(error.issues).join("\n")
+									: error.stack?.replace(/(?<=\().*(?=josh)/gm, "") ??
+											`${error.name}(${error.message})`,
 						  )
 						: ""
 				}`.trim(),
