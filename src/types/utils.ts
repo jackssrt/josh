@@ -39,3 +39,8 @@ export type StrictExclude<T, K extends T> = Exclude<T, K>;
 export type AnyFunction = (...args: any[]) => any;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type AnyFunctionReturning<T> = (...args: any[]) => T;
+
+/**
+ * Any defined type
+ */
+export type defined = NonNullable<unknown>;

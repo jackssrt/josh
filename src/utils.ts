@@ -16,6 +16,7 @@ import {
 	Collection,
 	EmbedBuilder,
 	GuildMember,
+	MessageFlags,
 	TimestampStyles,
 	codeBlock,
 	inlineCode,
@@ -34,7 +35,7 @@ import { ZodError } from "zod";
 import Client from "./client.js";
 import database from "./database.js";
 import logger from "./logger.js";
-import type { AnyFunction } from "./types/utils.js";
+import type { AnyFunction, defined } from "./types/utils.js";
 
 export const SMALLEST_DATE = new Date(-8640000000000000);
 export const LARGEST_DATE = new Date(8640000000000000);
@@ -272,11 +273,13 @@ export function reportSchemaFail(name: string, code: string, error: ZodError) {
 	});
 }
 
+type WebhookableChannel = Extract<TextBasedChannel, { fetchWebhooks: defined }>;
+
 const WEBHOOK_NAME = "josh impersonation webhook";
 export async function impersonate(
 	client: Client<true>,
 	user: GuildMember | User,
-	channel: Extract<TextBasedChannel, { fetchWebhooks: unknown }>,
+	channel: WebhookableChannel,
 	message: string | WebhookMessageCreateOptions,
 ): Promise<[Message, Webhook]> {
 	const webhook =
@@ -295,6 +298,30 @@ export async function impersonate(
 		webhook,
 	];
 }
+
+export function canReplaceMessage(message: Message): message is ReplaceableMessage {
+	return message.inGuild() && Object.prototype.hasOwnProperty.call(message.channel, "fetchWebhooks");
+}
+
+type ReplaceableMessage = Message<true> & { channel: WebhookableChannel };
+
+export async function replaceMessage(
+	client: Client<true>,
+	message: ReplaceableMessage,
+	newData: string | WebhookMessageCreateOptions,
+): Promise<[Message, Webhook]> {
+	return (
+		await parallel(
+			message.deletable && message.delete(),
+			impersonate(client, message.member ?? message.author, message.channel, {
+				flags: MessageFlags.SuppressNotifications,
+				allowedMentions: {},
+				...(typeof newData === "string" ? { content: newData } : newData),
+			}),
+		)
+	)[1];
+}
+
 export function messageHiddenText(text: string) {
 	// eslint-disable-next-line no-irregular-whitespace
 	return ` ||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​||||​|| ${text}` as const;
