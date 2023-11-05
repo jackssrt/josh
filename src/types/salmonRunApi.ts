@@ -3,7 +3,7 @@ import { z } from "zod";
 
 export const monthlyGearSchema = z.object({
 	__splatoon3ink_id: z.string(),
-	__typename: z.enum(["ClothingGear", "HeadGear"]),
+	__typename: z.enum(["ClothingGear", "HeadGear", "ShoesGear"]),
 	name: z.string(),
 	image: z.object({
 		url: z.string(),
