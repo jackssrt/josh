@@ -89,20 +89,6 @@ export async function loadJson<T>(path: string, reviver?: Parameters<JSON["parse
 		throw new Error(`File ${path} does not exist.`);
 	}
 }
-export async function generatorToArray<T>(gen: AsyncGenerator<T>): Promise<T[]> {
-	const out: T[] = [];
-	for await (const x of gen) {
-		out.push(x);
-	}
-	return out;
-}
-export function iteratorToArray<T>(iter: IterableIterator<T>): T[] {
-	const out: T[] = [];
-	for (const x of iter) {
-		out.push(x);
-	}
-	return out;
-}
 
 export function truncateString(text: string, maxLength: number) {
 	maxLength = Math.max(maxLength, 3);

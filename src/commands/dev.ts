@@ -24,15 +24,7 @@ import { updateStatsMessage } from "../events/statsMessage.js";
 import logger from "../logger.js";
 import rotations from "../rotations/index.js";
 import * as FestivalsAPI from "../types/festivalsApi.js";
-import {
-	colorLuminance,
-	hexToRGB,
-	iteratorToArray,
-	parallel,
-	pluralize,
-	reportSchemaFail,
-	textImage,
-} from "../utils.js";
+import { colorLuminance, hexToRGB, parallel, pluralize, reportSchemaFail, textImage } from "../utils.js";
 import createCommand from "./../command.js";
 import { COLOR_DATA } from "./color.js";
 
@@ -278,20 +270,20 @@ export default createCommand({
 			})
 			.with("renamevoicechannels", async () => {
 				const result = await parallel(
-					...iteratorToArray(
-						client.voiceCategory.children.cache
+					...[
+						...client.voiceCategory.children.cache
 							.filter((v): v is VoiceChannel => v.type === ChannelType.GuildVoice)
 							.sort((a, b) => a.position - b.position)
 							.values(),
-					).map(async (v, i) => {
+					].map(async (v, i) => {
 						await updateChannelName(v, i + 1);
 					}),
-					...iteratorToArray(
-						client.unusedVoiceCategory.children.cache
+					...[
+						...client.unusedVoiceCategory.children.cache
 							.filter((v): v is VoiceChannel => v.type === ChannelType.GuildVoice)
 							.sort((a, b) => a.position - b.position)
 							.values(),
-					).map(async (v, i) => {
+					].map(async (v, i) => {
 						await updateChannelName(v, i + 1 + client.voiceCategory.children.cache.size);
 					}),
 				);

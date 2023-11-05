@@ -4,7 +4,7 @@ import { USER_AGENT } from "../client.js";
 import database from "../database.js";
 import * as SalmonRunAPI from "../types/salmonRunApi.js";
 import * as SchedulesAPI from "../types/schedulesApi.js";
-import { LARGEST_DATE, formatTime, iteratorToArray, parallel, reportSchemaFail } from "../utils.js";
+import { LARGEST_DATE, formatTime, parallel, reportSchemaFail } from "../utils.js";
 import logger from "./../logger.js";
 import { PoppingTimePeriodCollection } from "./TimePeriodCollection.js";
 import {
@@ -102,10 +102,10 @@ export class Rotations {
 		return rotations;
 	}
 	public async notifyChanged() {
-		await parallel(...iteratorToArray(this.hooks.values()).map(async (v) => await v()));
+		await parallel(...[...this.hooks.values()].map(async (v) => await v()));
 	}
 	public async notifySalmonChanged() {
-		await parallel(...iteratorToArray(this.salmonHooks.values()).map(async (v) => await v()));
+		await parallel(...[...this.salmonHooks.values()].map(async (v) => await v()));
 	}
 	public async forceUpdate() {
 		const fetched = await Rotations.fetch(true);
