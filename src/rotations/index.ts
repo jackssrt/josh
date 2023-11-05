@@ -114,17 +114,11 @@ export class Rotations {
 
 	public hook(func: () => Awaitable<void>) {
 		this.hooks.add(func);
-		if (this.catchingUp)
-			void (async () => {
-				await func();
-			})();
+		if (this.catchingUp) void func();
 	}
 	public hookSalmon(func: () => Awaitable<void>) {
 		this.salmonHooks.add(func);
-		if (this.catchingUpSalmonRun)
-			void (async () => {
-				await func();
-			})();
+		if (this.catchingUpSalmonRun) void func();
 	}
 	public static async fetchSalmonRunGear(): Promise<SalmonRunAPI.MonthlyGear> {
 		const [cachedGearMonth, cachedGear] = await database.getCachedSalmonRunGear();
