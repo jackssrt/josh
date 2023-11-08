@@ -18,9 +18,9 @@ const SPEAK_REGEX = /<a?:|:\d+>|<id:\w+>|^--.*/g;
 export function cleanForSpeaking(text: string): string {
 	return text.replace(SPEAK_REGEX, "").replace(LINK_REGEX, "").replace(/_/g, " ");
 }
-const NAME_REGEX = /[^a-zA-Z]/g;
+const NAME_REGEX = /[^a-zA-Z ']/g;
 export function cleanName(name: string): string {
-	return name.replace(NAME_REGEX, "");
+	return name.replace(NAME_REGEX, "").trim();
 }
 
 export async function textToSpeech(text: string, voice: string) {
