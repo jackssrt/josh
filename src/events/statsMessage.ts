@@ -37,7 +37,7 @@ async function makeInviteGraph(guild: Guild, invites: Record<Snowflake, Snowflak
 	);
 
 	const layout = createLayout(graph);
-	for (let i = 0; i < 1000 && !layout.step(); i++) {
+	for (let i = 0; i < 10_000 && !layout.step(); i++) {
 		// pass
 	}
 	if (!layout.step())
