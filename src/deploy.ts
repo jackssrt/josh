@@ -9,7 +9,7 @@ import {
 import * as dotenv from "dotenv";
 import Client from "./client.js";
 import logger from "./logger.js";
-import { pluralize } from "./utils.js";
+import { camelCaseToTitleCase, pluralize } from "./utils.js";
 dotenv.config();
 export async function deploy(guildId: string) {
 	const client = (await Client.new()) as Client<boolean, boolean>;
@@ -24,12 +24,12 @@ export async function deploy(guildId: string) {
 			)
 			.toJSON(),
 	);
-	const contexts = client.contextMenuItemsRegistry.map((item, key) =>
+	const contextMenuItems = client.contextMenuItemsRegistry.map((item, key) =>
 		item
 			.data(
 				new ContextMenuCommandBuilder()
 					.setType(item.type === "User" ? ApplicationCommandType.User : ApplicationCommandType.Message)
-					.setName(key)
+					.setName(camelCaseToTitleCase(key, { withSpaces: true }))
 					.setDefaultMemberPermissions(item.ownerOnly ? PermissionFlagsBits.Administrator : undefined),
 			)
 			.toJSON(),
@@ -37,7 +37,9 @@ export async function deploy(guildId: string) {
 	const rest = new REST({ version: "10" }).setToken(process.env.TOKEN);
 
 	await rest
-		.put(Routes.applicationGuildCommands(process.env.CLIENT_ID, guildId), { body: [...commands, ...contexts] })
+		.put(Routes.applicationGuildCommands(process.env.CLIENT_ID, guildId), {
+			body: [...commands, ...contextMenuItems],
+		})
 		.then((data) => {
 			if (Array.isArray(data))
 				logger.info(`Successfully registered ${data.length} ${pluralize("application command", data.length)}.`);

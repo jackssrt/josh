@@ -114,6 +114,16 @@ export function pluralize(word: string, count: number): string {
 	return `${word}${count === 1 ? "" : "s"}`;
 }
 
+export function camelCaseToTitleCase(input: string, options?: { withSpaces: boolean }): string {
+	const words = input.split(/(?=[A-Z])/);
+
+	const result = words
+		.map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+		.join(options?.withSpaces ? " " : "");
+
+	return result;
+}
+
 export function formatTime(totalSeconds: number): string {
 	const parts: string[] = [];
 	const hours = Math.floor(Math.abs(totalSeconds) / 60 / 60);
