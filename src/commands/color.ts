@@ -1,7 +1,8 @@
+import type { Option } from "ts-results-es";
+import { None, Some } from "ts-results-es";
 import { BOOYAH_EMOJI } from "../emojis.js";
 import Lock from "../lock.js";
-import type { Result } from "../utils.js";
-import { getLowerRolesInSameCategory, parallel, search } from "../utils.js";
+import { flattenOptionArray, getLowerRolesInSameCategory, parallel, search } from "../utils.js";
 import createCommand from "./../command.js";
 
 export const COLOR_DATA = [
@@ -57,17 +58,17 @@ export const COLOR_DATA = [
 	{ name: "Pastel Yellow", value: "F5E198" },
 ] as const;
 
-function parseHex(color: string): Result<string> {
+function parseHex(color: string): Option<string> {
 	// Remove the leading '#' if present
 	if (color.startsWith("#")) color = color.slice(1);
 
 	// Check if the hexColor string is valid
-	if (!/^[0-9A-Fa-f]{3}$|^[0-9A-Fa-f]{6}$/.test(color)) return [undefined, new Error("Invalid hex color string")];
+	if (!/^[0-9A-Fa-f]{3}$|^[0-9A-Fa-f]{6}$/.test(color)) return None;
 
 	// Expand the short-hand color notation (e.g., #abc to #aabbcc)
 	if (color.length === 3) color = color.replace(/(.)/g, "$1$1");
 
-	return [color, undefined];
+	return Some(color);
 }
 
 const colorEmojiLock = new Lock();
@@ -89,16 +90,18 @@ export default createCommand({
 	async autocomplete({ interaction }) {
 		const focusedValue = interaction.options.getFocused();
 		// slice limits the options to only be 25
-		const [hex] = parseHex(focusedValue);
-		await interaction.respond([
-			...(hex ? [{ name: focusedValue, value: focusedValue }] : []),
-			...search(
-				COLOR_DATA.map((v) => v.name),
-				focusedValue,
-			)
-				.slice(0, hex ? 24 : 25)
-				.map((v) => ({ name: v, value: v })),
-		]);
+		const hex = parseHex(focusedValue);
+		await interaction.respond(
+			flattenOptionArray([
+				hex.map((v) => ({ name: v, value: v })),
+				...search(
+					COLOR_DATA.map((v) => v.name),
+					focusedValue,
+				)
+					.slice(0, hex.isSome() ? 24 : 25)
+					.map((v) => Some({ name: v, value: v })),
+			]),
+		);
 	},
 
 	async execute({ client, interaction }) {

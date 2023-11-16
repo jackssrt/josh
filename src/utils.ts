@@ -30,6 +30,8 @@ import { readFile } from "node:fs/promises";
 import { inspect } from "node:util";
 import type { Sharp } from "sharp";
 import sharp from "sharp";
+import type { Option, Result } from "ts-results-es";
+import { Err, Ok } from "ts-results-es";
 import type { ZodIssue } from "zod";
 import { ZodError } from "zod";
 import Client from "./client.js";
@@ -231,21 +233,24 @@ async function reportErrorInner(
 			.setTimestamp(new Date());
 	});
 	// send error to owner,
-	// reply or edit, and if it doesnt work: send to user in dms
+	// reply or edit, and if it doesn't work: send to user in dms
 	const result = await pawait(
 		parallel((affectedUser?.id ?? "") !== client.owner.id && client.owner.send(embed), async () => {
-			if (interaction) {
-				const [res] = await pawait(
-					interaction.replied
-						? interaction.editReply({ ...embed, content: "", components: [], files: [] })
-						: interaction.reply({ ...embed, components: [], files: [], ephemeral: true }),
-				);
-				if (res) return;
-			}
+			if (
+				interaction &&
+				(
+					await pawait(
+						interaction.replied
+							? interaction.editReply({ ...embed, content: "", components: [], files: [] })
+							: interaction.reply({ ...embed, components: [], files: [], ephemeral: true }),
+					)
+				).isOk()
+			)
+				return;
 			await affectedUser?.send(embed);
 		}),
 	);
-	if (result[1])
+	if (result.isErr())
 		logger.error(
 			`Failed to send error report: ${title}\n${embed.embeds[0]?.data.description}\n<@${affectedUser?.id}>`,
 		);
@@ -522,22 +527,24 @@ export async function parallel<T extends ((() => Promise<unknown>) | Promise<unk
 	};
 }
 
-/**
- * A tuple of an optional value or error.
- * @link https://doc.rust-lang.org/std/result/index.html
- */
-export type Result<T, E = Error> = [T, undefined] | [undefined, E];
+export function flattenOptionArray<T>(array: Option<T>[]): T[] {
+	return array.reduce<T[]>((acc, v) => {
+		if (v.isSome()) acc.push(v.value);
+		return acc;
+	}, []);
+}
+
 /**
  * Protected await, awaits x in a try catch, returns [result, undefined] or [undefined, error].
  * @param x a promise to await
  * @link https://youtu.be/ITogH7lJTyE
- * @returns `[result, undefined]` or `[undefined, error]`
+ * @returns Result
  */
 export async function pawait<T extends PromiseLike<unknown>, E extends Error>(x: T): Promise<Result<Awaited<T>, E>> {
 	try {
-		return [await x, undefined];
+		return Ok(await x);
 	} catch (e) {
-		return [undefined, e as E];
+		return Err(e as E);
 	}
 }
 
@@ -545,13 +552,13 @@ export async function pawait<T extends PromiseLike<unknown>, E extends Error>(x:
  * Protected call, calls the function x in a try catch, returns [result, undefined] or [undefined, error].
  * @param x a function to call
  * @link https://create.roblox.com/docs/reference/engine/globals/LuaGlobals#pcall
- * @returns `[result, undefined]` or `[undefined, error]`
+ * @returns Result
  */
 export function pcall<P extends unknown[], R, E extends Error>(x: (...args: P) => R, ...params: P): Result<R, E> {
 	try {
-		return [x(...params), undefined];
+		return Ok(x(...params));
 	} catch (e) {
-		return [undefined, e as E];
+		return Err(e as E);
 	}
 }
 export class Queue<T> {
