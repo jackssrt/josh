@@ -81,7 +81,7 @@ export default createCommand({
 					.setName("color")
 					.setAutocomplete(true)
 					.setDescription(
-						`The color name or hex code, ex: "${COLOR_DATA[0].name.toLowerCase()}" or "${COLOR_DATA[0].value.toLowerCase()}"`,
+						`The color name or hex value, ex: "${COLOR_DATA[0].name.toLowerCase()}" or "${COLOR_DATA[0].value.toLowerCase()}"`,
 					)
 					.setRequired(true),
 			)
@@ -111,7 +111,7 @@ export default createCommand({
 		);
 
 		const hexColor = (colorInput || colorData?.value)?.toLowerCase();
-		if (!hexColor) return await interaction.reply("Provide a valid color name or hex!");
+		if (!hexColor) return await interaction.reply("Provide a valid color name or hex value!");
 
 		let key = "color-command-emoji-lock";
 		try {
