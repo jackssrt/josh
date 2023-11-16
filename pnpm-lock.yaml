@@ -53,6 +53,9 @@ dependencies:
   ts-pattern:
     specifier: ^5.0.5
     version: 5.0.5
+  ts-results-es:
+    specifier: 4.1.0-alpha.1
+    version: 4.1.0-alpha.1
   utf-8-validate:
     specifier: ^6.0.3
     version: 6.0.3
@@ -3935,6 +3938,10 @@ packages:
 
   /ts-pattern@5.0.5:
     resolution: {integrity: sha512-tL0w8U/pgaacOmkb9fRlYzWEUDCfVjjv9dD4wHTgZ61MjhuMt46VNWTG747NqW6vRzoWIKABVhFSOJ82FvXrfA==}
+    dev: false
+
+  /ts-results-es@4.1.0-alpha.1:
+    resolution: {integrity: sha512-AwbHOBEU2zWnM8D1N1TeMKWiECO9nwDMnTwkJBVZ7E9FWRfsDCrFxo+4JE9g+HvHSBcNzqR1rmZC05zPnN5LMQ==}
     dev: false
 
   /tslib@2.6.2:
