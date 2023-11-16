@@ -183,7 +183,6 @@ export interface ErrorData {
 }
 
 function formatIssues(issues: ZodIssue[], indentLevel = 0): string[] {
-	logger.debug(indentLevel);
 	return issues
 		.map((v) => [
 			`${"\xa0".repeat(indentLevel * 4)}${v.path.join(".")}: ${v.code}, ${v.message}`,
@@ -429,7 +428,6 @@ export async function fillArrayAsync<T>(count: number, creator: (i: number) => P
 
 export async function textImage(text: string, color: string, size: number): Promise<Sharp> {
 	// adding "Dg" forces the text image to be as tall as possible,
-	logger.debug("TextImage");
 	const img = sharp({
 		text: {
 			text: `<span foreground="${color}">Dg ${escapeXml(text)} Dg</span>`,

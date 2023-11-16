@@ -21,7 +21,6 @@ import { updateChannelName, updateChannels } from "../events/expandingVoiceChann
 import { onMemberJoin, onMemberLeave } from "../events/joinLeave.js";
 import { updateRoleCategories } from "../events/roleCategories.js";
 import { updateStatsMessage } from "../events/statsMessage.js";
-import logger from "../logger.js";
 import rotations from "../rotations/index.js";
 import * as FestivalsAPI from "../types/festivalsApi.js";
 import { colorLuminance, hexToRGB, parallel, pluralize, reportSchemaFail, textImage } from "../utils.js";
@@ -48,7 +47,6 @@ async function makeColorRolesImage() {
 	const CELL_SIZE = [200, 100] as const;
 	const COLOR_DATA_LEN_SQRT = Math.sqrt(COLOR_DATA.length);
 	const IMAGE_SIZE_IN_CELLS = [Math.ceil(COLOR_DATA_LEN_SQRT), Math.floor(COLOR_DATA_LEN_SQRT)] as const;
-	logger.debug("makeColorRolesImage output image");
 	return await sharp({
 		create: {
 			width: CELL_SIZE[0] * IMAGE_SIZE_IN_CELLS[0],
@@ -60,7 +58,6 @@ async function makeColorRolesImage() {
 		.composite(
 			await parallel(
 				COLOR_DATA.map(async (v, i) => {
-					logger.debug("color roles image cell");
 					return {
 						input: await sharp({
 							create: {

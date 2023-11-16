@@ -18,7 +18,6 @@ import {
 import type * as CommonAPI from "../types/common.js";
 import type * as SchedulesAPI from "../types/schedulesApi.js";
 import { dedent, fillArrayAsync, parallel, textImage } from "../utils.js";
-import logger from "./../logger.js";
 import TimePeriod from "./TimePeriod.js";
 import TimePeriodCollection from "./TimePeriodCollection.js";
 import { Rotations } from "./index.js";
@@ -121,10 +120,8 @@ export abstract class DisplayableMatchNode extends BaseNode {
 		context: "challengesEvent" | "rotationNotifier" = "rotationNotifier",
 	): Promise<[Sharp]> {
 		const stageWidth = Math.ceil(width / this.stages.length);
-		logger.debug("DisplayableMatchNode stage image parallel");
 		const images = await parallel(
 			this.stages.map(async (v) => {
-				logger.debug("DisplayableMatchNode stage image");
 				return [
 					v,
 					sharp(
@@ -142,7 +139,6 @@ export abstract class DisplayableMatchNode extends BaseNode {
 				] as const;
 			}),
 		);
-		logger.debug("DisplayableMatchNode output image");
 		return [
 			sharp({
 				create: {
@@ -172,7 +168,6 @@ export abstract class DisplayableMatchNode extends BaseNode {
 													top: 0,
 													left: stageWidth * i,
 													input: await (async () => {
-														logger.debug("displayablematchnode text bg");
 														return await sharp({
 															create: {
 																background: "#000000AA",
@@ -203,8 +198,6 @@ export abstract class DisplayableMatchNode extends BaseNode {
 													top: height / 2 - height / 2 / 2,
 													left: width / 2 - height / 2 / 2,
 													input: await (async () => {
-														logger.debug("challenges badge");
-
 														return await sharp("./assets/challenges.png")
 															.resize({ width: height / 2, height: height / 2 })
 															.toBuffer();
@@ -478,7 +471,6 @@ export abstract class BaseCoopNode<
 		const WIDTH = 800;
 		const HEIGHT = 600;
 		const ICON_SIZE = HEIGHT - 450 - 16;
-		logger.debug("BaseCoopNode image");
 		return [
 			sharp({ create: { width: WIDTH, height: HEIGHT, background: "#00000000", channels: 4 } })
 				.composite([
@@ -487,7 +479,6 @@ export abstract class BaseCoopNode<
 							this.weapons.map<Promise<sharp.OverlayOptions[]>>(async (v, i) => {
 								// adding "Dg" forces the text image to be as tall as possible,
 								// thus making all weapon names align.
-								logger.debug("BaseCoopNode text image");
 								const nameImage = sharp({
 									text: {
 										text: `<span foreground="white">Dg ${v.name} Dg</span>`,
@@ -502,11 +493,9 @@ export abstract class BaseCoopNode<
 								// cuts off the "Dg" text while keeping the height
 								// and extra horizontal space for the blur to look good
 								nameImage.resize(nameImageWidth, nameImageHeight);
-								logger.debug("BaseCoopNode weapon image");
 								return [
 									{
 										input: await (async () => {
-											logger.debug("BaseCoopNode Download weapon image");
 											return await sharp(
 												Buffer.from(
 													(
@@ -550,7 +539,6 @@ export abstract class BaseCoopNode<
 					}))),
 					{
 						input: await (async () => {
-							logger.debug("baseCoopNode stage image");
 							return await sharp(
 								Buffer.from(
 									(
