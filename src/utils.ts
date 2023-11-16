@@ -1,5 +1,6 @@
 import type {
 	Awaitable,
+	Channel,
 	InteractionReplyOptions,
 	Message,
 	MessageCreateOptions,
@@ -300,7 +301,7 @@ export async function impersonate(
 }
 
 export function canReplaceMessage(message: Message): message is ReplaceableMessage {
-	return message.inGuild() && Object.prototype.hasOwnProperty.call(message.channel, "fetchWebhooks");
+	return message.inGuild() && !!(message.channel as Channel & WebhookableChannel).fetchWebhooks;
 }
 
 type ReplaceableMessage = Message<true> & { channel: WebhookableChannel };
