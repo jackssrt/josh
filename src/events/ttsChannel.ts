@@ -74,6 +74,6 @@ export default createEvent({
 					: []),
 			),
 		);
-		if (result[1]) await message.react("❌");
+		if (result.isErr()) await message.react("❌");
 	},
 });
