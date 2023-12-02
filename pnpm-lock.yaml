@@ -63,6 +63,11 @@ dependencies:
     specifier: ^3.22.4
     version: 3.22.4
 
+optionalDependencies:
+  '@img/sharp-win32-x64':
+    specifier: ^0.33.0
+    version: 0.33.0
+
 devDependencies:
   '@commitlint/cli':
     specifier: ^18.4.3
