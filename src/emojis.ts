@@ -16,6 +16,7 @@ export const SQUID_EMOJI = "<:squid:1080224560303046846>";
 export const DIVIDER_EMOJI = "<:di:1079836889982455808>";
 export const COHOZUNA_EMOJI = "<:cohozuna:1152240510585552916>";
 export const HORRORBOROS_EMOJI = "<:horrorboros:1152240512493957271>";
+export const MEGALODONTIA_EMOJI = "<:megalodontia:1180521720315121846>";
 export const SPLAT_ZONES_EMOJI = "<:splatZones:1071477929969721474>";
 export const CLAM_BLITZ_EMOJI = "<:clamBlitz:1071477924764598313>";
 export const RAINMAKER_EMOJI = "<:rainmaker:1071477926974992384>";

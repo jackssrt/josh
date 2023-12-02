@@ -5,12 +5,15 @@ import type { EmbedBuilder, HexColorString } from "discord.js";
 import { AttachmentBuilder, TimestampStyles, time } from "discord.js";
 import type { Sharp } from "sharp";
 import sharp from "sharp";
+import { match } from "ts-pattern";
+import type { z } from "zod";
 import { USER_AGENT } from "../client.js";
 import {
 	ANARCHY_BATTLE_EMOJI,
 	CHALLENGES_EMOJI,
 	COHOZUNA_EMOJI,
 	HORRORBOROS_EMOJI,
+	MEGALODONTIA_EMOJI,
 	REGULAR_BATTLE_EMOJI,
 	SPLATFEST_EMOJI,
 	X_BATTLE_EMOJI,
@@ -580,9 +583,15 @@ export class SalmonRunNode extends BaseCoopNode<
 > {
 	public color = "#ff5033" as const;
 	public name = "Salmon Run" as const;
-	public kingSalmonid: "Horrorboros" | "Cohozuna";
+	public kingSalmonid: z.infer<
+		typeof SchedulesAPI.coopGroupingRegularNodeSchema.shape.__splatoon3ink_king_salmonid_guess
+	>;
 	public get kingSalmonidEmoji() {
-		return this.kingSalmonid === "Horrorboros" ? HORRORBOROS_EMOJI : COHOZUNA_EMOJI;
+		return match(this.kingSalmonid)
+			.with("Horrorboros", () => HORRORBOROS_EMOJI)
+			.with("Cohozuna", () => COHOZUNA_EMOJI)
+			.with("Megalodontia", () => MEGALODONTIA_EMOJI)
+			.exhaustive();
 	}
 	constructor(data: SchedulesAPI.CoopGroupingRegularNode, setting: SchedulesAPI.BaseCoopRegularSetting) {
 		super(data, setting);
