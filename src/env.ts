@@ -27,7 +27,6 @@ export const processEnvSchema = z.object({
 	MEMBER_ROLE_ID: snowflakeSchema,
 	JOIN_LEAVE_CHANNEL_ID: snowflakeSchema,
 	CREATE_MATCH_CHANNEL_ID: snowflakeSchema,
-	MATCH_CHANNEL_CATEGORY_ID: snowflakeSchema,
 	TTS_CHANNEL_ID: snowflakeSchema,
 	STATS_CHANNEL_ID: snowflakeSchema,
 	ROLEPLAYER_IDS: snowflakeListSchema,
