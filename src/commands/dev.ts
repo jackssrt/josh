@@ -162,8 +162,8 @@ export default createCommand({
 					mentionable instanceof Role
 						? mentionable.members
 						: mentionable instanceof GuildMember
-						? new Collection([[mentionable.id, mentionable]])
-						: undefined;
+						  ? new Collection([[mentionable.id, mentionable]])
+						  : undefined;
 				if (!users) return await interaction.editReply("no users passed in");
 				await parallel(
 					// typescript stupid moment
