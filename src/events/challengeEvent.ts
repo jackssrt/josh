@@ -1,9 +1,9 @@
 import type { Guild } from "discord.js";
 import { GuildScheduledEventEntityType, GuildScheduledEventPrivacyLevel } from "discord.js";
 import database from "../database.js";
-import { CHALLENGES_EMOJI, EMPTY_EMOJI, SUB_EMOJI } from "../emojis.js";
+import { EMPTY_EMOJI, SUB_EMOJI } from "../emojis.js";
 import rotations from "../rotations/index.js";
-import { dedent } from "../utils.js";
+import { dedent, truncate } from "../utils.js";
 import createEvent from "./../event.js";
 
 export async function makeChallengeEvents(guild: Guild, overrideDatabase = false) {
@@ -26,24 +26,25 @@ export async function makeChallengeEvents(guild: Guild, overrideDatabase = false
 					challenge.startTime > new Date() ? challenge.startTime : new Date(new Date().getTime() + 60 * 1000),
 				scheduledEndTime: challenge.endTime,
 				image: await (await challenge.images(600, 180, "challengesEvent"))[0].toBuffer(),
-				description: dedent`**Time Periods**
-									${challenge.timePeriods.periods
-										.map((v) =>
-											v
-												.short()
-												.map((v) => v.join(" "))
-												.join("\n"),
-										)
-										.join("\n")}
-									
-									**Game Mode**
-									${challenge.rule.emoji} ${challenge.rule.name}
-									${EMPTY_EMOJI}${SUB_EMOJI}${challenge.stages.map((v) => v.name).join(", ")}
+				description: truncate(
+					1000,
+					dedent`**Time Periods**
+							${challenge.timePeriods.periods
+								.map((v) =>
+									v
+										.short()
+										.map((v) => v.join(" "))
+										.join("\n"),
+								)
+								.join("\n")}
 
-									**Description**
-									${challenge.longDescription}
-									
-									${CHALLENGES_EMOJI} Data provided by splatoon3.ink`,
+							**Game Mode**
+							${challenge.rule.emoji} ${challenge.rule.name}
+							${EMPTY_EMOJI}${SUB_EMOJI}${challenge.stages.map((v) => v.name).join(", ")}
+
+							**Description**
+							${challenge.longDescription}`,
+				),
 			});
 			await database.setMadeChallengeEvent(id);
 		}),

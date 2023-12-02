@@ -473,6 +473,10 @@ export function dedent(strings: TemplateStringsArray, ...values: unknown[]): str
 		}, "")
 		.replace(/^(\t| {4})+/gm, "");
 }
+export function truncate(limit: number, string: string) {
+	return string.substring(0, Math.min(limit, string.length));
+}
+
 /**
  * @link https://stackoverflow.com/a/27979933
  */
