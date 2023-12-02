@@ -189,7 +189,7 @@ export const currentFestTeamSchema = z.object({
 });
 export type CurrentFestTeam = z.infer<typeof currentFestTeamSchema>;
 
-export const currentFestSchema = (state: "FIRST_HALF" | "SECOND_HALF") =>
+export const currentFestSchema = (state: "FIRST_HALF" | "SECOND_HALF" | "SCHEDULED") =>
 	baseNodeSchema.extend({
 		id: z.string(),
 		title: z.string(),
@@ -268,7 +268,11 @@ export const responseSchema = z.object({
 		}),
 		festSchedules: nodes(festNodeSchema),
 		currentFest: z
-			.discriminatedUnion("state", [currentFestSchema("FIRST_HALF"), currentFestSchema("SECOND_HALF")])
+			.discriminatedUnion("state", [
+				currentFestSchema("FIRST_HALF"),
+				currentFestSchema("SECOND_HALF"),
+				currentFestSchema("SCHEDULED"),
+			])
 			.nullable(),
 		vsStages: nodes(highImageQualityStageSchema),
 	}),
