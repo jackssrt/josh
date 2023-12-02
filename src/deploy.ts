@@ -13,7 +13,7 @@ import { camelCaseToTitleCase, pluralize } from "./utils.js";
 dotenv.config();
 export async function deploy(guildId: string) {
 	const client = (await Client.new()) as Client<boolean, boolean>;
-	await client.load();
+	await (client as Client).load();
 	const commands = client.commandRegistry.map((command, key) =>
 		command
 			.data(
