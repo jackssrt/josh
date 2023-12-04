@@ -170,7 +170,7 @@ export abstract class DisplayableMatchNode extends BaseNode {
 												{
 													top: 0,
 													left: stageWidth * i,
-													input: await (() =>
+													input: await (async () =>
 														sharp({
 															create: {
 																background: "#000000AA",
@@ -495,7 +495,7 @@ export abstract class BaseCoopNode<
 								nameImage.resize(nameImageWidth, nameImageHeight);
 								return [
 									{
-										input: await (() =>
+										input: await (async () =>
 											sharp(
 												Buffer.from(
 													(
@@ -537,7 +537,7 @@ export abstract class BaseCoopNode<
 						left: (WIDTH / 4) * (i + 1) - 1,
 					}))),
 					{
-						input: await (() =>
+						input: await (async () =>
 							sharp(
 								Buffer.from(
 									(
