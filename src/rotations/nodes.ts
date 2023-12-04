@@ -350,11 +350,10 @@ export class ChallengeTimePeriod extends TimePeriod implements Shortable {
 		return [
 			[
 				time(this.startTime, TimestampStyles.RelativeTime),
-				time(this.startTime, TimestampStyles.ShortTime),
 				time(this.startTime, TimestampStyles.ShortDate),
+				time(this.startTime, TimestampStyles.ShortTime),
 				"→",
 				time(this.endTime, TimestampStyles.ShortTime),
-				time(this.endTime, TimestampStyles.ShortDate),
 			],
 		];
 	}
