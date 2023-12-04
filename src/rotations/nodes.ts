@@ -170,8 +170,8 @@ export abstract class DisplayableMatchNode extends BaseNode {
 												{
 													top: 0,
 													left: stageWidth * i,
-													input: await (async () => {
-														return await sharp({
+													input: await (() =>
+														sharp({
 															create: {
 																background: "#000000AA",
 																width: stageWidth,
@@ -180,8 +180,7 @@ export abstract class DisplayableMatchNode extends BaseNode {
 															},
 														})
 															.png()
-															.toBuffer();
-													})(),
+															.toBuffer())(),
 												},
 												{
 													left: stageWidth * i + 16 + 4,
@@ -200,11 +199,10 @@ export abstract class DisplayableMatchNode extends BaseNode {
 												{
 													top: height / 2 - height / 2 / 2,
 													left: width / 2 - height / 2 / 2,
-													input: await (async () => {
-														return await sharp("./assets/challenges.png")
+													input: await (() =>
+														sharp("./assets/challenges.png")
 															.resize({ width: height / 2, height: height / 2 })
-															.toBuffer();
-													})(),
+															.toBuffer())(),
 												},
 										  ]
 										: []),
@@ -350,11 +348,10 @@ export class ChallengeTimePeriod extends TimePeriod implements Shortable {
 		return [
 			[
 				time(this.startTime, TimestampStyles.RelativeTime),
-				time(this.startTime, TimestampStyles.ShortTime),
 				time(this.startTime, TimestampStyles.ShortDate),
+				time(this.startTime, TimestampStyles.ShortTime),
 				"→",
 				time(this.endTime, TimestampStyles.ShortTime),
-				time(this.endTime, TimestampStyles.ShortDate),
 			],
 		];
 	}
@@ -498,8 +495,8 @@ export abstract class BaseCoopNode<
 								nameImage.resize(nameImageWidth, nameImageHeight);
 								return [
 									{
-										input: await (async () => {
-											return await sharp(
+										input: await (() =>
+											sharp(
 												Buffer.from(
 													(
 														await axios.get<ArrayBuffer>(v.image.url, {
@@ -511,8 +508,7 @@ export abstract class BaseCoopNode<
 												),
 											)
 												.resize(ICON_SIZE, ICON_SIZE)
-												.toBuffer();
-										})(),
+												.toBuffer())(),
 										left: (WIDTH / 4) * i + WIDTH / 4 / 2 - ICON_SIZE / 2,
 										top: (HEIGHT - 450) / 2 + 450 - 10 - ICON_SIZE / 2,
 									},
@@ -541,8 +537,8 @@ export abstract class BaseCoopNode<
 						left: (WIDTH / 4) * (i + 1) - 1,
 					}))),
 					{
-						input: await (async () => {
-							return await sharp(
+						input: await (() =>
+							sharp(
 								Buffer.from(
 									(
 										await axios.get<ArrayBuffer>(this.stage.image, {
@@ -563,8 +559,7 @@ export abstract class BaseCoopNode<
 									},
 								])
 								.png()
-								.toBuffer();
-						})(),
+								.toBuffer())(),
 						left: 0,
 						top: 0,
 					},
