@@ -5,6 +5,7 @@ import ffmpegPath from "ffmpeg-static";
 import FfmpegCommand from "fluent-ffmpeg";
 import { unlink } from "fs/promises";
 import type Client from "../client.js";
+import database from "../database.js";
 import { SQUID_SHUFFLE_EMOJI } from "../emojis.js";
 import createEvent from "../event.js";
 import logger from "../logger.js";
@@ -63,7 +64,8 @@ export async function downloadTiktokVideos(client: Client<true>, message: Messag
 export default createEvent({
 	event: "messageCreate",
 	async on({ client }, message) {
-		if (message.guild !== client.guild) return;
+		if (message.guild !== client.guild || !(await database.getBooleanFlag("message.tiktokDownloader.enabled")))
+			return;
 		await downloadTiktokVideos(client, message);
 	},
 });
