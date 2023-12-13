@@ -9,7 +9,7 @@ eval set -- "$ARGS"
 while true; do
     case "$1" in
         --install)
-            pnpm install --no-optional -P
+            pnpm install --no-optional
             echo "Installed!"
             shift
             ;;
