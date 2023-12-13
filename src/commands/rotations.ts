@@ -113,7 +113,7 @@ export default createCommand({
 														: [],
 												)
 												.join("\n"),
-									  }
+										}
 									: [],
 							),
 						),

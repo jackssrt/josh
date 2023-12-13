@@ -150,7 +150,7 @@ export const coopStageSchema = (bigRun = false) =>
 					"Jammin' Salmon Junction",
 					"Salmonid Smokeyard",
 					"",
-			  ])
+				])
 			: z.string(),
 		thumbnailImage: z.object({
 			url: z.string(),

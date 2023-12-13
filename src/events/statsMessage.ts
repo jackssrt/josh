@@ -131,7 +131,7 @@ export async function updateStatsMessage(client: Client<true>) {
 										name: "To be added",
 										value: toBeAdded.map((v) => userMention(v)).join(" "),
 									},
-							  ]
+								]
 							: []),
 					)
 					.setImage("attachment://invites.png"),

@@ -69,11 +69,11 @@ export type Rule = RankedRule | typeof turfWarRule;
 export type APIRuleToRule<Rule extends SchedulesAPI.VsRule> = Rule extends SchedulesAPI.SplatZonesVsRule
 	? typeof splatZonesRule
 	: Rule extends SchedulesAPI.ClamBlitzVsRule
-	  ? typeof clamBlitzRule
-	  : Rule extends SchedulesAPI.RainmakerVsRule
-	    ? typeof rainmakerRule
-	    : Rule extends SchedulesAPI.TowerControlVsRule
-	      ? typeof towerControlRule
-	      : Rule extends SchedulesAPI.TurfWarVsRule
-	        ? typeof turfWarRule
-	        : never;
+		? typeof clamBlitzRule
+		: Rule extends SchedulesAPI.RainmakerVsRule
+			? typeof rainmakerRule
+			: Rule extends SchedulesAPI.TowerControlVsRule
+				? typeof towerControlRule
+				: Rule extends SchedulesAPI.TurfWarVsRule
+					? typeof turfWarRule
+					: never;

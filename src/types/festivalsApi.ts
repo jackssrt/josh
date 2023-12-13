@@ -21,7 +21,7 @@ const festivalTeamSchema = (state: FestState) =>
 						isChallengeContributionRatioTop: z.boolean(),
 						tricolorContributionRatio: z.number().nullable(),
 						isTricolorContributionRatioTop: z.boolean().nullable(),
-				  })
+					})
 				: z.null(),
 		teamName: z.string(),
 		image: z.object({

@@ -204,10 +204,10 @@ export default class Game<State extends GameState = GameState.WaitingForPlayers>
 				!x.inCachedGuild()
 					? false
 					: this.players.size >= this.maxPlayers && !this.players.has(x.member)
-					  ? !!void (await x.reply({ content: "Sorry, this game is full!", ephemeral: true }))
-					  : x.user.id === this.host.member.id
-					    ? !!void (await x.reply({ content: "You're the host!", ephemeral: true }))
-					    : true,
+						? !!void (await x.reply({ content: "Sorry, this game is full!", ephemeral: true }))
+						: x.user.id === this.host.member.id
+							? !!void (await x.reply({ content: "You're the host!", ephemeral: true }))
+							: true,
 		});
 		joinCollector.on("collect", async (interaction: ButtonInteraction<"cached">) => {
 			if (this.players.has(interaction.member)) {
@@ -315,7 +315,7 @@ export default class Game<State extends GameState = GameState.WaitingForPlayers>
 										),
 									),
 							),
-					  ]
+						]
 					: []),
 				new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(
 					new StringSelectMenuBuilder()

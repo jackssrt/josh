@@ -51,7 +51,7 @@ export default class Player<Host extends boolean = boolean> {
 						? {
 								name: `Host: ${this.gameHost.member.displayName}・Room code: ${this.gameCode}`,
 								...(hostIcon ? { iconURL: hostIcon } : {}),
-						  }
+							}
 						: null,
 				)
 				.setTitle(
@@ -59,7 +59,7 @@ export default class Player<Host extends boolean = boolean> {
 						? `Waiting for role... ${SQUID_SHUFFLE_EMOJI}`
 						: `Your role: ${this.role === PlayerRole.Seeker ? "Seeker" : "Hider"} ${
 								ROLE_ICON_MAP[this.role]
-						  }`,
+							}`,
 				)
 				.setDescription(
 					this.role !== undefined
@@ -77,8 +77,8 @@ export default class Player<Host extends boolean = boolean> {
 					this.role === PlayerRole.Seeker
 						? "#55acee"
 						: this.role === PlayerRole.Hider
-						  ? "#fdcb58"
-						  : "#2b2d31",
+							? "#fdcb58"
+							: "#2b2d31",
 				),
 		);
 	}

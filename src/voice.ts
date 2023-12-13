@@ -42,12 +42,12 @@ export async function textToSpeech(text: string, voice: string) {
 							"base64",
 						),
 					) ?? [],
-			  )
+				)
 			: (
 					await getAllAudioBase64(text, {
 						lang: "en",
 					})
-			  ).map((result) => Buffer.from(result.base64, "base64")),
+				).map((result) => Buffer.from(result.base64, "base64")),
 	);
 }
 

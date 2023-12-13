@@ -192,7 +192,7 @@ export abstract class DisplayableMatchNode extends BaseNode {
 													top: 16,
 													input: await text.toBuffer(),
 												},
-										  ]
+											]
 										: []),
 									...(context === "challengesEvent"
 										? [
@@ -204,7 +204,7 @@ export abstract class DisplayableMatchNode extends BaseNode {
 															.resize({ width: height / 2, height: height / 2 })
 															.toBuffer())(),
 												},
-										  ]
+											]
 										: []),
 								];
 							}),

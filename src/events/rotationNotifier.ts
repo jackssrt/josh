@@ -78,7 +78,7 @@ export async function sendSalmonRunRotation(client: Client<true>) {
 												.join("\n"),
 										),
 								),
-						  ]
+							]
 						: (b) => active.embed(b),
 				),
 			)),

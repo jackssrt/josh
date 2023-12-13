@@ -70,7 +70,7 @@ export default createEvent({
 										queueSound(client, v, audio);
 								});
 							}
-					  })
+						})
 					: []),
 			),
 		);
