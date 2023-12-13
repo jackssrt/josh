@@ -223,7 +223,7 @@ async function reportErrorInner(
 									? formatIssues(error.issues).join("\n")
 									: error.stack?.replace(/(?<=\().*(?=josh)/gm, "") ??
 											`${error.name}(${error.message})`,
-						  )
+							)
 						: ""
 				}`.trim(),
 					4096,

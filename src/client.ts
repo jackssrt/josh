@@ -10,6 +10,7 @@ import type {
 	PresenceData,
 	Role,
 	TextChannel,
+	User,
 	UserContextMenuCommandInteraction,
 } from "discord.js";
 import {
@@ -43,6 +44,7 @@ export default class Client<Ready extends boolean = false, Loaded extends boolea
 	public guild = undefined as Loaded extends true ? Guild : undefined;
 	public guildMe = undefined as Loaded extends true ? GuildMember : undefined;
 	public owner = undefined as Loaded extends true ? GuildMember : undefined;
+	public alt = undefined as Loaded extends true ? User : undefined;
 	public voiceCategory = undefined as Loaded extends true ? CategoryChannel : undefined;
 	public unusedVoiceCategory = undefined as Loaded extends true ? CategoryChannel : undefined;
 	public generalChannel = undefined as Loaded extends true ? TextChannel : undefined;
@@ -156,7 +158,10 @@ export default class Client<Ready extends boolean = false, Loaded extends boolea
 		this.on("ready", async () => {
 			logger.info("Fetching discord objects phase 1...");
 			const start = new Date();
-			this.guild = await this.guilds.fetch(process.env.GUILD_ID);
+			[this.guild, this.alt] = await parallel(
+				this.guilds.fetch(process.env.GUILD_ID),
+				this.users.fetch(process.env.ALT_USER_ID),
+			);
 			logger.info("Fetching discord objects phase 2...");
 			[
 				this.guildMe,
@@ -264,7 +269,7 @@ export default class Client<Ready extends boolean = false, Loaded extends boolea
 				interaction.isMessageContextMenuCommand()
 					? `message "${interaction.targetMessage.content.replace(/\n/g, "\\n")}" from @${
 							interaction.targetMessage.author.username
-					  }`
+						}`
 					: `@${interaction.targetUser.username}`
 			}`,
 		);
@@ -313,7 +318,7 @@ export default class Client<Ready extends boolean = false, Loaded extends boolea
 											v.message.author.username
 										}`) ??
 									v.value
-							  }`,
+								}`,
 						...(v.options ? v.options.flatMap((v) => recursive.call(undefined, v)) : []),
 					];
 				}),

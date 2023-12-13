@@ -18,6 +18,7 @@ export const DEFAULT_FLAGS = {
 	"log.discord.warn": "false",
 	"log.discord.debug": "false",
 	"message.fxtwitter.enabled": "true",
+	"message.tiktokDownloader.enabled": "true",
 } satisfies Record<string, string>;
 export type Flag = keyof typeof DEFAULT_FLAGS;
 export interface DatabaseData {
