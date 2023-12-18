@@ -13,7 +13,7 @@ import logger from "../logger.js";
 import {
 	awaitEvent,
 	canReplaceMessage,
-	dedent,
+	embeds,
 	messageHiddenText,
 	parallelSettled,
 	pawait,
@@ -24,7 +24,6 @@ import {
 function extractFFmpegRatio(ffmpegOutput: string, totalDurationInSeconds: number) {
 	const timeString = ffmpegOutput.match(/(?<=time=)([^ ]+)/g)?.[0];
 	const [hours, minutes, seconds] = (timeString ?? "0").split(":").map(parseFloat);
-	logger.debug("ffmpeg", "duration", totalDurationInSeconds, timeString, "->", [hours, minutes, seconds]);
 	if (hours === undefined || minutes === undefined || seconds === undefined) return;
 	const totalTimeInSeconds = hours * 3600 + minutes * 60 + seconds;
 	// +1 to account for decimals, ytdlp doesn't provide decimal duration only whole seconds.
@@ -33,12 +32,8 @@ function extractFFmpegRatio(ffmpegOutput: string, totalDurationInSeconds: number
 }
 function extractYtdlpInfo(ytdlpOutput: string) {
 	const data = ytdlpOutput.match(/^(\d+),(\d+),(\d+)$/gm)?.[0];
-	if (!data) {
-		logger.debug("ytdlp no data from progress");
-		return;
-	}
+	if (!data) return;
 	const [downloadedBytes, totalBytes, durationSeconds] = data.split(",") as [string, string, string];
-	logger.debug("ytdlp", downloadedBytes, totalBytes, durationSeconds);
 	return [parseFloat(downloadedBytes) / parseFloat(totalBytes), parseFloat(durationSeconds)] as const;
 }
 
@@ -47,10 +42,15 @@ export async function downloadTiktokVideos(client: Client<true>, message: Messag
 	const tiktokLink = message.content.match(tiktokUrlRegex)?.[0]?.replace(/\?.*/g, "");
 
 	if (!tiktokLink || !message.member || !canReplaceMessage(message)) return;
-	const progressMessage = await message.reply(`${SQUID_SHUFFLE_EMOJI} Downloading tiktok video...`);
+	const content = message.content.replace(tiktokUrlRegex, "<$&>");
+	const [resultMessage, webhook] = await replaceMessage(client, message, {
+		...(await embeds((b) => b.setTitle(`${SQUID_SHUFFLE_EMOJI} Downloading tiktok video`))),
+		content,
+	});
 	let ytDlpRatio: number | undefined = undefined;
 	let ffmpegRatio: number | undefined = undefined;
 	let totalDurationInSeconds: number | undefined = undefined;
+
 	// download using yt-dlp
 	const ytDlpProcess = spawn("yt-dlp", [
 		tiktokLink,
@@ -84,20 +84,27 @@ export async function downloadTiktokVideos(client: Client<true>, message: Messag
 		}
 	});
 
-	const formatPercent = (label: string, ratio: number) =>
-		`${label}: ${inlineCode(`${Math.round(ratio * 100).toString()}%`)}`;
-
 	const progressInterval = setInterval(() => {
 		// update progress
-
-		void progressMessage.edit(
-			dedent`${SQUID_SHUFFLE_EMOJI} Downloading tiktok
-			${formatPercent("Download", ytDlpRatio ?? 0)}
-			${formatPercent("Re-encode", ffmpegRatio ?? 0)}
-			----
-			${formatPercent("Average", ((ytDlpRatio ?? 0) + (ffmpegRatio ?? 0)) / 2)}
-			`,
-		);
+		void (async () => {
+			await webhook.editMessage(resultMessage, {
+				...(await embeds((b) =>
+					b.setTitle(`${SQUID_SHUFFLE_EMOJI} Downloading tiktok video`).addFields(
+						(
+							[
+								["Download", ytDlpRatio ?? 0],
+								["Re-encoding", ffmpegRatio ?? 0],
+								["Average", ((ytDlpRatio ?? 0) + (ffmpegRatio ?? 0)) / 2],
+							] as const
+						).map(([label, ratio]) => ({
+							name: label,
+							value: `${inlineCode(`${Math.round(ratio * 100).toString()}%`)}`,
+							inline: true,
+						})),
+					),
+				)),
+			});
+		})();
 	}, 1_500);
 
 	// due to how ChildProcessWithoutNullStreams's on function is defined (function overloads)
@@ -106,7 +113,12 @@ export async function downloadTiktokVideos(client: Client<true>, message: Messag
 	await awaitEvent<ChildProcessWithoutNullStreams, string>(ffmpegProcess, "exit"); // wait for re-encode to finish
 	clearInterval(progressInterval);
 	// get cdn link
-	await progressMessage.edit(`${SQUID_SHUFFLE_EMOJI} Uploading to discord...`);
+	void webhook.editMessage(resultMessage, {
+		...(await embeds((b) =>
+			b.setTitle(`${SQUID_SHUFFLE_EMOJI} Downloading tiktok video...`).setDescription("Uploading to discord..."),
+		)),
+		content,
+	});
 	const altMessageResult = await pawait(
 		client.alt.send({
 			files: [`./temp/${id}.mp4`],
@@ -118,7 +130,10 @@ export async function downloadTiktokVideos(client: Client<true>, message: Messag
 			affectedUser: message.member,
 			error: altMessageResult.error,
 		});
-		await progressMessage.edit(`Tiktok video download failed :(`);
+		await webhook.editMessage(resultMessage, {
+			...(await embeds((b) => b.setTitle(`Tiktok video download failed :(`).setColor("Red"))),
+			content,
+		});
 		return;
 	}
 	const discordLink = altMessageResult.value.attachments.first()?.url;
@@ -129,11 +144,11 @@ export async function downloadTiktokVideos(client: Client<true>, message: Messag
 
 	// clean up and finalize
 	await parallelSettled([
-		progressMessage.delete(),
 		message.delete(),
 		unlink(`./temp/${id}.mp4`),
-		replaceMessage(client, message, {
+		webhook.editMessage(resultMessage, {
 			content: `${message.content.replace(tiktokUrlRegex, "<$&>")}${messageHiddenText(discordLink)}`,
+			embeds: [],
 		}),
 	]);
 }
@@ -141,7 +156,11 @@ export async function downloadTiktokVideos(client: Client<true>, message: Messag
 export default createEvent({
 	event: "messageCreate",
 	async on({ client }, message) {
-		if (message.guild !== client.guild || !(await database.getBooleanFlag("message.tiktokDownloader.enabled")))
+		if (
+			message.guild !== client.guild ||
+			!(await database.getBooleanFlag("message.tiktokDownloader.enabled")) ||
+			message.author.bot
+		)
 			return;
 		await downloadTiktokVideos(client, message);
 	},
