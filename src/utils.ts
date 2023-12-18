@@ -368,7 +368,7 @@ export type EventNames<T extends EventEmitter> = Parameters<T["on"]>[0];
  * @param event the event(s) to wait for
  * @returns a Promise that resolves when the events are emitted or times out, with the arguments of the event or an empty array
  */
-export async function awaitEvent<T extends EventEmitter, E extends EventNames<T>>(
+export async function awaitEvent<T extends EventEmitter, E extends string | symbol = EventNames<T>>(
 	ee: T,
 	event: E[] | E,
 	timeoutSeconds?: number | undefined,
@@ -526,7 +526,15 @@ export async function parallel<T extends ((() => Promise<unknown>) | Promise<unk
 	...funcs: T | [T]
 ) {
 	return (await Promise.all(normalizeArray(funcs).map((v) => (typeof v === "function" ? v() : v)))) as {
-		-readonly [i in keyof T]: Awaited<T[i] extends (...args: unknown[]) => unknown ? ReturnType<T[i]> : T[i]>;
+		-readonly [i in keyof T]: Awaited<T[i] extends (...args: unknown[]) => infer R ? R : T[i]>;
+	};
+}
+
+export async function parallelSettled<T extends ((() => Promise<unknown>) | Promise<unknown> | undefined | false)[]>(
+	...funcs: T | [T]
+) {
+	return (await Promise.allSettled(normalizeArray(funcs).map((v) => (typeof v === "function" ? v() : v)))) as {
+		-readonly [i in keyof T]: Awaited<T[i] extends (...args: unknown[]) => infer R ? R : T[i]>;
 	};
 }
 
