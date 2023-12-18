@@ -93,7 +93,7 @@ export async function downloadTiktokVideos(client: Client<true>, message: Messag
 						(
 							[
 								["Download", ytDlpRatio ?? 0],
-								["Re-encoding", ffmpegRatio ?? 0],
+								["Re-encode", ffmpegRatio ?? 0],
 								["Average", ((ytDlpRatio ?? 0) + (ffmpegRatio ?? 0)) / 2],
 							] as const
 						).map(([label, ratio]) => ({
