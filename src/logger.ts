@@ -41,4 +41,5 @@ export class Logger {
 }
 
 const logger = new Logger();
+process.on("warning", (...params) => logger.warn(...params));
 export default logger;
