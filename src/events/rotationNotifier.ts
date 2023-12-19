@@ -3,7 +3,7 @@ import { TimestampStyles, time } from "discord.js";
 import rotations from "../rotations/index.js";
 import type { GenericCoopNode, GenericMatchNode } from "../rotations/nodes.js";
 import type { EmbedFactory } from "../utils.js";
-import { embeds, parallel } from "../utils.js";
+import { embeds, parallel, type Maybe } from "../utils.js";
 import type Client from "./../client.js";
 import createEvent from "./../event.js";
 
@@ -99,7 +99,7 @@ export async function sendRegularRotations(client: Client<true>) {
 			[rotations.rankedOpen.active, rotations.rankedOpen.future(FUTURE_ROTATIONS_COUNT)] as const,
 			[rotations.xBattle.active, rotations.xBattle.future(FUTURE_ROTATIONS_COUNT)] as const,
 		] as const satisfies readonly (readonly [
-			GenericMatchNode | false | undefined,
+			Maybe<GenericMatchNode>,
 			readonly (GenericMatchNode | undefined)[],
 		])[]
 	).filter((v) => v[0]) as readonly MatchNodePair[];
