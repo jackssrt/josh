@@ -54,7 +54,7 @@ export const LINK_REGEX =
 // eslint-disable-next-line no-control-regex
 export const COLORS_REGEX = /\u001b\[(.*?)m/g;
 
-export type Maybe<T> = T | false | undefined
+export type Maybe<T> = T | false | undefined;
 
 /**
  * Custom type guard for checking if a value is an error.
@@ -296,6 +296,7 @@ export async function impersonate(
 		await webhook.send({
 			avatarURL: user.displayAvatarURL({ size: 128 }),
 			username: `${user instanceof GuildMember ? user.displayName : user.username}`,
+			allowedMentions: { parse: [] },
 			...(typeof message === "string" ? { content: message } : message),
 		} satisfies WebhookMessageCreateOptions),
 		webhook,
@@ -318,7 +319,9 @@ export async function replaceMessage(
 			message.deletable && message.delete(),
 			impersonate(client, message.member ?? message.author, message.channel, {
 				flags: MessageFlags.SuppressNotifications,
-				allowedMentions: {},
+				allowedMentions: {
+					parse: [],
+				},
 				...(typeof newData === "string" ? { content: newData } : newData),
 			}),
 		)
