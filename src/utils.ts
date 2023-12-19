@@ -54,6 +54,8 @@ export const LINK_REGEX =
 // eslint-disable-next-line no-control-regex
 export const COLORS_REGEX = /\u001b\[(.*?)m/g;
 
+export type Maybe<T> = T | false | undefined
+
 /**
  * Custom type guard for checking if a value is an error.
  * @param e the thing to test
@@ -99,7 +101,7 @@ export function truncateString(text: string, maxLength: number) {
 }
 
 export type EmbedFactory = (b: EmbedBuilder) => Awaitable<EmbedBuilder>;
-export type OptionalEmbedFactory = (b: EmbedBuilder) => Awaitable<EmbedBuilder | false | undefined>;
+export type OptionalEmbedFactory = (b: EmbedBuilder) => Awaitable<Maybe<EmbedBuilder>>;
 
 export async function embeds(...funcs: OptionalEmbedFactory[]) {
 	return {
