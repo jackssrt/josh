@@ -27,13 +27,13 @@ function addFlagOption(b: SlashCommandStringOption) {
 export default createCommand({
 	data: (b) =>
 		b
-			.setDescription("Gets or sets feature flags")
-			.addSubcommand((b) => b.setName("get").setDescription("Gets a feature flag").addStringOption(addFlagOption))
+			.setDescription("Gets or sets flags")
+			.addSubcommand((b) => b.setName("get").setDescription("Gets a flag").addStringOption(addFlagOption))
 			.addSubcommand((b) => b.setName("getall").setDescription("Gets all flags"))
 			.addSubcommand((b) =>
 				b
 					.setName("set")
-					.setDescription("Sets a feature flag")
+					.setDescription("Sets a flag")
 					.addStringOption(addFlagOption)
 					.addStringOption((b) =>
 						b.setName("value").setDescription("The value to set the flag to").setRequired(true),
