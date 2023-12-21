@@ -5,6 +5,7 @@ import Lock from "./lock.js";
 import type * as SalmonRunAPI from "./types/salmonRunApi.js";
 import type * as SchedulesAPI from "./types/schedulesApi.js";
 import { SMALLEST_DATE, parallel } from "./utils.js";
+
 export const DEFAULT_FLAGS = {
 	"tts.voice": "gtts",
 	"tts.enabled": "true",
@@ -21,7 +22,9 @@ export const DEFAULT_FLAGS = {
 	"message.tiktokDownloader.enabled": "true",
 	"message.awesomeTroll.target": "",
 } satisfies Record<string, string>;
+
 export type Flag = keyof typeof DEFAULT_FLAGS;
+
 export type DatabaseData = {
 	createdSplatfestEvent: string;
 	cachedMapRotation: SchedulesAPI.Response;
@@ -35,6 +38,7 @@ export type DatabaseData = {
 	flags: Partial<typeof DEFAULT_FLAGS>;
 	activePresence: PresenceData;
 };
+
 class DatabaseBackend<T extends Record<K, unknown>, K extends string> {
 	private data: T | undefined = undefined;
 	private static readonly PATH = "./database.json";
@@ -55,10 +59,13 @@ class DatabaseBackend<T extends Record<K, unknown>, K extends string> {
 		await writeFile(DatabaseBackend.PATH, JSON.stringify(this.data), { encoding: "utf-8" });
 	}
 }
+
 const madeChallengeEventsLock = new Lock();
+
 export class Database {
 	private readonly backend = new DatabaseBackend<DatabaseData, keyof DatabaseData>();
 
+	// Splatfest Events
 	public async setSplatfestEventCreated(name: string) {
 		await this.backend.set("createdSplatfestEvent", name);
 	}
@@ -66,6 +73,7 @@ export class Database {
 		return (await this.backend.get("createdSplatfestEvent")) === name;
 	}
 
+	// Rotations
 	public async setCachedMapRotation(endTime: Date, response: SchedulesAPI.Response) {
 		await parallel(
 			this.backend.set("cachedMapRotation", response),
@@ -92,6 +100,8 @@ export class Database {
 			this.backend.set("monthlySalmonRunGear", gear),
 		);
 	}
+
+	// Challenge Events
 	// TODO serialize a set and use that
 	public async shouldMakeChallengeEvent(id: string): Promise<boolean> {
 		return !(await this.backend.get("madeChallengeEvents", [])).includes(id);
@@ -101,6 +111,8 @@ export class Database {
 		await this.backend.set("madeChallengeEvents", [...(await this.backend.get("madeChallengeEvents", [])), id]);
 		madeChallengeEventsLock.unlock(key);
 	}
+
+	// Static Messages
 	public async getStaticMessageId(id: string): Promise<Snowflake | undefined> {
 		return (await this.backend.get("staticMessageIds", {}))[id];
 	}
@@ -110,12 +122,16 @@ export class Database {
 			[id]: messageId,
 		});
 	}
+
+	// Invite Records
 	public async setInviteRecord(inviter: Snowflake, invitee: Snowflake) {
 		await this.backend.set("inviteRecords", { ...(await this.backend.get("inviteRecords")), [invitee]: inviter });
 	}
 	public async getInviteRecord(): Promise<Record<Snowflake, Snowflake>> {
 		return await this.backend.get("inviteRecords", {});
 	}
+
+	// Flags
 	public async setFlag<T extends Flag>(flag: T, value: (typeof DEFAULT_FLAGS)[T]) {
 		await this.backend.set("flags", { ...(await this.backend.get("flags")), [flag]: value });
 	}
@@ -129,6 +145,8 @@ export class Database {
 	public async getBooleanFlag<T extends Flag>(flag: T): Promise<boolean> {
 		return (await this.getFlag(flag)) === "true";
 	}
+
+	// Active Presence
 	public async getActivePresence(): Promise<PresenceData | undefined> {
 		return await this.backend.get("activePresence");
 	}
