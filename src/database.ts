@@ -44,11 +44,8 @@ class DatabaseBackend<T extends Record<K, unknown>, K extends string> {
 		else this.data = {} as T;
 	}
 	public async get<K extends keyof T>(key: K): Promise<T[K] | undefined>;
-	public async get<K extends keyof T, D extends T[K]>(key: K, defaultValue: D): Promise<T[K] | D>;
-	public async get<K extends keyof T, D extends T[K]>(
-		key: K,
-		defaultValue?: D | undefined,
-	): Promise<T[K] | NonNullable<D> | undefined> {
+	public async get<K extends keyof T>(key: K, defaultValue: T[K]): Promise<T[K]>;
+	public async get<K extends keyof T>(key: K, defaultValue?: T[K]): Promise<T[K] | undefined> {
 		if (this.data === undefined) await this.load();
 		return this.data![key] ?? defaultValue;
 	}
@@ -97,22 +94,19 @@ export class Database {
 	}
 	// TODO serialize a set and use that
 	public async shouldMakeChallengeEvent(id: string): Promise<boolean> {
-		return !(await this.backend.get("madeChallengeEvents", [] as string[])).includes(id);
+		return !(await this.backend.get("madeChallengeEvents", [])).includes(id);
 	}
 	public async setMadeChallengeEvent(id: string) {
 		const key = await madeChallengeEventsLock.lock();
-		await this.backend.set("madeChallengeEvents", [
-			...(await this.backend.get("madeChallengeEvents", [] as string[])),
-			id,
-		]);
+		await this.backend.set("madeChallengeEvents", [...(await this.backend.get("madeChallengeEvents", [])), id]);
 		madeChallengeEventsLock.unlock(key);
 	}
 	public async getStaticMessageId(id: string): Promise<Snowflake | undefined> {
-		return (await this.backend.get("staticMessageIds", {} as Record<string, Snowflake>))[id];
+		return (await this.backend.get("staticMessageIds", {}))[id];
 	}
 	public async setStaticMessageId(id: string, messageId: Snowflake) {
 		await this.backend.set("staticMessageIds", {
-			...(await this.backend.get("staticMessageIds", {} as Record<string, Snowflake>)),
+			...(await this.backend.get("staticMessageIds", {})),
 			[id]: messageId,
 		});
 	}
@@ -126,10 +120,10 @@ export class Database {
 		await this.backend.set("flags", { ...(await this.backend.get("flags")), [flag]: value });
 	}
 	public async getAllFlags(): Promise<DatabaseData["flags"]> {
-		return await this.backend.get("flags", {} as DatabaseData["flags"]);
+		return await this.backend.get("flags", {});
 	}
 	public async getFlag<T extends Flag>(flag: T): Promise<(typeof DEFAULT_FLAGS)[T]> {
-		const overrides = await this.backend.get("flags", {} as Partial<typeof DEFAULT_FLAGS>);
+		const overrides = await this.backend.get("flags", {});
 		return overrides[flag] ?? DEFAULT_FLAGS[flag];
 	}
 	public async getBooleanFlag<T extends Flag>(flag: T): Promise<boolean> {
