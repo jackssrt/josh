@@ -1,4 +1,4 @@
-import type { APIApplicationCommandOptionChoice, APIEmbedField } from "discord.js";
+import type { APIApplicationCommandOptionChoice, APIEmbedField, SlashCommandStringOption } from "discord.js";
 import { codeBlock, inlineCode } from "discord.js";
 import type { Flag } from "../database.js";
 import database, { DEFAULT_FLAGS } from "../database.js";
@@ -11,44 +11,30 @@ function displayFlag(flag: string, value: string) {
 
 type Subcommand = "get" | "getall" | "set";
 
+function addFlagOption(b: SlashCommandStringOption) {
+	return b
+		.setName("flag")
+		.setDescription("The flag to get")
+		.setRequired(true)
+		.addChoices(
+			...Object.keys(DEFAULT_FLAGS).map<APIApplicationCommandOptionChoice<string>>((v) => ({
+				name: v,
+				value: v,
+			})),
+		);
+}
+
 export default createCommand({
 	data: (b) =>
 		b
 			.setDescription("Gets or sets feature flags")
-			.addSubcommand((b) =>
-				b
-					.setName("get")
-					.setDescription("Gets a feature flag")
-					.addStringOption((b) =>
-						b
-							.setName("flag")
-							.setDescription("The flag to get")
-							.setRequired(true)
-							.addChoices(
-								...Object.keys(DEFAULT_FLAGS).map<APIApplicationCommandOptionChoice<string>>((v) => ({
-									name: v,
-									value: v,
-								})),
-							),
-					),
-			)
+			.addSubcommand((b) => b.setName("get").setDescription("Gets a feature flag").addStringOption(addFlagOption))
 			.addSubcommand((b) => b.setName("getall").setDescription("Gets all flags"))
 			.addSubcommand((b) =>
 				b
 					.setName("set")
 					.setDescription("Sets a feature flag")
-					.addStringOption((b) =>
-						b
-							.setName("flag")
-							.setDescription("The flag to set")
-							.setRequired(true)
-							.addChoices(
-								...Object.keys(DEFAULT_FLAGS).map<APIApplicationCommandOptionChoice<string>>((v) => ({
-									name: v,
-									value: v,
-								})),
-							),
-					)
+					.addStringOption(addFlagOption)
 					.addStringOption((b) =>
 						b.setName("value").setDescription("The value to set the flag to").setRequired(true),
 					),
