@@ -8,14 +8,14 @@ import {
 } from "../emojis.js";
 import type * as SchedulesAPI from "../types/schedulesApi.js";
 
-interface BaseRule {
+type BaseRule = {
 	name: string;
 	rule: string;
 	id: string;
 	emoji: string;
 	image: string;
 	color: HexColorString;
-}
+};
 export const turfWarRule = {
 	name: "Turf War",
 	rule: "TURF_WAR",

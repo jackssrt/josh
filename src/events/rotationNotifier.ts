@@ -98,10 +98,7 @@ export async function sendRegularRotations(client: Client<true>) {
 			[rotations.rankedSeries.active, rotations.rankedSeries.future(FUTURE_ROTATIONS_COUNT)] as const,
 			[rotations.rankedOpen.active, rotations.rankedOpen.future(FUTURE_ROTATIONS_COUNT)] as const,
 			[rotations.xBattle.active, rotations.xBattle.future(FUTURE_ROTATIONS_COUNT)] as const,
-		] as const satisfies readonly (readonly [
-			Maybe<GenericMatchNode>,
-			readonly (GenericMatchNode | undefined)[],
-		])[]
+		] as const satisfies readonly (readonly [Maybe<GenericMatchNode>, readonly (GenericMatchNode | undefined)[]])[]
 	).filter((v) => v[0]) as readonly MatchNodePair[];
 
 	await parallel(

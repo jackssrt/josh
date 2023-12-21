@@ -51,10 +51,10 @@ export async function textToSpeech(text: string, voice: string) {
 	);
 }
 
-interface SoundData {
+type SoundData = {
 	resource: AudioResource;
 	channel: VoiceBasedChannel;
-}
+};
 
 export const queue = new Queue<SoundData>();
 const queuePushedToEventEmitter = new EventEmitter();

@@ -5,10 +5,10 @@ import { parallel } from "../utils.js";
 import logger from "./../logger.js";
 
 const SUPERSCRIPT_NUMBERS = ["⁰", "¹", "²", "³", "⁴", "⁵", "⁶", "⁷", "⁸", "⁹"] as const;
-interface ChannelData {
+type ChannelData = {
 	channel: VoiceChannel;
 	used: boolean;
-}
+};
 
 const channels: (ChannelData | undefined)[] = [];
 

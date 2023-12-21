@@ -29,13 +29,13 @@ import { RULE_MAP, turfWarRule } from "./rules.js";
 import type { BaseCoopStage } from "./stages.js";
 import { CoopStage, Stage, TricolorStage } from "./stages.js";
 
-interface Shortable {
+type Shortable = {
 	short: () => string[][];
-}
+};
 
-interface BaseNodeShortOptions {
+type BaseNodeShortOptions = {
 	showDate: boolean;
-}
+};
 export abstract class BaseNode extends TimePeriod implements Shortable {
 	public abstract color: HexColorString;
 	public abstract emoji: string;

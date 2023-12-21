@@ -6,7 +6,7 @@ import type {
 } from "discord.js";
 import type Client from "./client.js";
 
-export interface ContextMenuItem<T extends "User" | "Message"> {
+export type ContextMenuItem<T extends "User" | "Message"> = {
 	type: T;
 	ownerOnly?: boolean;
 	data: (builder: ContextMenuCommandBuilder) => ContextMenuCommandBuilder;
@@ -14,7 +14,7 @@ export interface ContextMenuItem<T extends "User" | "Message"> {
 		client: Client<true>;
 		interaction: T extends "User" ? UserContextMenuCommandInteraction : MessageContextMenuCommandInteraction;
 	}) => Awaitable<unknown>;
-}
+};
 
 /**
  * An identity function to make typescript supply the type argument automatically.

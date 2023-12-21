@@ -35,7 +35,7 @@ export const processEnvSchema = z.object({
 declare global {
 	// eslint-disable-next-line @typescript-eslint/no-namespace
 	namespace NodeJS {
-		// eslint-disable-next-line @typescript-eslint/no-empty-interface
+		// eslint-disable-next-line @typescript-eslint/no-empty-interface, @typescript-eslint/consistent-type-definitions
 		interface ProcessEnv extends z.infer<typeof processEnvSchema> {}
 	}
 }

@@ -177,13 +177,13 @@ export function scaleNumber(val: number, src: [number, number], dst: [number, nu
 	return ((val - src[0]) / (src[1] - src[0])) * (dst[1] - dst[0]) + dst[0];
 }
 
-export interface ErrorData {
+export type ErrorData = {
 	title: string;
 	affectedUser?: GuildMember | User | undefined;
 	interaction?: RepliableInteraction | undefined;
 	description?: string | undefined;
 	error?: Error | undefined;
-}
+};
 
 function formatIssues(issues: ZodIssue[], indentLevel = 0): string[] {
 	return issues

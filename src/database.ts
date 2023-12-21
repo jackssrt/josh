@@ -22,7 +22,7 @@ export const DEFAULT_FLAGS = {
 	"message.awesomeTroll.target": "",
 } satisfies Record<string, string>;
 export type Flag = keyof typeof DEFAULT_FLAGS;
-export interface DatabaseData {
+export type DatabaseData = {
 	createdSplatfestEvent: string;
 	cachedMapRotation: SchedulesAPI.Response;
 	cachedMapRotationExpiry: number;
@@ -34,7 +34,7 @@ export interface DatabaseData {
 	inviteRecords: Record<Snowflake, Snowflake>;
 	flags: Partial<typeof DEFAULT_FLAGS>;
 	activePresence: PresenceData;
-}
+};
 class DatabaseBackend<T extends Record<K, unknown>, K extends string> {
 	private data: T | undefined = undefined;
 	private static readonly PATH = "./database.json";

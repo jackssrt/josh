@@ -14,7 +14,7 @@ export type GuildOnly = ChatInputCommandInteraction<"cached" | "raw">;
 
 export type DeferType = "ephemeral" | "standard" | null;
 
-export interface Command<D extends DeferType = null, G extends boolean = boolean> {
+export type Command<D extends DeferType = null, G extends boolean = boolean> = {
 	data: (builder: SlashCommandBuilder) => SharedNameAndDescription & { toJSON: () => object };
 	defer?: D;
 	ownerOnly?: boolean;
@@ -30,7 +30,7 @@ export interface Command<D extends DeferType = null, G extends boolean = boolean
 				: ChatInputCommandInteraction
 			: Deferred<G extends true ? GuildOnly : ChatInputCommandInteraction>;
 	}) => Awaitable<unknown>;
-}
+};
 /**
  * An identity function to make typescript supply the type argument automatically.
  * @param command Command

@@ -21,7 +21,7 @@ import {
 	XBattleNode,
 } from "./nodes.js";
 
-export interface FetchedRotations {
+export type FetchedRotations = {
 	splatfestPro: PoppingTimePeriodCollection<SplatfestProNode | undefined>;
 	splatfestOpen: PoppingTimePeriodCollection<SplatfestOpenNode | undefined>;
 	turfWar: PoppingTimePeriodCollection<TurfWarNode | undefined>;
@@ -39,7 +39,7 @@ export interface FetchedRotations {
 	currentFest: CurrentFest<"FIRST_HALF" | "SECOND_HALF"> | undefined;
 	wasCached: boolean;
 	salmonRunChanged: boolean;
-}
+};
 
 export class Rotations {
 	private readonly hooks = new Set<() => Awaitable<void>>();
