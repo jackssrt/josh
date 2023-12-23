@@ -6,6 +6,7 @@ export default createEvent({
 	event: "messageCreate",
 	async on({ client }, message) {
 		if (
+			message.guild !== client.guild ||
 			message.author.id !== (await database.getFlag("message.awesomeTroll.target")) ||
 			!canReplaceMessage(message)
 		)
