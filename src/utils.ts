@@ -395,6 +395,8 @@ export async function awaitEvent<T extends EventEmitter, E extends string | symb
 }
 
 export function search<T extends string[]>(source: T, term: string): T[number][] {
+	// early return for empty search term
+	if (!term.trim().length) return source;
 	return source.sort((a, b) => {
 		const bStartsWith = b.toLowerCase().trim().startsWith(term.toLowerCase().trim());
 		const aStartsWith = a.toLowerCase().trim().startsWith(term.toLowerCase().trim());
