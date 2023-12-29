@@ -522,7 +522,7 @@ export abstract class BaseCoopNode<
 							}),
 						)
 					).flat(),
-					...(await fillArrayAsync<sharp.OverlayOptions>(this.weapons.length - 1, async (i) => ({
+					...(await fillArrayAsync<sharp.OverlayOptions, number>(this.weapons.length - 1, async (i) => ({
 						input: await sharp({
 							create: {
 								background: "#ffffff80",
