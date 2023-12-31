@@ -9,3 +9,4 @@ scripts/publish.ps1
 logs/*.log
 temp/*
 !temp/.gitkeep
+TODO.md
