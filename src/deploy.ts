@@ -7,9 +7,10 @@ import {
 	SlashCommandBuilder,
 } from "discord.js";
 import * as dotenv from "dotenv";
+import { startCase } from "lodash";
 import Client from "./client.js";
 import logger from "./logger.js";
-import { camelCaseToTitleCase, pluralize } from "./utils.js";
+import { pluralize } from "./utils.js";
 dotenv.config();
 export async function deploy(guildId: string) {
 	const client = (await Client.new()) as Client<boolean, boolean>;
@@ -29,7 +30,7 @@ export async function deploy(guildId: string) {
 			.data(
 				new ContextMenuCommandBuilder()
 					.setType(item.type === "User" ? ApplicationCommandType.User : ApplicationCommandType.Message)
-					.setName(camelCaseToTitleCase(key, { withSpaces: true }))
+					.setName(startCase(key))
 					.setDefaultMemberPermissions(item.ownerOnly ? PermissionFlagsBits.Administrator : undefined),
 			)
 			.toJSON(),
