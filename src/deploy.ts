@@ -7,7 +7,7 @@ import {
 	SlashCommandBuilder,
 } from "discord.js";
 import * as dotenv from "dotenv";
-import { startCase } from "lodash";
+import { startCase } from "lodash-es";
 import Client from "./client.js";
 import logger from "./logger.js";
 import { pluralize } from "./utils.js";

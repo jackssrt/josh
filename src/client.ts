@@ -21,7 +21,7 @@ import {
 	GuildMember,
 	inlineCode,
 } from "discord.js";
-import { camelCase } from "lodash";
+import { camelCase } from "lodash-es";
 import { spawn } from "node:child_process";
 import path from "node:path";
 import { platform } from "node:process";
