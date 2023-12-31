@@ -14,6 +14,7 @@
 	"dependencies": {
 		"@discordjs/opus": "^0.9.0",
 		"@discordjs/voice": "^0.16.1",
+		"@img/sharp-linux-arm64": "^0.33.1",
 		"@img/sharp-linux-x64": "^0.33.1",
 		"@img/sharp-win32-x64": "^0.33.1",
 		"ansi-styles": "^6.2.1",

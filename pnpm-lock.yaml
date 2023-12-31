@@ -11,6 +11,9 @@ dependencies:
   '@discordjs/voice':
     specifier: ^0.16.1
     version: 0.16.1(@discordjs/opus@0.9.0)(bufferutil@4.0.8)(ffmpeg-static@5.2.0)(utf-8-validate@6.0.3)
+  '@img/sharp-linux-arm64':
+    specifier: ^0.33.1
+    version: 0.33.1
   '@img/sharp-linux-x64':
     specifier: ^0.33.1
     version: 0.33.1
@@ -1051,6 +1054,15 @@ packages:
       '@img/sharp-libvips-linux-arm64': 1.0.0
     dev: false
     optional: true
+
+  /@img/sharp-linux-arm64@0.33.1:
+    resolution: {integrity: sha512-59B5GRO2d5N3tIfeGHAbJps7cLpuWEQv/8ySd9109ohQ3kzyCACENkFVAnGPX00HwPTQcaBNF7HQYEfZyZUFfw==}
+    engines: {glibc: '>=2.26', node: ^18.17.0 || ^20.3.0 || >=21.0.0, npm: '>=9.6.5', pnpm: '>=7.1.0', yarn: '>=3.2.0'}
+    cpu: [arm64]
+    os: [linux]
+    optionalDependencies:
+      '@img/sharp-libvips-linux-arm64': 1.0.0
+    dev: false
 
   /@img/sharp-linux-arm@0.33.0:
     resolution: {integrity: sha512-4horD3wMFd5a0ddbDY8/dXU9CaOgHjEHALAddXgafoR5oWq5s8X61PDgsSeh4Qupsdo6ycfPPSSNBrfVQnwwrg==}
