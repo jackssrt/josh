@@ -21,6 +21,7 @@ import {
 	GuildMember,
 	inlineCode,
 } from "discord.js";
+import { camelCase } from "lodash";
 import { spawn } from "node:child_process";
 import path from "node:path";
 import { platform } from "node:process";
@@ -110,7 +111,7 @@ export default class Client<Ready extends boolean = false, Loaded extends boolea
 		await parallel(
 			this.commandRegistry.loadFromDirectory(`./${dirName}/commands`),
 			this.eventRegistry.loadFromDirectory(`./${dirName}/events`),
-			this.contextMenuItemsRegistry.loadFromDirectory(`./${dirName}/contextMenuItems`),
+			this.contextMenuItemsRegistry.loadFromDirectory(`./${dirName}/contextMenuItems`, camelCase),
 		);
 		logger.info(`Loaded ${this.commandRegistry.size} ${pluralize("command", this.commandRegistry.size)}`);
 		new Set(this.commandRegistry.values()).forEach((v) => {
