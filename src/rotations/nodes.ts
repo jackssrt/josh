@@ -1,11 +1,11 @@
 // due to inheritance I have to use async functions without awaiting anything in them
 /* eslint-disable @typescript-eslint/require-await */
-import axios from "axios";
 import type { EmbedBuilder, HexColorString } from "discord.js";
 import { AttachmentBuilder, TimestampStyles, time } from "discord.js";
 import type { Sharp } from "sharp";
 import sharp from "sharp";
 import { match } from "ts-pattern";
+import { request } from "undici";
 import type { z } from "zod";
 import { USER_AGENT } from "../client.js";
 import {
@@ -129,14 +129,13 @@ export abstract class DisplayableMatchNode extends BaseNode {
 					v,
 					sharp(
 						Buffer.from(
-							(
-								await axios.get<ArrayBuffer>(v.image, {
-									responseType: "arraybuffer",
+							await (
+								await request(v.image, {
 									headers: {
 										"User-Agent": USER_AGENT,
 									},
 								})
-							).data,
+							).body.arrayBuffer(),
 						),
 					).resize(stageWidth, height, { fit: sharp.fit.cover }),
 				] as const;
@@ -498,13 +497,11 @@ export abstract class BaseCoopNode<
 										input: await (async () =>
 											sharp(
 												Buffer.from(
-													(
-														await axios.get<ArrayBuffer>(v.image.url, {
-															responseType: "arraybuffer",
-
+													await (
+														await request(v.image.url, {
 															headers: { "User-Agent": USER_AGENT },
 														})
-													).data,
+													).body.arrayBuffer(),
 												),
 											)
 												.resize(ICON_SIZE, ICON_SIZE)
@@ -540,14 +537,13 @@ export abstract class BaseCoopNode<
 						input: await (async () =>
 							sharp(
 								Buffer.from(
-									(
-										await axios.get<ArrayBuffer>(this.stage.image, {
-											responseType: "arraybuffer",
+									await (
+										await request(this.stage.image, {
 											headers: {
 												"User-Agent": USER_AGENT,
 											},
 										})
-									).data,
+									).body.arrayBuffer(),
 								),
 							)
 								.composite([

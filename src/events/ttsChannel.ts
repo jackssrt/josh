@@ -1,6 +1,6 @@
-import axios from "axios";
 import type { Message, Snowflake, VoiceBasedChannel } from "discord.js";
 import { Collection } from "discord.js";
+import { request } from "undici";
 import type Client from "../client.js";
 import database from "../database.js";
 import { parallel, pawait } from "../utils.js";
@@ -59,9 +59,7 @@ export default createEvent({
 				},
 				...(filesToPlay.size > 0 && (await database.getBooleanFlag("tts.playFiles"))
 					? filesToPlay.map(async (v) => {
-							const audio = Buffer.from(
-								(await axios.get<ArrayBuffer>(v.url, { responseType: "arraybuffer" })).data,
-							);
+							const audio = Buffer.from(await (await request(v.url)).body.arrayBuffer());
 							if (memberVoiceChannel) {
 								queueSound(client, memberVoiceChannel, audio);
 							} else {

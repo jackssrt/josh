@@ -1,4 +1,3 @@
-import axios from "axios";
 import type { VoiceChannel } from "discord.js";
 import {
 	AttachmentBuilder,
@@ -23,7 +22,7 @@ import { updateRoleCategories } from "../events/roleCategories.js";
 import { updateStatsMessage } from "../events/statsMessage.js";
 import rotations from "../rotations/index.js";
 import * as FestivalsAPI from "../types/festivalsApi.js";
-import { colorLuminance, hexToRGB, parallel, pluralize, reportSchemaFail, textImage } from "../utils.js";
+import { colorLuminance, hexToRGB, parallel, pluralize, reportSchemaFail, request, textImage } from "../utils.js";
 import createCommand from "./../command.js";
 import { COLOR_DATA } from "./color.js";
 
@@ -204,20 +203,22 @@ export default createCommand({
 				await interaction.editReply(`done, ${userMention(inviter)} => ${userMention(invitee)}`);
 			})
 			.with("splatfest", async () => {
-				const response = await axios.get<FestivalsAPI.Response>("https://splatoon3.ink/data/festivals.json", {
-					headers: {
-						"User-Agent": USER_AGENT,
-					},
-				});
-				const validationResult = FestivalsAPI.responseSchema.safeParse(response.data);
+				const response = (
+					await request("https://splatoon3.ink/data/festivals.json", {
+						headers: {
+							"User-Agent": USER_AGENT,
+						},
+					})
+				).expect("Failed to fetch splatfests.");
+				const validationResult = FestivalsAPI.responseSchema.safeParse(response);
 				if (!validationResult.success)
 					reportSchemaFail(
 						"Festivals",
 						`FestivalsAPI.responseSchema.safeParse(response)`,
 						validationResult.error,
 					);
-
-				const fest = response.data.US.data.festRecords.nodes.find((v) => v.state !== "CLOSED");
+				const data = validationResult.success ? validationResult.data : (response as FestivalsAPI.Response);
+				const fest = data.US.data.festRecords.nodes.find((v) => v.state !== "CLOSED");
 				if (!fest) return await interaction.editReply("No active splatfest");
 				await parallel(
 					async () => {

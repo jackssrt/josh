@@ -6,13 +6,13 @@ import {
 	getVoiceConnection,
 	joinVoiceChannel,
 } from "@discordjs/voice";
-import axios from "axios";
 import { inlineCode, type VoiceBasedChannel } from "discord.js";
 import { EventEmitter } from "events";
 import { getAllAudioBase64 } from "google-tts-api";
 import { Readable } from "stream";
 import type Client from "./client.js";
-import { LINK_REGEX, Queue, awaitEvent, parallel, reportError } from "./utils.js";
+import { LINK_REGEX, Queue, awaitEvent, parallel, reportError, request } from "./utils.js";
+
 const SPEAK_REGEX = /<a?:|:\d+>|<id:\w+>|^--.*/g;
 
 export function cleanForSpeaking(text: string): string {
@@ -23,6 +23,19 @@ export function cleanName(name: string): string {
 	return name.replace(NAME_REGEX, "").trim();
 }
 
+// No zod schema because we need performance here
+type TiktokApiResponse =
+	| {
+			success: true;
+			data: string;
+			error: null;
+	  }
+	| {
+			success: false;
+			data: null;
+			error: string;
+	  };
+
 export async function textToSpeech(text: string, voice: string) {
 	const subVoice = voice.split("-")[1];
 	return Buffer.concat(
@@ -31,14 +44,20 @@ export async function textToSpeech(text: string, voice: string) {
 					text.match(/.{1,300}/g)?.map(async (subtext) =>
 						Buffer.from(
 							(
-								await axios.post<{ data: string }>(
-									"https://tiktok-tts.weilnet.workers.dev/api/generation",
-									{
-										text: subtext,
-										voice: subVoice ?? "en_us_001",
-									},
-								)
-							).data.data,
+								(
+									await request("https://tiktok-tts.weilnet.workers.dev/api/generation", {
+										body: JSON.stringify({
+											text: subtext,
+											voice: subVoice ?? "en_us_001",
+										}),
+										method: "POST",
+									})
+								).unwrap() as TiktokApiResponse
+							).data ??
+								(() => {
+									throw new Error("no data");
+								})(),
+
 							"base64",
 						),
 					) ?? [],

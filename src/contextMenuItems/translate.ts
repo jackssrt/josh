@@ -1,19 +1,19 @@
-import axios from "axios";
 import { GuildMember } from "discord.js";
+import { z } from "zod";
 import createContextMenuItem from "../contextMenuItem.js";
-import { pawait, reportError } from "../utils.js";
+import { pawait, reportError, request } from "../utils.js";
 
-type TranslationApiReturn = {
-	src: string;
-	sentences: { trans: string }[];
-};
+const translationApiReturnSchema = z.object({
+	src: z.string(),
+	sentences: z.array(z.object({ trans: z.string() })),
+});
 
 /**
  * @link https://github.com/Vendicated/Vencord/blob/7e395fc6968aced5d45fae55db646def1d555c49/src/plugins/translate/utils.ts#L38
  */
 async function translate(text: string, outLang = "en") {
-	const res = await pawait(
-		axios.get<TranslationApiReturn>(
+	const res = (
+		await request(
 			`https://translate.googleapis.com/translate_a/single?${new URLSearchParams({
 				client: "gtx",
 				sl: "auto",
@@ -23,9 +23,14 @@ async function translate(text: string, outLang = "en") {
 				source: "input",
 				q: text,
 			}).toString()}`,
-		),
-	);
-	return res.map((v) => v.data.sentences.map((v) => v.trans).join(""));
+		)
+	).expect("Translation request failed");
+
+	const validationResult = translationApiReturnSchema.safeParse(res);
+	if (!validationResult.success) {
+		throw new Error("Failed to validate translation api response");
+	}
+	return validationResult.data.sentences.map((v) => v.trans).join("");
 }
 
 export default createContextMenuItem({
@@ -33,7 +38,7 @@ export default createContextMenuItem({
 	data: (b) => b,
 	async execute({ interaction }) {
 		const content = interaction.targetMessage.content;
-		const translated = await translate(content);
+		const translated = await pawait(translate(content));
 		if (translated.isErr()) {
 			reportError({
 				title: "Translation failed",

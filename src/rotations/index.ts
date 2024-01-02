@@ -1,10 +1,9 @@
-import axios from "axios";
 import type { Awaitable } from "discord.js";
 import { USER_AGENT } from "../client.js";
 import database from "../database.js";
 import * as SalmonRunAPI from "../types/salmonRunApi.js";
 import * as SchedulesAPI from "../types/schedulesApi.js";
-import { LARGEST_DATE, formatTime, parallel, reportSchemaFail } from "../utils.js";
+import { LARGEST_DATE, formatTime, parallel, reportSchemaFail, request } from "../utils.js";
 import logger from "./../logger.js";
 import { PoppingTimePeriodCollection } from "./TimePeriodCollection.js";
 import {
@@ -133,18 +132,22 @@ export class Rotations {
 				);
 			return cachedGear;
 		}
-		const response = await axios.get<SalmonRunAPI.Response>("https://splatoon3.ink/data/coop.json", {
-			headers: { "User-Agent": USER_AGENT },
-		});
+		const response = (
+			await request("https://splatoon3.ink/data/coop.json", {
+				headers: { "User-Agent": USER_AGENT },
+			})
+		).expect("Failed to fetch salmon run gear data");
 		// validate response
-		const validationResult = SalmonRunAPI.responseSchema.safeParse(response.data);
+		const validationResult = SalmonRunAPI.responseSchema.safeParse(response);
 		if (!validationResult.success)
 			reportSchemaFail(
 				"Fetched Salmon Run",
 				"SalmonRunAPI.responseSchema.safeParse(response.data)",
 				validationResult.error,
 			);
-		const monthlyGear = response.data.data.coopResult.monthlyGear;
+
+		const monthlyGear = (validationResult.success ? validationResult.data : (response as SalmonRunAPI.Response))
+			.data.coopResult.monthlyGear;
 		await database.setCachedSalmonRunGear(monthlyGear);
 		return monthlyGear;
 	}
@@ -175,16 +178,17 @@ export class Rotations {
 		const response =
 			cached ??
 			(
-				await axios.get<SchedulesAPI.Response>("https://splatoon3.ink/data/schedules.json", {
+				await request("https://splatoon3.ink/data/schedules.json", {
 					headers: {
 						"User-Agent": USER_AGENT,
 					},
 				})
-			).data;
+			).expect("Failed to fetch new rotations");
 		// validate with zod
 		const validationResult = SchedulesAPI.responseSchema.safeParse(response);
 		if (!validationResult.success)
 			reportSchemaFail("Schedules", "SchedulesAPI.responseSchema.safeParse()", validationResult.error);
+		const data = validationResult.success ? validationResult.data : (response as SchedulesAPI.Response);
 		const {
 			data: {
 				regularSchedules: { nodes: rawTurfWar },
@@ -200,7 +204,7 @@ export class Rotations {
 				vsStages: { nodes: vsStages },
 				currentFest: rawCurrentFest,
 			},
-		} = response;
+		} = data;
 
 		const challenges = new PoppingTimePeriodCollection(
 			rawChallenges.map((x) =>
@@ -258,10 +262,7 @@ export class Rotations {
 		);
 		const lastSalmonEndTime = await database.getSalmonRunEndTime();
 		if (!cached)
-			await parallel(
-				database.setCachedMapRotation(endTime, response),
-				database.setSalmonRunEndTime(salmonEndTime),
-			);
+			await parallel(database.setCachedMapRotation(endTime, data), database.setSalmonRunEndTime(salmonEndTime));
 		return {
 			splatfestOpen,
 			splatfestPro,

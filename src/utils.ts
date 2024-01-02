@@ -33,6 +33,7 @@ import type { Sharp } from "sharp";
 import sharp from "sharp";
 import type { Option, Result } from "ts-results-es";
 import { Err, Ok } from "ts-results-es";
+import { request as undiciRequest } from "undici";
 import type { ZodIssue } from "zod";
 import { ZodError } from "zod";
 import Client from "./client.js";
@@ -55,6 +56,15 @@ export const LINK_REGEX =
 export const COLORS_REGEX = /\u001b\[(.*?)m/g;
 
 export type Maybe<T> = T | false | undefined;
+
+/**
+ * Sends an http request and json-decode the response
+ */
+export async function request(...params: Parameters<typeof undiciRequest>) {
+	const res = await undiciRequest(...params);
+	if (!res.statusCode.toString().startsWith("2")) return Err(res);
+	return (await pawait(res.body.json())).mapErr(() => res);
+}
 
 /**
  * Custom type guard for checking if a value is an error.
