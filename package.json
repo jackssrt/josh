@@ -62,7 +62,7 @@
 		"lint": "eslint ./src/**/*.ts",
 		"build": "tsc",
 		"start": "node ./build/index.js",
-		"start:bun": "bun run ./src/index.js",
+		"start:bun": "bun run ./build/index.js",
 		"check": "tsc --noEmit && eslint ./src/**/*.ts",
 		"test": "vitest",
 		"debug": "tsc --sourceMap && node ./build/index.js",
