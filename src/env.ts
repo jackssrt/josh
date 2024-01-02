@@ -31,6 +31,7 @@ export const processEnvSchema = z.object({
 	ROLEPLAYER_IDS: snowflakeListSchema,
 	JOIN_IGNORE_IDS: snowflakeListSchema,
 	ALT_USER_ID: snowflakeSchema,
+	ANNOUNCEMENTS_CHANNEL_ID: snowflakeSchema,
 });
 declare global {
 	// eslint-disable-next-line @typescript-eslint/no-namespace

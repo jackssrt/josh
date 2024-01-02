@@ -56,6 +56,8 @@ export default class Client<Ready extends boolean = false, Loaded extends boolea
 	public colorsRoleCategory = undefined as Loaded extends true ? Role : undefined;
 	public statsChannel = undefined as Loaded extends true ? TextChannel : undefined;
 	public splatfestTeamRoleCategory = undefined as Loaded extends true ? Role : undefined;
+	public announcementsChannel = undefined as Loaded extends true ? NewsChannel : undefined;
+
 	public static loadedSyncSignal = new SyncSignal();
 	public static readonly defaultPresence = {
 		status: "online",
@@ -177,6 +179,7 @@ export default class Client<Ready extends boolean = false, Loaded extends boolea
 				this.colorsRoleCategory,
 				this.statsChannel,
 				this.splatfestTeamRoleCategory,
+				this.announcementsChannel,
 			] = await parallel(
 				this.guild.members.fetchMe(),
 				this.guild.members.fetch(process.env.OWNER_ID),
@@ -190,6 +193,7 @@ export default class Client<Ready extends boolean = false, Loaded extends boolea
 				this.guild.roles.fetch(process.env.COLORS_ROLE_CATEGORY_ID) as Promise<Role>,
 				this.guild.channels.fetch(process.env.STATS_CHANNEL_ID) as Promise<TextChannel>,
 				this.guild.roles.fetch(process.env.SPLATFEST_TEAM_CATEGORY_ROLE_ID) as Promise<Role>,
+				this.guild.channels.fetch(process.env.ANNOUNCEMENTS_CHANNEL_ID) as Promise<NewsChannel>,
 			);
 			logger.info(`Fetching discord objects took ${formatTime((new Date().getTime() - start.getTime()) / 1000)}`);
 			Client.instance = this;

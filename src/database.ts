@@ -1,6 +1,7 @@
 import type { PresenceData, Snowflake } from "discord.js";
 import { existsSync } from "fs";
 import { readFile, writeFile } from "fs/promises";
+import type { AnnouncementData, AnnouncementDataForKey, EditableAnnouncementMessageIdType } from "./announcements.js";
 import Lock from "./lock.js";
 import type * as SalmonRunAPI from "./types/salmonRunApi.js";
 import type * as SchedulesAPI from "./types/schedulesApi.js";
@@ -22,7 +23,6 @@ export const DEFAULT_FLAGS = {
 	"message.tiktokDownloader.enabled": "true",
 	"message.awesomeTroll.target": "",
 } satisfies Record<string, string>;
-
 export type Flag = keyof typeof DEFAULT_FLAGS;
 
 export type DatabaseData = {
@@ -37,6 +37,9 @@ export type DatabaseData = {
 	inviteRecords: Record<Snowflake, Snowflake>;
 	flags: Partial<typeof DEFAULT_FLAGS>;
 	activePresence: PresenceData;
+	occurrences: Record<string, DatabaseOccurenceData>;
+	announcements: { [K in string]: AnnouncementDataForKey<K> };
+	announcementsMessageIds: Record<Snowflake, [`user-${string}`, EditableAnnouncementMessageIdType]>;
 };
 
 class DatabaseBackend<T extends Record<K, unknown>, K extends string> {
@@ -122,6 +125,13 @@ export class Database {
 			[id]: messageId,
 		});
 	}
+	public async deleteStaticMessageId(id: string) {
+		const old = await this.backend.get("staticMessageIds", {});
+		// old is a Record<string, _>
+		// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+		delete old[id];
+		await this.backend.set("staticMessageIds", old);
+	}
 
 	// Invite Records
 	public async setInviteRecord(inviter: Snowflake, invitee: Snowflake) {
@@ -152,6 +162,47 @@ export class Database {
 	}
 	public async setActivePresence(presence: PresenceData) {
 		await this.backend.set("activePresence", presence);
+	}
+
+	// Announcements
+	public async getAnnouncement<T extends string>(id: T): Promise<AnnouncementDataForKey<T>> {
+		return (await this.backend.get("announcements", {}))[id];
+	}
+	public async setAnnouncement(id: string, data: AnnouncementData) {
+		await this.backend.set("announcements", {
+			...(await this.backend.get("announcements", {})),
+			[id]: data,
+		});
+	}
+	public async getAnnouncementByMessageId(messageId: string) {
+		return (await this.backend.get("announcementsMessageIds", {}))[messageId];
+	}
+	public async linkMessageIdToAnnouncementSource(
+		messageId: string,
+		id: `user-${string}`,
+		type: EditableAnnouncementMessageIdType,
+	) {
+		await this.backend.set("announcementsMessageIds", {
+			...(await this.backend.get("announcementsMessageIds", {})),
+			[messageId]: [id, type],
+		});
+	}
+	public async unlinkMessageIdFromAnnouncementSource(messageId: string) {
+		const old = await this.backend.get("announcementsMessageIds", {});
+		// old is a Record<string, _>
+		// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+		delete old[messageId];
+		await this.backend.set("announcementsMessageIds", old);
+	}
+	public async getAllAnnouncementIds() {
+		return Object.keys(await this.backend.get("announcements", {}));
+	}
+	public async deleteAnnouncement(id: string) {
+		const old = await this.backend.get("announcements", {});
+		// old is a Record<string, _>
+		// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+		delete old[id];
+		await this.backend.set("announcements", old);
 	}
 }
 

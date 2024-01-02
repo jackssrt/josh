@@ -1,6 +1,7 @@
 import type {
 	Awaitable,
 	Channel,
+	GuildTextBasedChannel,
 	InteractionReplyOptions,
 	Message,
 	MessageCreateOptions,
@@ -8,7 +9,6 @@ import type {
 	RepliableInteraction,
 	Role,
 	TextBasedChannel,
-	TextChannel,
 	User,
 	Webhook,
 	WebhookMessageCreateOptions,
@@ -33,6 +33,7 @@ import type { Sharp } from "sharp";
 import sharp from "sharp";
 import type { Option, Result } from "ts-results-es";
 import { Err, Ok } from "ts-results-es";
+import type { LastArrayElement } from "type-fest";
 import { request as undiciRequest } from "undici";
 import type { ZodIssue } from "zod";
 import { ZodError } from "zod";
@@ -56,6 +57,8 @@ export const LINK_REGEX =
 export const COLORS_REGEX = /\u001b\[(.*?)m/g;
 
 export type Maybe<T> = T | false | undefined;
+export type If<C extends boolean, V, NV = V | undefined> = C extends true ? V : NV;
+export type IfNot<C extends boolean, V, NV = V | undefined> = C extends true ? NV : V;
 
 /**
  * Sends an http request and json-decode the response
@@ -156,7 +159,7 @@ export function getRandomValues<T extends unknown[]>(arr: T, count: number): T[n
 }
 
 export async function updateStaticMessage(
-	channel: TextChannel,
+	channel: GuildTextBasedChannel,
 	id: string,
 	content: string | (MessageEditOptions & MessageCreateOptions),
 ): Promise<Message<true>> {
@@ -170,6 +173,14 @@ export async function updateStaticMessage(
 		return message;
 	}
 }
+
+export async function deleteStaticMessage(channel: GuildTextBasedChannel, id: string) {
+	const messageId = await database.getStaticMessageId(id);
+	const message = messageId && (await channel.messages.fetch(messageId));
+	if (message && message.deletable) await message.delete();
+	await database.deleteStaticMessageId(id);
+}
+
 /**
  * @link https://stackoverflow.com/questions/4154969/how-to-map-numbers-in-range-099-to-range-1-01-0/4155197#4155197
  */
@@ -529,20 +540,40 @@ export function formatNumberIntoNth(num: number): string {
 	}
 	return `${num}th`;
 }
-export async function parallel<T extends ((() => Promise<unknown>) | Promise<unknown> | undefined | false)[]>(
-	...funcs: T | [T]
-) {
+
+export type OneOrMore<T> = [T, ...T[]];
+
+export async function parallel<T extends Maybe<(() => Promise<unknown>) | Promise<unknown>>[]>(...funcs: T | [T]) {
 	return (await Promise.all(normalizeArray(funcs).map((v) => (typeof v === "function" ? v() : v)))) as {
 		-readonly [i in keyof T]: Awaited<T[i] extends (...args: unknown[]) => infer R ? R : T[i]>;
 	};
 }
 
-export async function parallelSettled<T extends ((() => Promise<unknown>) | Promise<unknown> | undefined | false)[]>(
+export async function parallelSettled<T extends Maybe<(() => Promise<unknown>) | Promise<unknown>>[]>(
 	...funcs: T | [T]
 ) {
 	return (await Promise.allSettled(normalizeArray(funcs).map((v) => (typeof v === "function" ? v() : v)))) as {
 		-readonly [i in keyof T]: Awaited<T[i] extends (...args: unknown[]) => infer R ? R : T[i]>;
 	};
+}
+
+export async function parallelRace<T extends OneOrMore<Maybe<(() => Promise<unknown>) | Promise<unknown>>>>(
+	...funcs: T | [T]
+) {
+	return (await Promise.race(
+		normalizeArray(funcs).flatMap((v) => (typeof v === "function" ? v() : v instanceof Promise ? v : [])),
+	)) as {
+		-readonly [i in keyof T]: Awaited<
+			T[i] extends (...args: unknown[]) => infer R ? R : Exclude<T[i], false | undefined>
+		>;
+	}[number];
+}
+
+export function sequential<T extends Maybe<() => Promise<unknown>>[]>(...funcs: T | [T]) {
+	return normalizeArray(funcs).reduce(
+		(acc, c) => (c ? acc.then(c) : acc),
+		Promise.resolve<unknown>(undefined),
+	) as LastArrayElement<T>;
 }
 
 export function flattenOptionArray<T>(array: Option<T>[]): T[] {
