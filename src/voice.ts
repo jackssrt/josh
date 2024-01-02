@@ -51,6 +51,9 @@ export async function textToSpeech(text: string, voice: string) {
 											voice: subVoice ?? "en_us_001",
 										}),
 										method: "POST",
+										headers: {
+											"Content-Type": "application/json",
+										},
 									})
 								).unwrap() as TiktokApiResponse
 							).data ??
