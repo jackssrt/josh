@@ -40,7 +40,7 @@ import { ZodError } from "zod";
 import Client from "./client.js";
 import database from "./database.js";
 import logger from "./logger.js";
-import type { AnyFunction, defined } from "./types/utils.js";
+import type { AnyFunction, TupleOf, defined } from "./types/utils.js";
 
 export const SMALLEST_DATE = new Date(-8640000000000000);
 export const LARGEST_DATE = new Date(8640000000000000);
@@ -429,7 +429,7 @@ export function search<T extends string[]>(source: T, term: string): T[number][]
 
 export type Uncallable<T> = T extends AnyFunction ? never : T;
 
-export function fillArray<T>(count: number, value: Uncallable<T> | ((i: number) => T)): T[] {
+export function fillArray<T, N extends number>(count: N, value: Uncallable<T> | ((i: number) => T)) {
 	const array = new Array<T>(count);
 	// checked early for performance, value doesn't change value between each item
 	// prettier-ignore
@@ -439,10 +439,10 @@ export function fillArray<T>(count: number, value: Uncallable<T> | ((i: number) 
 	else
 		for (let i = 0; i < count; i++)
 			array[i] = value
-	return array;
+	return array as number extends N ? T[] : TupleOf<T, N>;
 }
-export async function fillArrayAsync<T>(count: number, creator: (i: number) => Promise<T>): Promise<T[]> {
-	return await parallel(fillArray(count, creator));
+export async function fillArrayAsync<T, N extends number>(count: N, creator: (i: number) => Promise<T>) {
+	return (await parallel(fillArray(count, creator))) as number extends N ? T[] : TupleOf<T, N>;
 }
 
 export async function textImage(text: string, color: string, size: number): Promise<Sharp> {

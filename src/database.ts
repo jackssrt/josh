@@ -3,6 +3,7 @@ import { existsSync } from "fs";
 import { readFile, writeFile } from "fs/promises";
 import type { AnnouncementData, AnnouncementDataForKey, EditableAnnouncementMessageIdType } from "./announcements.js";
 import Lock from "./lock.js";
+import type { DatabaseOccurenceData } from "./occurrences.js";
 import type * as SalmonRunAPI from "./types/salmonRunApi.js";
 import type * as SchedulesAPI from "./types/schedulesApi.js";
 import { SMALLEST_DATE, parallel } from "./utils.js";
@@ -162,6 +163,17 @@ export class Database {
 	}
 	public async setActivePresence(presence: PresenceData) {
 		await this.backend.set("activePresence", presence);
+	}
+
+	// Occurrences
+	public async getOccurrenceById(id: string): Promise<DatabaseOccurenceData | undefined> {
+		return (await this.backend.get("occurrences", {}))[id];
+	}
+	public async saveOccurrence(id: string, data: DatabaseOccurenceData) {
+		await this.backend.set("occurrences", {
+			...(await this.backend.get("occurrences", {})),
+			[id]: data,
+		});
 	}
 
 	// Announcements
