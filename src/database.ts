@@ -2,10 +2,10 @@ import type { PresenceData, Snowflake } from "discord.js";
 import { existsSync } from "fs";
 import { readFile, writeFile } from "fs/promises";
 import type { AnnouncementData, AnnouncementDataForKey, EditableAnnouncementMessageIdType } from "./announcements.js";
-import Lock from "./utils/Lock.js";
 import type { DatabaseOccurenceData } from "./occurrences.js";
 import type * as SalmonRunAPI from "./types/salmonRunApi.js";
 import type * as SchedulesAPI from "./types/schedulesApi.js";
+import Lock from "./utils/Lock.js";
 import { parallel } from "./utils/promise.js";
 import { SMALLEST_DATE } from "./utils/time.js";
 
@@ -112,9 +112,13 @@ export class Database {
 		return !(await this.backend.get("madeChallengeEvents", [])).includes(id);
 	}
 	public async setMadeChallengeEvent(id: string) {
-		const key = await madeChallengeEventsLock.lock();
-		await this.backend.set("madeChallengeEvents", [...(await this.backend.get("madeChallengeEvents", [])), id]);
-		madeChallengeEventsLock.unlock(key);
+		await madeChallengeEventsLock.lock(
+			async () =>
+				await this.backend.set("madeChallengeEvents", [
+					...(await this.backend.get("madeChallengeEvents", [])),
+					id,
+				]),
+		);
 	}
 
 	// Static Messages

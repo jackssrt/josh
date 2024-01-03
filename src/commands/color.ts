@@ -79,7 +79,6 @@ export default createCommand({
 			.setDMPermission(false),
 	async autocomplete({ interaction }) {
 		const focusedValue = interaction.options.getFocused();
-		// slice limits the options to only be 25
 		const hex = parseHex(focusedValue);
 		await interaction.respond(
 			flattenOptionArray([
@@ -106,10 +105,9 @@ export default createCommand({
 		const hexColor = (colorInput || colorData?.value)?.toLowerCase();
 		if (!hexColor) return await interaction.reply("Provide a valid color name or hex value!");
 
-		let key = "color-command-emoji-lock";
-		try {
-			await parallel(interaction.deferReply(), async () => {
-				key = await colorEmojiLock.lock();
+		await parallel(
+			interaction.deferReply(),
+			colorEmojiLock.lock(async () => {
 				const colorRoles = await getLowerRolesInSameCategory(client.colorsRoleCategory);
 				const alreadyExistingRole = colorRoles.find(
 					(v) => (v.hexColor.toLowerCase() as `#${string}`) === `#${hexColor}`,
@@ -137,18 +135,15 @@ export default createCommand({
 					name: `🎨・${colorData?.name ?? "Custom"}`,
 				});
 				await interaction.member.roles.add(newRole, "Requested color");
-			});
-			const colorRoles = await getLowerRolesInSameCategory(client.colorsRoleCategory);
-			await parallel(
-				interaction.editReply(`All done! Enjoy your new name color! ${BOOYAH_EMOJI}`),
+				await parallel(
+					(await getLowerRolesInSameCategory(client.colorsRoleCategory)).map(async (v) => {
+						if (v.members.size === 0 && v.id !== process.env.DEFAULT_COLOR_ROLE_ID)
+							await v.delete("Color role clean up");
+					}),
+				);
+			}),
+		);
 
-				...colorRoles.map(async (v) => {
-					if (v.members.size === 0 && v.id !== process.env.DEFAULT_COLOR_ROLE_ID)
-						await v.delete("Color role clean up");
-				}),
-			);
-		} finally {
-			colorEmojiLock.unlock(key);
-		}
+		await interaction.editReply(`All done! Enjoy your new name color! ${BOOYAH_EMOJI}`);
 	},
 });
