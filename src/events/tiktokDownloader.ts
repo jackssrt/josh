@@ -69,7 +69,8 @@ export async function downloadTiktokVideos(client: Client<true>, message: Messag
 	const id = randomUUID();
 
 	// re-encode video for discord embed
-	const ffmpegProcess = spawn(ffmpegPath ?? "ffmpeg", ["-i", "-", `./temp/${id}.mp4`]);
+	// typescript import this properly
+	const ffmpegProcess = spawn((ffmpegPath as unknown as string | null) ?? "ffmpeg", ["-i", "-", `./temp/${id}.mp4`]);
 	ytDlpProcess.stdout.pipe(ffmpegProcess.stdin);
 	const ffmpegRl = createInterface({ input: ffmpegProcess.stderr });
 	ffmpegRl.on("line", (line) => {
