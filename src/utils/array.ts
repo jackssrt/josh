@@ -21,26 +21,26 @@ export async function fillArrayAsync<T, N extends number>(count: N, creator: (i:
 	return (await parallel(fillArray(count, creator))) as number extends N ? T[] : TupleOf<T, N>;
 }
 
-export function search<T extends string[]>(source: T, term: string): T[number][] {
+export function search<T extends string[]>(source: T, rawTerm: string): T[number][] {
+	const term = rawTerm.trim().toLowerCase();
 	// early return for empty search term
-	if (!term.trim().length) return source;
-	return source.sort((a, b) => {
-		const bStartsWith = b.toLowerCase().trim().startsWith(term.toLowerCase().trim());
-		const aStartsWith = a.toLowerCase().trim().startsWith(term.toLowerCase().trim());
-		if (aStartsWith && bStartsWith) return 0;
-		else if (bStartsWith) return 1;
-		else if (aStartsWith) return -1;
-		const bContains = b.toLowerCase().trim().includes(term.toLowerCase().trim());
-		const aContains = a.toLowerCase().trim().includes(term.toLowerCase().trim());
-		if (bContains && aContains) return 0;
-		else if (bContains) return 1;
-		else if (aContains) return -1;
+	if (!term.length) return source;
+	return source
+		.map((v) => v.trim().toLowerCase())
+		.sort((a, b) => {
+			const bStartsWith = b.startsWith(term);
+			const aStartsWith = a.startsWith(term);
+			if (aStartsWith && bStartsWith) return 0;
+			else if (bStartsWith) return 1;
+			else if (aStartsWith) return -1;
+			const bContains = b.includes(term);
+			const aContains = a.includes(term);
+			if (bContains && aContains) return 0;
+			else if (bContains) return 1;
+			else if (aContains) return -1;
 
-		return (
-			levenshtein(a.toLowerCase().trim(), term.toLowerCase().trim()) -
-			levenshtein(b.toLowerCase().trim(), term.toLowerCase().trim())
-		);
-	});
+			return levenshtein(a, term) - levenshtein(b, term);
+		});
 }
 
 /**
