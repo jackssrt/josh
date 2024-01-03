@@ -1,4 +1,4 @@
-import { parallel } from "../utils.js";
+import { parallel } from "../utils/promise.js";
 import createCommand from "./../command.js";
 
 export default createCommand({

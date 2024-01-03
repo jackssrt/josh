@@ -3,7 +3,7 @@ import { codeBlock, inlineCode } from "discord.js";
 import { match } from "ts-pattern";
 import type { Flag } from "../database.js";
 import database, { DEFAULT_FLAGS } from "../database.js";
-import { embeds } from "../utils.js";
+import { embeds } from "../utils/discord/embeds.js";
 import createCommand from "./../command.js";
 
 function displayFlag(flag: string, value: string) {

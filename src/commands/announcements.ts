@@ -23,7 +23,8 @@ import type { GuildOnlyChatCommandInteraction } from "../command.js";
 import createCommand from "../command.js";
 import database from "../database.js";
 import type { StrictOmit } from "../types/utils.js";
-import { parallel, parallelRace, search } from "../utils.js";
+import { search } from "../utils/array.js";
+import { parallel, parallelRace } from "../utils/promise.js";
 
 type CollectMessageParams<Skip extends boolean> = {
 	client: Client<true>;

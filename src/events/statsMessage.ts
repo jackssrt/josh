@@ -5,18 +5,13 @@ import createLayout from "ngraph.forcelayout";
 import createGraph from "ngraph.graph";
 import sharp from "sharp";
 import database from "../database.js";
-import {
-	dedent,
-	embeds,
-	escapeXml,
-	getLowerRolesInSameCategory,
-	membersWithRoles,
-	parallel,
-	pluralize,
-	reportError,
-	scaleNumber,
-	updateStaticMessage,
-} from "../utils.js";
+import { reportError } from "../errorhandler.js";
+import { updateStaticMessage } from "../staticMessages.js";
+import { embeds } from "../utils/discord/embeds.js";
+import { getLowerRolesInSameCategory, membersWithRoles } from "../utils/discord/roles.js";
+import { scaleNumber } from "../utils/math.js";
+import { parallel } from "../utils/promise.js";
+import { dedent, escapeXml, pluralize } from "../utils/string.js";
 import type Client from "./../client.js";
 import createEvent from "./../event.js";
 

@@ -11,7 +11,12 @@ import { EventEmitter } from "events";
 import { getAllAudioBase64 } from "google-tts-api";
 import { Readable } from "stream";
 import type Client from "./client.js";
-import { LINK_REGEX, Queue, awaitEvent, parallel, reportError, request } from "./utils.js";
+import { reportError } from "./errorhandler.js";
+import { Queue } from "./utils/Queue.js";
+import { awaitEvent } from "./utils/eventEmitter.js";
+import { request } from "./utils/http.js";
+import { parallel } from "./utils/promise.js";
+import { LINK_REGEX } from "./utils/regex.js";
 
 const SPEAK_REGEX = /<a?:|:\d+>|<id:\w+>|^--.*/g;
 

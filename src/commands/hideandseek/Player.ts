@@ -1,7 +1,7 @@
 import type { ButtonInteraction, ChatInputCommandInteraction, GuildMember, Message } from "discord.js";
 import { userMention } from "discord.js";
 import { SQUID_SHUFFLE_EMOJI } from "../../emojis.js";
-import { embeds } from "../../utils.js";
+import { embeds } from "../../utils/discord/embeds.js";
 import { HIDER_EXPLANATION, PlayerRole, ROLE_ICON_MAP, SEEKER_EXPLANATION } from "./consts.js";
 
 export default class Player<Host extends boolean = boolean> {

@@ -1,5 +1,5 @@
 import type { GuildMember, Role } from "discord.js";
-import { roleIsCategory } from "../utils.js";
+import { roleIsCategory } from "../utils/discord/roles.js";
 import createEvent from "./../event.js";
 
 export async function updateRoleCategories(member: GuildMember) {

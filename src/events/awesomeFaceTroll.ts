@@ -1,5 +1,5 @@
 import database from "../database.js";
-import { canReplaceMessage, replaceMessage } from "../utils.js";
+import { canReplaceMessage, replaceMessage } from "../utils/discord/messages.js";
 import createEvent from "./../event.js";
 
 export default createEvent({

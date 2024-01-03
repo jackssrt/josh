@@ -2,7 +2,7 @@ import { Collection } from "discord.js";
 import { readdir } from "fs/promises";
 import { existsSync } from "node:fs";
 import path from "path";
-import logger from "./logger.js";
+import logger from "./utils/Logger.js";
 
 export default class Registry<I> extends Collection<string, I> {
 	public async loadFromDirectory(directory: string, nameTransformer?: (name: string) => string): Promise<void> {

@@ -1,7 +1,7 @@
 import { execFile as _execFile } from "child_process";
 import { promisify } from "util";
 import { IS_PROD } from "./env.js";
-import { parallel } from "./utils.js";
+import { parallel } from "./utils/promise.js";
 
 const execFile = promisify(_execFile);
 

@@ -1,7 +1,8 @@
 import { PermissionFlagsBits } from "discord.js";
 import { inspect } from "node:util";
 import type Client from "../client.js";
-import { embeds, impersonate } from "../utils.js";
+import { embeds } from "../utils/discord/embeds.js";
+import { impersonate } from "../utils/discord/messages.js";
 import createCommand from "./../command.js";
 
 // This function cleans up and prepares the

@@ -4,7 +4,7 @@ import rotations from "../rotations/index.js";
 import type { BaseNode } from "../rotations/nodes.js";
 import type { RankedRule } from "../rotations/rules.js";
 import { RULE_MAP } from "../rotations/rules.js";
-import { embeds } from "../utils.js";
+import { embeds } from "../utils/discord/embeds.js";
 import createCommand from "./../command.js";
 const listSubcommands = [
 	"challenges",

@@ -2,7 +2,9 @@ import type { Message } from "discord.js";
 import { Colors, MessageType, channelMention, roleMention, userMention } from "discord.js";
 import type Client from "../client.js";
 import { BOOYAH_EMOJI } from "../emojis.js";
-import { dedent, embeds, formatNumberIntoNth, membersWithRoles } from "../utils.js";
+import { embeds } from "../utils/discord/embeds.js";
+import { membersWithRoles } from "../utils/discord/roles.js";
+import { dedent, ordinal } from "../utils/string.js";
 import createEvent from "./../event.js";
 
 export async function sendWelcomeMessage(client: Client<true>, message: Message<true>) {
@@ -22,7 +24,7 @@ export async function sendWelcomeMessage(client: Client<true>, message: Message<
 						and if you want, pick up some more roles in <id:customize>.
 						But most importantly, have fun! ${BOOYAH_EMOJI}`,
 				)
-				.setFooter({ text: `You're our ${formatNumberIntoNth(allMembers.size)} member!` })
+				.setFooter({ text: `You're our ${ordinal(allMembers.size)} member!` })
 				.setTimestamp(new Date())
 				.setColor(Colors.Blurple),
 		)),

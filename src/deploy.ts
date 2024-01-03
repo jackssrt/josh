@@ -9,8 +9,8 @@ import {
 import * as dotenv from "dotenv";
 import { startCase } from "lodash-es";
 import Client from "./client.js";
-import logger from "./logger.js";
-import { pluralize } from "./utils.js";
+import logger from "./utils/Logger.js";
+import { pluralize } from "./utils/string.js";
 dotenv.config();
 export async function deploy(guildId: string) {
 	const client = (await Client.new()) as Client<boolean, boolean>;

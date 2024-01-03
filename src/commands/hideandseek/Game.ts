@@ -20,19 +20,12 @@ import {
 import EventEmitter from "node:events";
 import { BOOYAH_EMOJI, OUCH_EMOJI, SQUID_SHUFFLE_EMOJI, VEEMO_PEEK_EMOJI } from "../../emojis.js";
 import { IS_PROD } from "../../env.js";
-import {
-	SMALLEST_DATE,
-	awaitEvent,
-	constructEmbedsWrapper,
-	dedent,
-	embeds,
-	fillArray,
-	futureTimestamp,
-	getRandomValues,
-	messageHiddenText,
-	parallel,
-	wait,
-} from "../../utils.js";
+import { fillArray, getRandomValues } from "../../utils/array.js";
+import { constructEmbedsWrapper, embeds } from "../../utils/discord/embeds.js";
+import { awaitEvent } from "../../utils/eventEmitter.js";
+import { parallel } from "../../utils/promise.js";
+import { dedent, messageHiddenText } from "../../utils/string.js";
+import { SMALLEST_DATE, futureTimestamp, wait } from "../../utils/time.js";
 import Player from "./Player.js";
 import {
 	PlayerRole,

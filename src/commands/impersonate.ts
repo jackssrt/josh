@@ -1,5 +1,5 @@
 import { ChannelType } from "discord.js";
-import { impersonate } from "../utils.js";
+import { impersonate } from "../utils/discord/messages.js";
 import createCommand from "./../command.js";
 
 export default createCommand({

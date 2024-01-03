@@ -2,11 +2,12 @@ import type { PresenceData, Snowflake } from "discord.js";
 import { existsSync } from "fs";
 import { readFile, writeFile } from "fs/promises";
 import type { AnnouncementData, AnnouncementDataForKey, EditableAnnouncementMessageIdType } from "./announcements.js";
-import Lock from "./lock.js";
+import Lock from "./utils/Lock.js";
 import type { DatabaseOccurenceData } from "./occurrences.js";
 import type * as SalmonRunAPI from "./types/salmonRunApi.js";
 import type * as SchedulesAPI from "./types/schedulesApi.js";
-import { SMALLEST_DATE, parallel } from "./utils.js";
+import { parallel } from "./utils/promise.js";
+import { SMALLEST_DATE } from "./utils/time.js";
 
 export const DEFAULT_FLAGS = {
 	"tts.voice": "gtts",

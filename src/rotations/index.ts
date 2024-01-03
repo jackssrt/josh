@@ -1,10 +1,13 @@
 import type { Awaitable } from "discord.js";
 import { USER_AGENT } from "../client.js";
 import database from "../database.js";
+import { reportSchemaFail } from "../errorhandler.js";
 import * as SalmonRunAPI from "../types/salmonRunApi.js";
 import * as SchedulesAPI from "../types/schedulesApi.js";
-import { LARGEST_DATE, formatTime, parallel, reportSchemaFail, request } from "../utils.js";
-import logger from "./../logger.js";
+import logger from "../utils/Logger.js";
+import { request } from "../utils/http.js";
+import { parallel } from "../utils/promise.js";
+import { LARGEST_DATE, formatTime } from "../utils/time.js";
 import { PoppingTimePeriodCollection } from "./TimePeriodCollection.js";
 import {
 	BigRunNode,

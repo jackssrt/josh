@@ -2,8 +2,10 @@ import type { MessageCreateOptions, MessageEditOptions, NewsChannel } from "disc
 import { TimestampStyles, time } from "discord.js";
 import rotations from "../rotations/index.js";
 import type { GenericCoopNode, GenericMatchNode } from "../rotations/nodes.js";
-import type { EmbedFactory } from "../utils.js";
-import { embeds, parallel, type Maybe } from "../utils.js";
+import type { EmbedFactory } from "../utils/discord/embeds.js";
+import { embeds } from "../utils/discord/embeds.js";
+import { parallel } from "../utils/promise.js";
+import type { Maybe } from "../utils/types.js";
 import type Client from "./../client.js";
 import createEvent from "./../event.js";
 

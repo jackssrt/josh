@@ -1,6 +1,6 @@
 import type { ZodTuple, ZodTypeAny } from "zod";
 import { z } from "zod";
-import { fillArray } from "../utils.js";
+import { fillArray } from "../utils/array.js";
 
 export type TupleOf<T, N extends number, A extends unknown[] = []> = A["length"] extends N
 	? A

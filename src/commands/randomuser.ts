@@ -1,5 +1,5 @@
 import { userMention } from "discord.js";
-import { fillArray, getRandomValues } from "../utils.js";
+import { fillArray, getRandomValues } from "../utils/array.js";
 import createCommand from "./../command.js";
 
 export default createCommand({

@@ -20,7 +20,10 @@ import {
 } from "../emojis.js";
 import type * as CommonAPI from "../types/common.js";
 import type * as SchedulesAPI from "../types/schedulesApi.js";
-import { dedent, fillArrayAsync, parallel, textImage } from "../utils.js";
+import { fillArrayAsync } from "../utils/array.js";
+import { textImage } from "../utils/image.js";
+import { parallel } from "../utils/promise.js";
+import { dedent } from "../utils/string.js";
 import TimePeriod from "./TimePeriod.js";
 import TimePeriodCollection from "./TimePeriodCollection.js";
 import { Rotations } from "./index.js";

@@ -3,21 +3,15 @@ import { bold, inlineCode, roleMention, userMention } from "discord.js";
 import type Client from "./client.js";
 import database from "./database.js";
 import { SQUID_SHUFFLE_EMOJI } from "./emojis.js";
-import logger from "./logger.js";
-import type { If } from "./utils.js";
-import {
-	dedent,
-	deleteStaticMessage,
-	embeds,
-	messageHiddenText,
-	parallel,
-	reportError,
-	sequential,
-	updateStaticMessage,
-} from "./utils.js";
+import { reportError } from "./errorhandler.js";
+import { deleteStaticMessage, updateStaticMessage } from "./staticMessages.js";
+import logger from "./utils/Logger.js";
+import { embeds } from "./utils/discord/embeds.js";
+import { parallel, sequential } from "./utils/promise.js";
+import { dedent, messageHiddenText } from "./utils/string.js";
+import type { If } from "./utils/types.js";
 
 //#region Shared
-
 export type AnnouncementData<UserMade extends boolean = boolean> = {
 	authorId: If<UserMade, string>;
 
@@ -133,7 +127,6 @@ export async function deleteAnnouncement(client: Client<true>, id: string) {
 	);
 	return true;
 }
-
 //#endregion
 
 //#region Programmable
@@ -223,5 +216,4 @@ export async function createUserAnnouncement(id: `user-${string}`, data: Announc
 		),
 	);
 }
-
 //#endregion

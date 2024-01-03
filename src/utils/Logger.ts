@@ -2,9 +2,12 @@
 import styles from "ansi-styles";
 import { appendFile } from "node:fs/promises";
 import { inspect } from "node:util";
-import { COLORS_REGEX, isError } from "./utils.js";
+import { COLORS_REGEX } from "./regex.js";
+import { isError } from "./types.js";
+
 export class Logger {
 	private static readonly LOG_FILE = `./logs/${new Date().toISOString().replace(/[:.]/g, " ")}.log` as const;
+
 	private log(color: string | undefined, tag: string | undefined, first: unknown, rest: unknown[]) {
 		rest.unshift(first);
 		process.nextTick(async () => {
@@ -26,20 +29,26 @@ export class Logger {
 			await appendFile(Logger.LOG_FILE, `${output.replace(COLORS_REGEX, "")}\n`, { encoding: "utf8" });
 		});
 	}
+
 	public debug(first: unknown, ...rest: unknown[]) {
 		this.log(`${styles.gray.open}${styles.dim.open}`, "[D]", first, rest);
 	}
+
 	public info(first: unknown, ...rest: unknown[]) {
 		this.log(undefined, undefined, first, rest);
 	}
+
 	public warn(first: unknown, ...rest: unknown[]) {
 		this.log(styles.yellowBright.open, "[WARN]", first, rest);
 	}
+
 	public error(first: unknown, ...rest: unknown[]) {
 		this.log(styles.redBright.open, "[ERROR]", first, rest);
 	}
 }
 
 const logger = new Logger();
+
 process.on("warning", (...params) => logger.warn(...params));
+
 export default logger;

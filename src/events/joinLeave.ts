@@ -2,7 +2,8 @@ import type { Collection, GuildMember, PartialGuildMember } from "discord.js";
 import { userMention } from "discord.js";
 import type Client from "../client.js";
 import createEvent from "../event.js";
-import { impersonate, membersWithRoles } from "../utils.js";
+import { impersonate } from "../utils/discord/messages.js";
+import { membersWithRoles } from "../utils/discord/roles.js";
 
 export async function onMemberJoin(client: Client<true>, member: GuildMember) {
 	const allMembers = membersWithRoles([client.memberRole]);

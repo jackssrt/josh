@@ -3,7 +3,7 @@ import { GuildScheduledEventEntityType, GuildScheduledEventPrivacyLevel } from "
 import database from "../database.js";
 import { EMPTY_EMOJI, SUB_EMOJI } from "../emojis.js";
 import rotations from "../rotations/index.js";
-import { dedent, truncate } from "../utils.js";
+import { dedent, truncate } from "../utils/string.js";
 import createEvent from "./../event.js";
 
 export async function makeChallengeEvents(guild: Guild, overrideDatabase = false) {
@@ -27,7 +27,6 @@ export async function makeChallengeEvents(guild: Guild, overrideDatabase = false
 				scheduledEndTime: challenge.endTime,
 				image: await (await challenge.images(600, 180, "challengesEvent"))[0].toBuffer(),
 				description: truncate(
-					1000,
 					dedent`**Time Periods**
 							${challenge.timePeriods.periods
 								.map((v) =>
@@ -44,6 +43,7 @@ export async function makeChallengeEvents(guild: Guild, overrideDatabase = false
 
 							**Description**
 							${challenge.longDescription}`,
+					1000,
 				),
 			});
 			await database.setMadeChallengeEvent(id);

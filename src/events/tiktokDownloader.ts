@@ -8,18 +8,15 @@ import { createInterface } from "readline";
 import type Client from "../client.js";
 import database from "../database.js";
 import { SQUID_SHUFFLE_EMOJI } from "../emojis.js";
+import { reportError } from "../errorhandler.js";
 import createEvent from "../event.js";
-import logger from "../logger.js";
-import {
-	awaitEvent,
-	canReplaceMessage,
-	embeds,
-	messageHiddenText,
-	parallelSettled,
-	pawait,
-	replaceMessage,
-	reportError,
-} from "../utils.js";
+import { embeds } from "../utils/discord/embeds.js";
+import { canReplaceMessage, replaceMessage } from "../utils/discord/messages.js";
+import { awaitEvent } from "../utils/eventEmitter.js";
+import logger from "../utils/Logger.js";
+import { parallelSettled } from "../utils/promise.js";
+import { pawait } from "../utils/result.js";
+import { messageHiddenText } from "../utils/string.js";
 
 function extractFFmpegRatio(ffmpegOutput: string, totalDurationInSeconds: number) {
 	const timeString = ffmpegOutput.match(/(?<=time=)([^ ]+)/g)?.[0];

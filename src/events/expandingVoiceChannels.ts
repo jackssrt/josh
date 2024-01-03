@@ -1,8 +1,8 @@
 import type { VoiceBasedChannel } from "discord.js";
 import { ChannelType, type CategoryChannel, type CategoryChildChannel, type VoiceChannel } from "discord.js";
 import createEvent from "../event.js";
-import { parallel } from "../utils.js";
-import logger from "./../logger.js";
+import logger from "../utils/Logger.js";
+import { parallel } from "../utils/promise.js";
 
 const SUPERSCRIPT_NUMBERS = ["⁰", "¹", "²", "³", "⁴", "⁵", "⁶", "⁷", "⁸", "⁹"] as const;
 type ChannelData = {

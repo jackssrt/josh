@@ -1,8 +1,11 @@
-import type { Option } from "ts-results-es";
-import { None, Some } from "ts-results-es";
+import { Some } from "ts-results-es";
 import { BOOYAH_EMOJI } from "../emojis.js";
-import Lock from "../lock.js";
-import { flattenOptionArray, getLowerRolesInSameCategory, parallel, search } from "../utils.js";
+import Lock from "../utils/Lock.js";
+import { search } from "../utils/array.js";
+import { parseHex } from "../utils/color.js";
+import { getLowerRolesInSameCategory } from "../utils/discord/roles.js";
+import { flattenOptionArray } from "../utils/option.js";
+import { parallel } from "../utils/promise.js";
 import createCommand from "./../command.js";
 
 export const COLOR_DATA = [
@@ -57,19 +60,6 @@ export const COLOR_DATA = [
 	{ name: "Pastel Orange", value: "F5B498" },
 	{ name: "Pastel Yellow", value: "F5E198" },
 ] as const;
-
-function parseHex(color: string): Option<string> {
-	// Remove the leading '#' if present
-	if (color.startsWith("#")) color = color.slice(1);
-
-	// Check if the hexColor string is valid
-	if (!/^[0-9A-Fa-f]{3}$|^[0-9A-Fa-f]{6}$/.test(color)) return None;
-
-	// Expand the short-hand color notation (e.g., #abc to #aabbcc)
-	if (color.length === 3) color = color.replace(/(.)/g, "$1$1");
-
-	return Some(color);
-}
 
 const colorEmojiLock = new Lock();
 

@@ -25,15 +25,18 @@ import { startCase } from "lodash-es";
 import { spawn } from "node:child_process";
 import path from "node:path";
 import { platform } from "node:process";
-import SyncSignal from "./SyncSignal.js";
 import type { Command, DeferType } from "./command.js";
 import type { ContextMenuItem } from "./contextMenuItem.js";
 import database from "./database.js";
 import { IS_BUILT, IS_DEV } from "./env.js";
+import { reportError } from "./errorhandler.js";
 import type { Event } from "./event.js";
-import logger from "./logger.js";
 import Registry from "./registry.js";
-import { formatTime, parallel, pluralize, reportError } from "./utils.js";
+import logger from "./utils/Logger.js";
+import SyncSignal from "./utils/SyncSignal.js";
+import { parallel } from "./utils/promise.js";
+import { pluralize } from "./utils/string.js";
+import { formatTime } from "./utils/time.js";
 
 export const USER_AGENT = "Josh (source code: https://github.com/jackssrt/josh , make an issue if it's misbehaving)";
 
