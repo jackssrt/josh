@@ -95,7 +95,7 @@ async function reportErrorInner(
 export function reportError(data: ErrorData) {
 	// wait for client to be ready
 	void (async () => {
-		await Client.loadedSyncSignal.await();
+		await Client.loadedSyncSignal;
 		await reportErrorInner(Client.instance!, data);
 	})();
 }

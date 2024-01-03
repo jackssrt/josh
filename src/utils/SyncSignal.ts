@@ -1,17 +1,9 @@
-import { EventEmitter } from "events";
-import { awaitEvent } from "./eventEmitter.js";
-
 export default class SyncSignal {
-	private fired = false;
-	private readonly ee: EventEmitter = new EventEmitter();
-
-	public fire() {
-		this.fired = true;
-		this.ee.emit("fire");
-	}
-
-	public async await() {
-		if (this.fired) return;
-		await awaitEvent(this.ee, "fire");
-	}
+	public readonly promise = new Promise<never>((resolve) => (this.fire = resolve as () => void));
+	// fire is assigned to in the callback of new Promise above
+	public fire: () => void = null!;
+	/**
+	 * This exists to make SyncSignal awaitable
+	 */
+	public then: Promise<never>["then"] = this.promise.then.bind(this.promise);
 }

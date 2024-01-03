@@ -61,7 +61,8 @@ export default class Client<Ready extends boolean = false, Loaded extends boolea
 	public splatfestTeamRoleCategory = undefined as Loaded extends true ? Role : undefined;
 	public announcementsChannel = undefined as Loaded extends true ? NewsChannel : undefined;
 
-	public static loadedSyncSignal = new SyncSignal();
+	// this is static because of the errorhandler
+	public static loadedSyncSignal? = new SyncSignal();
 	public static readonly defaultPresence = {
 		status: "online",
 		activities: [{ type: ActivityType.Competing, name: "Splatoon 3" }],
@@ -200,7 +201,8 @@ export default class Client<Ready extends boolean = false, Loaded extends boolea
 			);
 			logger.info(`Fetching discord objects took ${formatTime((new Date().getTime() - start.getTime()) / 1000)}`);
 			Client.instance = this;
-			Client.loadedSyncSignal.fire();
+			Client.loadedSyncSignal?.fire();
+			delete Client.loadedSyncSignal;
 			if (IS_DEV && platform === "win32")
 				spawn(`powershell.exe`, [
 					"-c",
@@ -213,7 +215,7 @@ export default class Client<Ready extends boolean = false, Loaded extends boolea
 
 		for (const event of this.eventRegistry.values()) {
 			this[event.isOnetime ? "once" : "on"](event.event, async (...params: ClientEvents[typeof event.event]) => {
-				await Client.loadedSyncSignal.await();
+				await Client.loadedSyncSignal;
 				if (await database.getBooleanFlag("log.events")) this.logEvent(event);
 				await event.on({ client: this }, ...params);
 			});
@@ -236,7 +238,7 @@ export default class Client<Ready extends boolean = false, Loaded extends boolea
 			const command = this.commandRegistry.get(interaction.commandName);
 			if (!command) return;
 
-			await Client.loadedSyncSignal.await();
+			await Client.loadedSyncSignal;
 
 			await this.runCommand(interaction, command);
 		});
@@ -248,7 +250,7 @@ export default class Client<Ready extends boolean = false, Loaded extends boolea
 			const item = this.contextMenuItemsRegistry.get(interaction.commandName);
 			if (!item) return;
 
-			await Client.loadedSyncSignal.await();
+			await Client.loadedSyncSignal;
 
 			await this.runContextMenuItem(interaction, item);
 		});
@@ -259,7 +261,7 @@ export default class Client<Ready extends boolean = false, Loaded extends boolea
 			const command = this.commandRegistry.get(interaction.commandName);
 			if (!command) return;
 
-			await Client.loadedSyncSignal.await();
+			await Client.loadedSyncSignal;
 
 			await this.autocompleteCommand(interaction, command);
 		});
