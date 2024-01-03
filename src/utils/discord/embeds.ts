@@ -1,6 +1,6 @@
 import type { Awaitable, InteractionReplyOptions } from "discord.js";
 import { EmbedBuilder } from "discord.js";
-import { parallel } from "../promise";
+import { parallel } from "../promise.js";
 import type { Maybe } from "../types.js";
 
 export type EmbedFactory = (b: EmbedBuilder) => Awaitable<EmbedBuilder>;

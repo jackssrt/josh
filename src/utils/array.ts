@@ -1,7 +1,7 @@
 import levenshtein from "js-levenshtein";
 import type { TupleOf } from "../types/utils.js";
-import { parallel } from "./promise";
-import type { Uncallable } from "./types";
+import { parallel } from "./promise.js";
+import type { Uncallable } from "./types.js";
 
 export function fillArray<T, N extends number>(count: N, value: Uncallable<T> | ((i: number) => T)) {
 	const array = new Array<T>(count);

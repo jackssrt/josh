@@ -1,6 +1,6 @@
 import { Err } from "ts-results-es";
 import { request as undiciRequest } from "undici";
-import { pawait } from "./result";
+import { pawait } from "./result.js";
 
 /**
  * Sends an http request and json-decode the response

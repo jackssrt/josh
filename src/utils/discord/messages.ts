@@ -1,7 +1,7 @@
 import type { Channel, Message, User, Webhook, WebhookMessageCreateOptions } from "discord.js";
 import { GuildMember, MessageFlags } from "discord.js";
 import type Client from "../../client.js";
-import type { WebhookableChannel } from "../../utils";
+import type { WebhookableChannel } from "../../utils.js";
 import { parallel } from "../promise.js";
 
 //#region impersonate
