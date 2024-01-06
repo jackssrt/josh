@@ -9,6 +9,7 @@ export function colorLuminance(r: number, g: number, b: number): number {
 }
 
 /**
+ * Converts a hex string to RGB
  * @link https://stackoverflow.com/a/39077686
  */
 export function hexToRGB(hex: `#${string}`) {
@@ -21,7 +22,12 @@ export function hexToRGB(hex: `#${string}`) {
 		.match(/.{2}/g)
 		?.map((x) => parseInt(x, 16)) as [number, number, number];
 }
-export function parseHex(color: string): Option<string> {
+/**
+ * Parses a string for a hex color
+ * @param color A string possibly containing a hex color
+ * @returns Option of the hex color in lowercase or uppercase, for example: `FF00aa`
+ */
+export function parseHex(color: string): Option<`${string}${string}${string}${string}${string}${string}`> {
 	// Remove the leading '#' if present
 	if (color.startsWith("#")) color = color.slice(1);
 

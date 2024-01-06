@@ -1,3 +1,6 @@
+/**
+ * A queue. First in first out data structure.
+ */
 export class Queue<T> {
 	private elements: T[];
 	private head: number;

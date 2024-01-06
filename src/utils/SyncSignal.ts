@@ -1,3 +1,6 @@
+/**
+ * A signal to sync promises
+ */
 export default class SyncSignal {
 	public readonly promise = new Promise<never>((resolve) => (this.fire = resolve as () => void));
 	// fire is assigned to in the callback of new Promise above

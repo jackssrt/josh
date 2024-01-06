@@ -1,12 +1,16 @@
-import type { GuildMember, Role } from "discord.js";
+import type { GuildMember, Role, Snowflake } from "discord.js";
 import { Collection } from "discord.js";
-
-export function membersWithRoles(roles: Role[]): Collection<string, GuildMember> {
+/**
+ * Gets all the GuildMembers that have *all* provided Roles.
+ * @param roles An array of Roles to check
+ * @returns A collection of GuildMembers keyed by their ids
+ */
+export function membersWithRoles(roles: Role[]): Collection<Snowflake, GuildMember> {
 	return roles.reduce(
 		(acc, v) => {
 			return acc.intersect(v.members);
 		},
-		roles[0]?.members ?? new Collection<string, GuildMember>(),
+		roles[0]?.members ?? new Collection<Snowflake, GuildMember>(),
 	);
 }
 
@@ -30,6 +34,10 @@ export async function getLowerRolesInSameCategory(anchor: Role) {
 	return roles;
 }
 
+/**
+ * Checks whether a role is a category role.
+ * @param role The role to check
+ */
 export function roleIsCategory(role: Role): boolean {
 	return role.name.match(/⠀+[A-Z]/g) !== null && role.hexColor !== "#010101";
 }

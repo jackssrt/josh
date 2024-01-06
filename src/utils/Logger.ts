@@ -4,7 +4,10 @@ import { appendFile } from "node:fs/promises";
 import { inspect } from "node:util";
 import { COLORS_REGEX } from "./regex.js";
 import { isError } from "./types.js";
-
+/**
+ * A logger.
+ * Logs to both the terminal and a file.
+ */
 export class Logger {
 	private static readonly LOG_FILE = `./logs/${new Date().toISOString().replace(/[:.]/g, " ")}.log` as const;
 

@@ -2,6 +2,13 @@ import type { Sharp } from "sharp";
 import sharp from "sharp";
 import { escapeXml } from "./string.js";
 
+/**
+ * Gets an image of the provided text.
+ * @param text The text
+ * @param color The color name to use, for example: `red`, `white`
+ * @param size The text size
+ * @returns A Sharp instance containing the text in png format
+ */
 export async function textImage(text: string, color: string, size: number): Promise<Sharp> {
 	// adding "Dg" forces the text image to be as tall as possible,
 	const img = sharp({
