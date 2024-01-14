@@ -1,4 +1,5 @@
-import { PermissionFlagsBits } from "discord.js";
+import type { InteractionReplyOptions } from "discord.js";
+import { PermissionFlagsBits, codeBlock } from "discord.js";
 import { inspect } from "node:util";
 import type Client from "../client.js";
 import { embeds } from "../utils/discord/embeds.js";
@@ -39,13 +40,22 @@ export default createCommand({
 		client;
 		embeds;
 		impersonate;
+		// this is in a block to prevent eval from accessing the original reply function
+		{
+			const reply = interaction.reply.bind(interaction);
+			interaction.reply = (async (payload: string | InteractionReplyOptions) => {
+				const content = await clean(client, typeof payload === "string" ? payload : payload.content);
+				return await reply({
+					...(typeof payload === "object" ? payload : {}),
+					content: content,
+				});
+			}) as unknown as (typeof interaction)["reply"];
+		}
 		const evaled = eval(
-			`(async function() {\n${interaction.options
-				.getString("code", true)
-				.replace(/client\.token/g, '"[haha no you don\'t]"')}\n})()`,
-		) as unknown;
+			`(async function() {\n${interaction.options.getString("code", true)}\n})()`,
+		) as Promise<unknown>;
 
 		const cleaned = await clean(client, evaled);
-		if (!interaction.replied) await interaction.reply({ content: `\`\`\`js\n${cleaned}\n\`\`\``, ephemeral: true });
+		if (!interaction.replied) await interaction.reply({ content: codeBlock("js", cleaned), ephemeral: true });
 	},
 });
