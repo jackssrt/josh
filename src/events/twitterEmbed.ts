@@ -2,7 +2,7 @@ import database from "../database.js";
 import { canReplaceMessage, replaceMessage } from "../utils/discord/messages.js";
 import createEvent from "./../event.js";
 
-const REGEX = /(?:https?:)?\/\/(?:[A-z]+\.)?(twitter|x)\.com\/@?([A-z0-9_]+)\/status\/([0-9]+)\/?/;
+const REGEX = /(?:https?:)?\/\/(?:[a-zA-Z]+\.)?(twitter|x)\.com\/@?(\w+)\/status\/([0-9]+)\/?/;
 
 export default createEvent({
 	event: "messageCreate",
