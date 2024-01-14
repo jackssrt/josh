@@ -1,6 +1,7 @@
 import type { Channel, Message, User, Webhook, WebhookMessageCreateOptions } from "discord.js";
 import { GuildMember, MessageFlags } from "discord.js";
 import type Client from "../../client.js";
+import database from "../../database.js";
 import type { WebhookableChannel } from "../../utils.js";
 import { parallel } from "../promise.js";
 
@@ -56,7 +57,8 @@ export function canReplaceMessage(message: Message): message is ReplaceableMessa
 /**
  * Replace a message sent by someone to alter the contents, uses {@link impersonate}.\
  * The resulting new message will be \@silent and not ping anyone.\
- * The original message passed in will be deleted if possible.
+ * The original message passed in will be deleted if possible.\
+ * Lets the user delete and edit the replaced message.
  * @param client A ready client to use
  * @param message The message to replace
  * @param newData The new message data
@@ -67,9 +69,8 @@ export async function replaceMessage(
 	message: ReplaceableMessage,
 	newData: string | WebhookMessageCreateOptions,
 ): Promise<[Message, Webhook]> {
-	return (
+	const impersonateReturn = (
 		await parallel(
-			message.deletable && message.delete(),
 			impersonate(client, message.member ?? message.author, message.channel, {
 				flags: MessageFlags.SuppressNotifications,
 				allowedMentions: {
@@ -77,7 +78,10 @@ export async function replaceMessage(
 				},
 				...(typeof newData === "string" ? { content: newData } : newData),
 			}),
+			message.deletable && message.delete(),
 		)
-	)[1];
+	)[0];
+	await database.setReplacedMessage(impersonateReturn[0].id, message.author.id);
+	return impersonateReturn;
 }
 //#endregion

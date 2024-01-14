@@ -42,6 +42,7 @@ export type DatabaseData = {
 	occurrences: Record<string, DatabaseOccurenceData>;
 	announcements: { [K in string]: AnnouncementDataForKey<K> };
 	announcementsMessageIds: Record<Snowflake, [`user-${string}`, EditableAnnouncementMessageIdType]>;
+	replacedMessages: Record<Snowflake, Snowflake>;
 };
 
 class DatabaseBackend<T extends Record<K, unknown>, K extends string> {
@@ -220,6 +221,24 @@ export class Database {
 		// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
 		delete old[id];
 		await this.backend.set("announcements", old);
+	}
+
+	// Replaced messages
+	public async setReplacedMessage(messageId: Snowflake, authorId: Snowflake) {
+		await this.backend.set("replacedMessages", {
+			...(await this.backend.get("replacedMessages", {})),
+			[messageId]: authorId,
+		});
+	}
+	public async getReplacedMessage(messageId: Snowflake) {
+		return (await this.backend.get("replacedMessages", {}))[messageId];
+	}
+	public async deleteReplacedMessage(messageId: Snowflake) {
+		const old = await this.backend.get("replacedMessages", {});
+		// old is a Record<string, _>
+		// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+		delete old[messageId];
+		await this.backend.set("replacedMessages", old);
 	}
 }
 
