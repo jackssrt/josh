@@ -124,7 +124,7 @@ export class Rotations {
 	}
 	public static async fetchSalmonRunGear(): Promise<SalmonRunAPI.MonthlyGear> {
 		const [cachedGearMonth, cachedGear] = await database.getCachedSalmonRunGear();
-		logger.info("salmon run gear fetched, cached:", cachedGearMonth === new Date().getMonth() && cachedGear);
+		logger.info("salmon run gear fetched, cached:", cachedGearMonth === new Date().getMonth() && !!cachedGear);
 		if (cachedGearMonth === new Date().getMonth() && cachedGear) {
 			const validationResult = SalmonRunAPI.monthlyGearSchema.safeParse(cachedGear);
 			if (!validationResult.success)
