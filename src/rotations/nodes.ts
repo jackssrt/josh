@@ -585,6 +585,7 @@ export class SalmonRunNode extends BaseCoopNode<
 			.with("Horrorboros", () => HORRORBOROS_EMOJI)
 			.with("Cohozuna", () => COHOZUNA_EMOJI)
 			.with("Megalodontia", () => MEGALODONTIA_EMOJI)
+			.with("Random", () => "🎲")
 			.exhaustive();
 	}
 	constructor(data: SchedulesAPI.CoopGroupingRegularNode, setting: SchedulesAPI.BaseCoopRegularSetting) {
