@@ -236,7 +236,7 @@ export default class Client<Ready extends boolean = false, Loaded extends boolea
 			if (await database.getBooleanFlag("log.commands")) this.logCommand(interaction);
 
 			const command = this.commandRegistry.get(interaction.commandName);
-			if (!command) return;
+			if (!command) throw Error(`Command ${interaction.commandName} not implemented`);
 
 			await Client.loadedSyncSignal;
 
@@ -248,7 +248,7 @@ export default class Client<Ready extends boolean = false, Loaded extends boolea
 
 			if (await database.getBooleanFlag("log.contextMenuItems")) this.logContextMenuItem(interaction);
 			const item = this.contextMenuItemsRegistry.get(interaction.commandName);
-			if (!item) return;
+			if (!item) throw Error(`Context Menu Item ${interaction.commandName} not implemented`);
 
 			await Client.loadedSyncSignal;
 
@@ -259,7 +259,7 @@ export default class Client<Ready extends boolean = false, Loaded extends boolea
 			if (!interaction.isAutocomplete()) return;
 
 			const command = this.commandRegistry.get(interaction.commandName);
-			if (!command) return;
+			if (!command) throw Error(`Autocomplete ${interaction.commandName} not implemented`);
 
 			await Client.loadedSyncSignal;
 
