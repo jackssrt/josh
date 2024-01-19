@@ -95,7 +95,7 @@ export async function updateStatsMessage(client: Client<true>) {
 			(b) =>
 				b.setTitle("Server information").addFields({
 					name: "Released",
-					value: `${time(new Date(1675696320000), TimestampStyles.RelativeTime)}`,
+					value: time(new Date(1675696320000), TimestampStyles.RelativeTime),
 					inline: true,
 				}),
 			async (b) =>

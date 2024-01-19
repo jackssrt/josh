@@ -335,7 +335,7 @@ export default class Game<State extends GameState = GameState.WaitingForPlayers>
 						.addOptions(
 							this.players.map((v) =>
 								new StringSelectMenuOptionBuilder()
-									.setLabel(`${v.member.displayName}`)
+									.setLabel(v.member.displayName)
 									.setValue(v.member.id),
 							),
 						),

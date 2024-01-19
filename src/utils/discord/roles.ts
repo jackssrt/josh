@@ -6,12 +6,9 @@ import { Collection } from "discord.js";
  * @returns A collection of GuildMembers keyed by their ids
  */
 export function membersWithRoles(roles: Role[]): Collection<Snowflake, GuildMember> {
-	return roles.reduce(
-		(acc, v) => {
-			return acc.intersect(v.members);
-		},
-		roles[0]?.members ?? new Collection<Snowflake, GuildMember>(),
-	);
+	return roles.reduce((acc, v) => {
+		return acc.intersect(v.members);
+	}, roles[0]?.members ?? new Collection<Snowflake, GuildMember>());
 }
 
 /**

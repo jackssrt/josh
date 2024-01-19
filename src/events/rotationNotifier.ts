@@ -35,13 +35,10 @@ async function sendRotation(
 	// delete old message
 	// send message
 	// crosspost message
-	await parallel(
-		async () => {
-			const message = await channel.send(notificationText);
-			await parallel(message.crosspost(), message.edit({ content: "", ...mainMessageData }));
-		},
-		oldMessage.first()?.delete(),
-	);
+	await parallel(async () => {
+		const message = await channel.send(notificationText);
+		await parallel(message.crosspost(), message.edit({ content: "", ...mainMessageData }));
+	}, oldMessage.first()?.delete());
 }
 
 export async function sendSalmonRunRotation(client: Client<true>) {

@@ -23,7 +23,8 @@ export class Queue<T> {
 
 		const item = this.elements[this.head];
 		// this is an array, not a tuple
-		// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+		// this array is only indexed directly
+		// eslint-disable-next-line @typescript-eslint/no-dynamic-delete, @typescript-eslint/no-array-delete
 		delete this.elements[this.head++];
 		return item;
 	}

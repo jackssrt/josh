@@ -96,7 +96,7 @@ export async function downloadTiktokVideos(client: Client<true>, message: Messag
 							] as const
 						).map(([label, ratio]) => ({
 							name: label,
-							value: `${inlineCode(`${Math.round(ratio * 100).toString()}%`)}`,
+							value: inlineCode(`${Math.round(ratio * 100).toString()}%`),
 							inline: true,
 						})),
 					),
