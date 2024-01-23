@@ -189,6 +189,7 @@ export const currentFestTeamSchema = z.object({
 });
 export type CurrentFestTeam = z.infer<typeof currentFestTeamSchema>;
 
+// this may cause a schema error because I don't have the data from a SCHEDULED currentFest
 export const currentFestSchema = (state: "FIRST_HALF" | "SECOND_HALF" | "SCHEDULED") =>
 	baseNodeSchema.extend({
 		id: z.string(),
@@ -198,7 +199,9 @@ export const currentFestSchema = (state: "FIRST_HALF" | "SECOND_HALF" | "SCHEDUL
 		teams: repeatedTuple(currentFestTeamSchema, 3),
 		tricolorStage: tricolorStageSchema,
 	});
-export type CurrentFest<State extends "FIRST_HALF" | "SECOND_HALF"> = z.infer<Call<typeof currentFestSchema, [State]>>;
+export type CurrentFest<State extends "FIRST_HALF" | "SECOND_HALF" | "SCHEDULED"> = z.infer<
+	Call<typeof currentFestSchema, [State]>
+>;
 
 export const festNodeSchema = baseNodeSchema.extend({
 	festMatchSettings: z.tuple([festSettingSchema("CHALLENGE"), festSettingSchema("REGULAR")]).nullable(),
