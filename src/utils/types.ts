@@ -1,4 +1,4 @@
-import type { AnyFunction } from "../types/utils.js";
+import type { AnyFunction } from "../schemas/utils.js";
 
 export type Maybe<T> = T | false | undefined;
 
@@ -15,15 +15,24 @@ export type IfNot<C extends boolean, V, NV = V | undefined> = C extends true ? N
 export type OneOrMore<T> = [T, ...T[]];
 
 /**
- * Excludes functions from T
+ * Excludes functions from T.
  */
 export type Uncallable<T> = T extends AnyFunction ? never : T;
 
 /**
- * Custom type guard for checking if a value is an error.
- * @param e the thing to test
- * @returns e is Error
+ * Any defined type.
  */
-export function isError(e: unknown): e is Error {
-	return e instanceof Error;
-}
+export type defined = NonNullable<unknown>;
+
+/**
+ * Exclude from T those types that are assignable to U.\
+ * U can only have types that are assignable to T.
+ */
+export type StrictExclude<T, U extends T> = Exclude<T, U>;
+
+/**
+ * Makes a tuple with T repeated N times.
+ */
+export type TupleOf<T, N extends number, A extends unknown[] = []> = A["length"] extends N
+	? A
+	: TupleOf<T, N, [T, ...A]>;

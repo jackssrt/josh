@@ -18,8 +18,8 @@ import {
 	SPLATFEST_EMOJI,
 	X_BATTLE_EMOJI,
 } from "../emojis.js";
-import type * as CommonAPI from "../types/common.js";
-import type * as SchedulesAPI from "../types/schedulesApi.js";
+import type * as CommonAPI from "../schemas/common.js";
+import type * as SchedulesAPI from "../schemas/schedulesApi.js";
 import { fillArrayAsync } from "../utils/array.js";
 import { textImage } from "../utils/image.js";
 import { parallel } from "../utils/promise.js";

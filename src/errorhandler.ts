@@ -10,6 +10,15 @@ import { parallel } from "./utils/promise.js";
 import { pawait } from "./utils/result.js";
 import { dedent, truncate } from "./utils/string.js";
 
+/**
+ * Custom type guard for checking if a value is an error.
+ * @param e the thing to test
+ * @returns e is Error
+ */
+export function isError(e: unknown): e is Error {
+	return e instanceof Error;
+}
+
 export type ErrorData = {
 	title: string;
 	affectedUser?: GuildMember | User | undefined;

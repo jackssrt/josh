@@ -2,7 +2,7 @@
 import { z } from "zod";
 import { baseNodeSchema } from "./common.js";
 import type { Call } from "./utils.js";
-import { nodes, repeatedTuple } from "./utils.js";
+import { nodes, repeatedZodTuple } from "./utils.js";
 
 // functions that return a schema are "generic" schemas.
 
@@ -81,7 +81,7 @@ export const vsRuleSchema = z.union([rankedVsRuleSchema, turfWarVsRuleSchema]);
 export type VsRule = z.infer<typeof vsRuleSchema>;
 
 export const baseMatchSettingSchema = z.object({
-	vsStages: repeatedTuple(lowImageQualityStageSchema, 2),
+	vsStages: repeatedZodTuple(lowImageQualityStageSchema, 2),
 	festMatchSettings: z.null().optional(),
 	vsRule: rankedVsRuleSchema.or(turfWarVsRuleSchema),
 });
@@ -164,7 +164,7 @@ export type CoopStage<BigRun extends boolean = false> = z.infer<Call<typeof coop
 export const baseCoopRegularSettingSchema = (bigRun = false) =>
 	z.object({
 		coopStage: coopStageSchema(bigRun),
-		weapons: repeatedTuple(coopWeaponSchema, 4),
+		weapons: repeatedZodTuple(coopWeaponSchema, 4),
 	});
 export type BaseCoopRegularSetting = z.infer<ReturnType<typeof baseCoopRegularSettingSchema>>;
 
@@ -196,7 +196,7 @@ export const currentFestSchema = (state: "FIRST_HALF" | "SECOND_HALF" | "SCHEDUL
 		title: z.string(),
 		midtermTime: z.string(),
 		state: z.literal(state),
-		teams: repeatedTuple(currentFestTeamSchema, 3),
+		teams: repeatedZodTuple(currentFestTeamSchema, 3),
 		tricolorStage: tricolorStageSchema,
 	});
 export type CurrentFest<State extends "FIRST_HALF" | "SECOND_HALF" | "SCHEDULED"> = z.infer<

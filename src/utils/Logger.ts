@@ -2,8 +2,8 @@
 import styles from "ansi-styles";
 import { appendFile } from "node:fs/promises";
 import { inspect } from "node:util";
+import { isError } from "../errorhandler.js";
 import { COLORS_REGEX } from "./regex.js";
-import { isError } from "./types.js";
 /**
  * A logger.
  * Logs to both the terminal and a file.

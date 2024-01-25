@@ -22,7 +22,7 @@ import { onMemberJoin, onMemberLeave } from "../events/joinLeave.js";
 import { updateRoleCategories } from "../events/roleCategories.js";
 import { updateStatsMessage } from "../events/statsMessage.js";
 import rotations from "../rotations/index.js";
-import * as FestivalsAPI from "../types/festivalsApi.js";
+import * as FestivalsAPI from "../schemas/festivalsApi.js";
 import { colorLuminance, hexToRGB } from "../utils/color.js";
 import { request } from "../utils/http.js";
 import { textImage } from "../utils/image.js";

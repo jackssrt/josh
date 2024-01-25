@@ -8,7 +8,7 @@ import {
 	SOCKEYE_STATION_EMOJI,
 	SPAWNING_GROUNDS_EMOJI,
 } from "../emojis.js";
-import type * as SchedulesAPI from "../types/schedulesApi.js";
+import type * as SchedulesAPI from "../schemas/schedulesApi.js";
 
 export abstract class BaseStage {
 	constructor(

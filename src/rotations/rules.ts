@@ -6,7 +6,7 @@ import {
 	SPLAT_ZONES_EMOJI,
 	TOWER_CONTROL_EMOJI,
 } from "../emojis.js";
-import type * as SchedulesAPI from "../types/schedulesApi.js";
+import type * as SchedulesAPI from "../schemas/schedulesApi.js";
 
 type BaseRule = {
 	name: string;

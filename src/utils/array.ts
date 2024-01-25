@@ -1,5 +1,5 @@
 import levenshtein from "js-levenshtein";
-import type { TupleOf } from "../types/utils.js";
+import type { TupleOf } from "../utils/types.js";
 import { parallel } from "./promise.js";
 import type { Uncallable } from "./types.js";
 

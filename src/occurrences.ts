@@ -1,8 +1,8 @@
 import type { Awaitable, Snowflake } from "discord.js";
 import { GuildScheduledEventEntityType, GuildScheduledEventPrivacyLevel } from "discord.js";
+import type { Except } from "type-fest";
 import type Client from "./client.js";
 import database from "./database.js";
-import type { StrictOmit } from "./types/utils.js";
 
 export type OccurrenceUpdateData = {
 	id: string;
@@ -13,7 +13,7 @@ export type OccurrenceUpdateData = {
 };
 
 export type DatabaseOccurenceData = Partial<
-	StrictOmit<OccurrenceUpdateData, "startTime" | "id" | "image"> & {
+	Except<OccurrenceUpdateData, "startTime" | "id" | "image"> & {
 		discordEventId: Snowflake;
 	}
 >;

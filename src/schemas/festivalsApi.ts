@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { baseNodeSchema } from "./common.js";
 import type { Call } from "./utils.js";
-import { nodes, repeatedTuple } from "./utils.js";
+import { nodes, repeatedZodTuple } from "./utils.js";
 
 const festStates = ["FIRST_HALF", "SECOND_HALF", "CLOSED", "SCHEDULED"] as const;
 type FestState = (typeof festStates)[number];
@@ -46,7 +46,7 @@ export const festivalNodeSchema = <State extends FestState>(state: State) =>
 		image: z.object({
 			url: z.string(),
 		}),
-		teams: repeatedTuple(festivalTeamSchema, 3, [state]),
+		teams: repeatedZodTuple(festivalTeamSchema, 3, [state]),
 	});
 export type FestivalNode<State extends FestState> = z.infer<Call<typeof festivalNodeSchema, [State]>>;
 export const regionalFestivalDataSchema = z.object({
