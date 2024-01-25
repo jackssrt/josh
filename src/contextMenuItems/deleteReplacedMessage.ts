@@ -16,5 +16,7 @@ export default createContextMenuItem({
 			});
 		// database.deleteReplacedMessage() gets called by the event handler
 		await interaction.targetMessage.delete();
+		await interaction.reply({ content: "✅", ephemeral: true });
+		await interaction.deleteReply();
 	},
 });
