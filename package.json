@@ -66,6 +66,6 @@
 		"check": "tsc --noEmit && eslint ./src/**/*.ts",
 		"test": "vitest",
 		"debug": "tsc --sourceMap && node ./build/index.js",
-		"prepare": "husky install"
+		"prepare": "husky"
 	}
 }
