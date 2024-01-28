@@ -36,3 +36,15 @@ export type StrictExclude<T, U extends T> = Exclude<T, U>;
 export type TupleOf<T, N extends number, A extends unknown[] = []> = A["length"] extends N
 	? A
 	: TupleOf<T, N, [T, ...A]>;
+
+/**
+ * Returns a union of all the keys of T whose values extend from U
+ * @link https://roblox-ts.com/docs/api/utility-types#extractkeyst-u
+ */
+export type ExtractKeys<T, U> = { [K in keyof T]: T[K] extends U ? K : never }[keyof T];
+
+/**
+ * Returns a new object type of all the keys of T whose values extend from U
+ * @link https://roblox-ts.com/docs/api/utility-types#extractmemberst-u
+ */
+export type ExtractMembers<T, U> = Pick<T, ExtractKeys<T, U>>;

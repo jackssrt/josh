@@ -1,4 +1,4 @@
-import type { PresenceData, Snowflake } from "discord.js";
+import type { Awaitable, PresenceData, Snowflake } from "discord.js";
 import { existsSync } from "fs";
 import { readFile, writeFile } from "fs/promises";
 import type { AnnouncementData, AnnouncementDataForKey, EditableAnnouncementMessageIdType } from "./announcements.js";
@@ -8,6 +8,7 @@ import type * as SchedulesAPI from "./schemas/schedulesApi.js";
 import Lock from "./utils/Lock.js";
 import { parallel } from "./utils/promise.js";
 import { SMALLEST_DATE } from "./utils/time.js";
+import type { ExtractKeys } from "./utils/types.js";
 
 export const DEFAULT_FLAGS = {
 	"tts.voice": "gtts",
@@ -45,7 +46,7 @@ export type DatabaseData = {
 	replacedMessages: Record<Snowflake, Snowflake>;
 };
 
-class DatabaseBackend<T extends Record<K, unknown>, K extends string> {
+class DatabaseBackend<T extends Record<string, unknown>> {
 	private data: T | undefined = undefined;
 	private static readonly PATH = "./database.json";
 	private async load() {
@@ -64,12 +65,55 @@ class DatabaseBackend<T extends Record<K, unknown>, K extends string> {
 		this.data![key] = value;
 		await writeFile(DatabaseBackend.PATH, JSON.stringify(this.data), { encoding: "utf-8" });
 	}
+	public async update<K extends keyof T>(key: K, defaultValue: T[K], updater: (oldValue: T[K]) => Awaitable<T[K]>) {
+		const oldValue = await this.get(key, defaultValue);
+		await this.set(key, await updater(oldValue));
+	}
+	public async setRecordKey<K extends ExtractKeys<T, Record<string, unknown>>>(
+		databaseKey: K,
+		key: keyof T[K],
+		value: T[K][keyof T[K]],
+	) {
+		// you can only pass database keys that have a type of Record<string, unknown> to this function
+		// typescript can't infer that T[K] extends Record<string, unknown>
+		await this.update(
+			databaseKey,
+			{} as T[K] & Record<string, unknown>,
+			(oldValue) =>
+				({
+					...(oldValue as T[K] & Record<string, unknown>),
+					[key]: value,
+				}) as T[K] & Record<string, unknown>,
+		);
+	}
+	public async deleteRecordKey<K extends ExtractKeys<DatabaseData, Record<string, unknown>> & keyof T>(
+		databaseKey: K,
+		key: keyof T[K],
+	) {
+		// you can only pass database keys that have a type of Record<string, unknown> to this function
+		// typescript can't infer that T[K] extends Record<string, unknown>
+		await this.update(databaseKey, {} as T[K] & Record<string, unknown>, (oldValue) => {
+			// oldValue is a Record<string, _>
+			// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+			delete oldValue[key];
+			return oldValue;
+		});
+	}
+	public async appendArray<K extends ExtractKeys<T, unknown[]>>(databaseKey: K, value: T[K][keyof T[K]]) {
+		// you can only pass database keys that have a type of unknown[] to this function
+		// typescript can't infer that T[K] extends unknown[]
+		await this.update(
+			databaseKey,
+			[] as T[K] & unknown[],
+			(oldValue) => [...(oldValue as T[K] & unknown[]), value] as T[K] & unknown[],
+		);
+	}
 }
 
 const madeChallengeEventsLock = new Lock();
 
 export class Database {
-	private readonly backend = new DatabaseBackend<DatabaseData, keyof DatabaseData>();
+	private readonly backend = new DatabaseBackend<DatabaseData>();
 
 	// Splatfest Events
 	public async setSplatfestEventCreated(name: string) {
@@ -113,13 +157,7 @@ export class Database {
 		return !(await this.backend.get("madeChallengeEvents", [])).includes(id);
 	}
 	public async setMadeChallengeEvent(id: string) {
-		await madeChallengeEventsLock.lock(
-			async () =>
-				await this.backend.set("madeChallengeEvents", [
-					...(await this.backend.get("madeChallengeEvents", [])),
-					id,
-				]),
-		);
+		await madeChallengeEventsLock.lock(async () => await this.backend.appendArray("madeChallengeEvents", id));
 	}
 
 	// Static Messages
@@ -127,22 +165,15 @@ export class Database {
 		return (await this.backend.get("staticMessageIds", {}))[id];
 	}
 	public async setStaticMessageId(id: string, messageId: Snowflake) {
-		await this.backend.set("staticMessageIds", {
-			...(await this.backend.get("staticMessageIds", {})),
-			[id]: messageId,
-		});
+		await this.backend.setRecordKey("staticMessageIds", id, messageId);
 	}
 	public async deleteStaticMessageId(id: string) {
-		const old = await this.backend.get("staticMessageIds", {});
-		// old is a Record<string, _>
-		// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
-		delete old[id];
-		await this.backend.set("staticMessageIds", old);
+		await this.backend.deleteRecordKey("staticMessageIds", id);
 	}
 
 	// Invite Records
 	public async setInviteRecord(inviter: Snowflake, invitee: Snowflake) {
-		await this.backend.set("inviteRecords", { ...(await this.backend.get("inviteRecords")), [invitee]: inviter });
+		await this.backend.setRecordKey("inviteRecords", invitee, inviter);
 	}
 	public async getInviteRecord(): Promise<Record<Snowflake, Snowflake>> {
 		return await this.backend.get("inviteRecords", {});
@@ -150,7 +181,7 @@ export class Database {
 
 	// Flags
 	public async setFlag<T extends Flag>(flag: T, value: (typeof DEFAULT_FLAGS)[T]) {
-		await this.backend.set("flags", { ...(await this.backend.get("flags")), [flag]: value });
+		await this.backend.setRecordKey("flags", flag, value);
 	}
 	public async getAllFlags(): Promise<DatabaseData["flags"]> {
 		return await this.backend.get("flags", {});
@@ -176,10 +207,7 @@ export class Database {
 		return (await this.backend.get("occurrences", {}))[id];
 	}
 	public async saveOccurrence(id: string, data: DatabaseOccurenceData) {
-		await this.backend.set("occurrences", {
-			...(await this.backend.get("occurrences", {})),
-			[id]: data,
-		});
+		await this.backend.setRecordKey("occurrences", id, data);
 	}
 
 	// Announcements
@@ -187,10 +215,7 @@ export class Database {
 		return (await this.backend.get("announcements", {}))[id];
 	}
 	public async setAnnouncement(id: string, data: AnnouncementData) {
-		await this.backend.set("announcements", {
-			...(await this.backend.get("announcements", {})),
-			[id]: data,
-		});
+		await this.backend.setRecordKey("announcements", id, data);
 	}
 	public async getAnnouncementByMessageId(messageId: string) {
 		return (await this.backend.get("announcementsMessageIds", {}))[messageId];
@@ -200,45 +225,27 @@ export class Database {
 		id: `user-${string}`,
 		type: EditableAnnouncementMessageIdType,
 	) {
-		await this.backend.set("announcementsMessageIds", {
-			...(await this.backend.get("announcementsMessageIds", {})),
-			[messageId]: [id, type],
-		});
+		await this.backend.setRecordKey("announcementsMessageIds", messageId, [id, type]);
 	}
 	public async unlinkMessageIdFromAnnouncementSource(messageId: string) {
-		const old = await this.backend.get("announcementsMessageIds", {});
-		// old is a Record<string, _>
-		// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
-		delete old[messageId];
-		await this.backend.set("announcementsMessageIds", old);
+		await this.backend.deleteRecordKey("announcementsMessageIds", messageId);
 	}
 	public async getAllAnnouncementIds() {
 		return Object.keys(await this.backend.get("announcements", {}));
 	}
 	public async deleteAnnouncement(id: string) {
-		const old = await this.backend.get("announcements", {});
-		// old is a Record<string, _>
-		// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
-		delete old[id];
-		await this.backend.set("announcements", old);
+		await this.backend.deleteRecordKey("announcements", id);
 	}
 
 	// Replaced messages
 	public async setReplacedMessage(messageId: Snowflake, authorId: Snowflake) {
-		await this.backend.set("replacedMessages", {
-			...(await this.backend.get("replacedMessages", {})),
-			[messageId]: authorId,
-		});
+		await this.backend.setRecordKey("replacedMessages", messageId, authorId);
 	}
 	public async getReplacedMessage(messageId: Snowflake) {
 		return (await this.backend.get("replacedMessages", {}))[messageId];
 	}
 	public async deleteReplacedMessage(messageId: Snowflake) {
-		const old = await this.backend.get("replacedMessages", {});
-		// old is a Record<string, _>
-		// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
-		delete old[messageId];
-		await this.backend.set("replacedMessages", old);
+		await this.backend.deleteRecordKey("replacedMessages", messageId);
 	}
 }
 
