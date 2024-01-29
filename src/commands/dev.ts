@@ -191,7 +191,14 @@ export default createCommand({
 			})
 			.with(P.select(P.union("memberjoin", "memberleave")), async (subcommand) => {
 				const member = interaction.options.getMember("member");
-				if (!(member instanceof GuildMember)) return;
+
+				if (
+					!(member instanceof GuildMember) ||
+					member.user.bot ||
+					member.guild !== client.guild ||
+					process.env.JOIN_IGNORE_IDS.split(",").includes(member.id)
+				)
+					return;
 				if (subcommand === "memberjoin") await onMemberJoin(client, member);
 				else await onMemberLeave(client, member);
 				await interaction.editReply("done");

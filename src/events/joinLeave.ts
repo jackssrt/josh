@@ -1,7 +1,9 @@
-import type { Collection, GuildMember, PartialGuildMember } from "discord.js";
-import { userMention } from "discord.js";
+import type { Collection, PartialGuildMember } from "discord.js";
+import { Colors, GuildMember, userMention } from "discord.js";
 import type Client from "../client.js";
+import database from "../database.js";
 import createEvent from "../event.js";
+import { embeds } from "../utils/discord/embeds.js";
 import { impersonate } from "../utils/discord/messages.js";
 import { membersWithRoles } from "../utils/discord/roles.js";
 
@@ -9,25 +11,44 @@ export async function onMemberJoin(client: Client<true>, member: GuildMember) {
 	const allMembers = membersWithRoles([client.memberRole]);
 	// adds the new member to the collection if they aren't already in it
 	allMembers.set(member.id, member);
+	await database.addMember(member);
 
+	const memberIndex = await database.getMemberIndex(member);
 	await impersonate(
 		client,
 		member,
 		client.joinLeaveChannel,
-		`🟢 ${userMention(member.user.id)} joined, member #${allMembers.size}`,
+		await embeds((b) =>
+			b
+				.setColor(Colors.Green)
+				.setDescription(`**${userMention(member.user.id)} joined**`)
+				.addFields(
+					{ name: "Member #", value: `${memberIndex !== undefined ? memberIndex + 1 : "???"}`, inline: true },
+					{ name: "New member count", value: `${allMembers.size}`, inline: true },
+				),
+		),
 	);
 }
 
 export async function onMemberLeave(client: Client<true>, member: GuildMember | PartialGuildMember) {
 	const allMembers: Collection<string, GuildMember | PartialGuildMember> = membersWithRoles([client.memberRole]);
-	// adds the new member to the collection if they aren't already in it
-	allMembers.set(member.id, member);
+	// remove the old member from the collection if they aren't already removed
+	allMembers.delete(member.id);
 
+	const memberIndex = await database.getMemberIndex(member);
 	await impersonate(
 		client,
-		member.user,
+		member instanceof GuildMember ? member : member.user,
 		client.joinLeaveChannel,
-		`🔴 ${userMention(member.user.id)} left, member #${allMembers.size}`,
+		await embeds((b) =>
+			b
+				.setColor(Colors.Red)
+				.setDescription(`**${userMention(member.user.id)} left**`)
+				.addFields(
+					{ name: "Member #", value: `${memberIndex !== undefined ? memberIndex + 1 : "???"}`, inline: true },
+					{ name: "New member count", value: `${allMembers.size}`, inline: true },
+				),
+		),
 	);
 }
 

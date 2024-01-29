@@ -1,4 +1,4 @@
-import type { Awaitable, PresenceData, Snowflake } from "discord.js";
+import type { Awaitable, GuildMember, PartialGuildMember, PresenceData, Snowflake } from "discord.js";
 import { existsSync } from "fs";
 import { readFile, writeFile } from "fs/promises";
 import type { AnnouncementData, AnnouncementDataForKey, EditableAnnouncementMessageIdType } from "./announcements.js";
@@ -44,7 +44,10 @@ export type DatabaseData = {
 	announcements: { [K in string]: AnnouncementDataForKey<K> };
 	announcementsMessageIds: Record<Snowflake, [`user-${string}`, EditableAnnouncementMessageIdType]>;
 	replacedMessages: Record<Snowflake, Snowflake>;
+	members: Record<Snowflake, number>;
 };
+
+const UPDATE_SKIP = Symbol();
 
 class DatabaseBackend<T extends Record<string, unknown>> {
 	private data: T | undefined = undefined;
@@ -65,9 +68,14 @@ class DatabaseBackend<T extends Record<string, unknown>> {
 		this.data![key] = value;
 		await writeFile(DatabaseBackend.PATH, JSON.stringify(this.data), { encoding: "utf-8" });
 	}
-	public async update<K extends keyof T>(key: K, defaultValue: T[K], updater: (oldValue: T[K]) => Awaitable<T[K]>) {
+	public async update<K extends keyof T>(
+		key: K,
+		defaultValue: T[K],
+		updater: (oldValue: T[K]) => Awaitable<T[K] | typeof UPDATE_SKIP>,
+	) {
 		const oldValue = await this.get(key, defaultValue);
-		await this.set(key, await updater(oldValue));
+		const newValue = await updater(oldValue);
+		if (newValue !== UPDATE_SKIP) await this.set(key, newValue);
 	}
 	public async setRecordKey<K extends ExtractKeys<T, Record<string, unknown>>>(
 		databaseKey: K,
@@ -246,6 +254,24 @@ export class Database {
 	}
 	public async deleteReplacedMessage(messageId: Snowflake) {
 		await this.backend.deleteRecordKey("replacedMessages", messageId);
+	}
+
+	// Members
+	public async addMember(member: GuildMember) {
+		await this.backend.update("members", {}, (old) => {
+			if (old[member.id] === undefined) {
+				old[member.id] = Object.keys(old).length;
+				return old;
+			} else {
+				return UPDATE_SKIP;
+			}
+		});
+	}
+	public async getMemberList() {
+		return await this.backend.get("members", {});
+	}
+	public async getMemberIndex(member: GuildMember | PartialGuildMember) {
+		return (await this.backend.get("members", {}))[member.id];
 	}
 }
 
