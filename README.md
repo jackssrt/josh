@@ -42,6 +42,6 @@ A Splatoon-oriented discord bot for my server! Josh is written in typescript wit
 ## Setup
 
 - Clone the repo
-- Install node v19 and the dependencies with pnpm preferably
+- Install node v18.19.0 and the dependencies with pnpm
 - Create a .env file following the zod schema in [env.ts](https://github.com/jackssrt/josh/blob/main/src/env.ts)
 - Run the dev script in [package.json](https://github.com/jackssrt/josh/blob/main/package.json) or the build and start scripts
