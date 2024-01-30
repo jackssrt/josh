@@ -1,18 +1,15 @@
 import type { Message } from "discord.js";
 import { Colors, MessageType, channelMention, roleMention, userMention } from "discord.js";
-import type Client from "../client.js";
+import database from "../database.js";
 import { BOOYAH_EMOJI } from "../emojis.js";
 import { embeds } from "../utils/discord/embeds.js";
-import { membersWithRoles } from "../utils/discord/roles.js";
 import { dedent, ordinal } from "../utils/string.js";
 import createEvent from "./../event.js";
 
-export async function sendWelcomeMessage(client: Client<true>, message: Message<true>) {
+export async function sendWelcomeMessage(message: Message<true>) {
 	const { member } = message;
 	if (!member) return;
-	const allMembers = membersWithRoles([client.memberRole]);
-	// adds the new member to the collection if they aren't already in it
-	allMembers.set(member.id, member);
+	const memberIndex = await database.getMemberIndex(member);
 	await message.reply({
 		content: `${userMention(member.id)} ${roleMention(process.env.GREETER_ROLE_ID)}`,
 		...(await embeds((b) =>
@@ -24,7 +21,7 @@ export async function sendWelcomeMessage(client: Client<true>, message: Message<
 						and if you want, pick up some more roles in <id:customize>.
 						But most importantly, have fun! ${BOOYAH_EMOJI}`,
 				)
-				.setFooter({ text: `You're our ${ordinal(allMembers.size)} member!` })
+				.setFooter({ text: `You're our ${memberIndex ? ordinal(memberIndex + 1) : "???th"} member!` })
 				.setTimestamp(new Date())
 				.setColor(Colors.Blurple),
 		)),
@@ -42,6 +39,6 @@ export default createEvent({
 		)
 			return;
 		if (process.env.JOIN_IGNORE_IDS.split(",").includes(message.author.id)) return await message.delete();
-		await sendWelcomeMessage(client, message);
+		await sendWelcomeMessage(message);
 	},
 });
