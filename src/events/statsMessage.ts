@@ -15,6 +15,8 @@ import { dedent, escapeXml, pluralize } from "../utils/string.js";
 import type Client from "./../client.js";
 import createEvent from "./../event.js";
 
+const INVITE_GRAPH_NAME_REGEX = /[^ \p{L}]/gu;
+
 async function makeInviteGraph(guild: Guild, invites: Record<Snowflake, Snowflake>): Promise<Buffer> {
 	// Create the graph
 	const graph = createGraph<string>();
@@ -83,7 +85,7 @@ async function makeInviteGraph(guild: Guild, invites: Record<Snowflake, Snowflak
 		svg += dedent`<circle cx="${scaledPos.x}" cy="${scaledPos.y}" r="30" fill="#17a80d"/>`;
 		text += `<text x="${scaledPos.x}" y="${
 			scaledPos.y + 5
-		}" text-anchor="middle" dominant-baseline="middle" fill="white" font-family="splatoon2" font-size="30px">${escapeXml(v.data)}</text>`;
+		}" text-anchor="middle" dominant-baseline="middle" fill="white" font-family="splatoon2" font-size="30px">${escapeXml(v.data.replace(INVITE_GRAPH_NAME_REGEX, "").replace(/  +/g, " ").trim())}</text>`;
 	});
 
 	// Finish drawing
