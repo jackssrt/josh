@@ -18,7 +18,7 @@ import {
 	userMention,
 } from "discord.js";
 import EventEmitter from "node:events";
-import { BOOYAH_EMOJI, OUCH_EMOJI, SQUID_SHUFFLE_EMOJI, VEEMO_PEEK_EMOJI } from "../../emojis.js";
+import { BOOYAH_EMOJI, SQUID_SHUFFLE_EMOJI, VEEMO_PEEK_EMOJI } from "../../emojis.js";
 import { IS_PROD } from "../../env.js";
 import { fillArray, getRandomValues } from "../../utils/array.js";
 import { constructEmbedsWrapper, embeds } from "../../utils/discord/embeds.js";
@@ -559,7 +559,7 @@ export default class Game<State extends GameState = GameState.WaitingForPlayers>
 			this.mainMessage?.edit({
 				...(await embeds((b) =>
 					b
-						.setTitle(`Hide and seek game was aborted ${OUCH_EMOJI}`)
+						.setTitle(`Hide and seek game was aborted :(`)
 						.setDescription("The game was aborted...")
 						.setColor("Red"),
 				)),
