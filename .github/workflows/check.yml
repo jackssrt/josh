@@ -17,6 +17,6 @@ jobs:
                   node-version: latest
                   cache: 'pnpm'
             - name: Install dependencies
-              run: pnpm install
+              run: pnpm install --frozen-lockfile --ignore-scripts
             - name: Run check script
               run: pnpm check
