@@ -16,6 +16,7 @@ import type Client from "./../client.js";
 import createEvent from "./../event.js";
 
 async function makeInviteGraph(guild: Guild, invites: Record<Snowflake, Snowflake>): Promise<Buffer> {
+	// Create the graph
 	const graph = createGraph<string>();
 	await parallel(
 		Object.entries(invites).map(async ([invitee, inviter]) => {
@@ -30,6 +31,7 @@ async function makeInviteGraph(guild: Guild, invites: Record<Snowflake, Snowflak
 		}),
 	);
 
+	// Calculate the layout
 	const layout = createLayout(graph);
 	for (let i = 0; i < 10_000 && !layout.step(); i++) {
 		// pass
@@ -44,6 +46,8 @@ async function makeInviteGraph(guild: Guild, invites: Record<Snowflake, Snowflak
 	graph.forEachNode((v) => {
 		nodes.push(layout.getNodePosition(v.id));
 	});
+
+	// Calculate the scale
 	const smallestX = Math.min(...nodes.map((v) => v.x));
 	const largestX = Math.max(...nodes.map((v) => v.x));
 	const smallestY = Math.min(...nodes.map((v) => v.y));
@@ -58,16 +62,20 @@ async function makeInviteGraph(guild: Guild, invites: Record<Snowflake, Snowflak
 			y: scaleNumber(a.y, [smallestY, largestY], [paddingHeight, height - paddingHeight]) - smallestY,
 		};
 	}
-	let svg = `<svg version="1.1" width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">`;
 
-	// Draw edges
+	// Start drawing
+	let svg = `<svg version="1.1" width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">`;
+	let text = "";
+
+	// Draw links
 	graph.forEachLink((link) => {
 		const posA = scaleVector(layout.getNodePosition(link.fromId));
 		const posB = scaleVector(layout.getNodePosition(link.toId));
 
 		svg += `<line x1="${posA.x}" y1="${posA.y}" x2="${posB.x}" y2="${posB.y}" stroke="#0e7008" stroke-width="10" />`;
 	});
-	let text = "";
+
+	// Draw nodes
 	graph.forEachNode((v) => {
 		const pos = layout.getNodePosition(v.id);
 		const scaledPos = scaleVector(pos);
@@ -75,9 +83,10 @@ async function makeInviteGraph(guild: Guild, invites: Record<Snowflake, Snowflak
 		svg += dedent`<circle cx="${scaledPos.x}" cy="${scaledPos.y}" r="30" fill="#17a80d"/>`;
 		text += `<text x="${scaledPos.x}" y="${
 			scaledPos.y + 5
-		}" text-anchor="middle" dominant-baseline="middle" fill="white" font-family="splatoon2
-			" font-size="30px">${escapeXml(v.data)}</text>`;
+		}" text-anchor="middle" dominant-baseline="middle" fill="white" font-family="splatoon2" font-size="30px">${escapeXml(v.data)}</text>`;
 	});
+
+	// Finish drawing
 	svg += text;
 	svg += "</svg>";
 	return sharp(Buffer.from(svg)).png({ force: true }).toBuffer();
