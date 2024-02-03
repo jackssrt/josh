@@ -42,6 +42,7 @@ async function reportErrorInner(
 	client: Client<true>,
 	{ title, description, error, affectedUser, interaction }: ErrorData,
 ) {
+	affectedUser ??= interaction?.member instanceof GuildMember ? interaction.member : interaction?.user;
 	const parts = ["Error reported:", title];
 	if (description) parts.push(description);
 	if (error) parts.push(inspect(error, { depth: 1 }));
@@ -97,7 +98,7 @@ async function reportErrorInner(
 	);
 	if (result.isErr())
 		logger.error(
-			`Failed to send error report: ${title}\n${embed.embeds[0]?.data.description}\n<@${affectedUser?.id}>`,
+			`Failed to send error report: ${title}\n${embed.embeds[0]?.data?.description}\n<@${affectedUser?.id}>`,
 		);
 }
 
