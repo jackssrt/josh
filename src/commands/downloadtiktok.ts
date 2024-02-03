@@ -1,22 +1,15 @@
-import type { ChildProcessWithoutNullStreams } from "child_process";
-import { spawn } from "child_process";
+import { spawn, type ChildProcessWithoutNullStreams } from "child_process";
 import { randomUUID } from "crypto";
-import { inlineCode, type Message } from "discord.js";
+import { AttachmentBuilder, inlineCode, type ChatInputCommandInteraction } from "discord.js";
 import ffmpegPath from "ffmpeg-static";
+import { createReadStream } from "fs";
 import { unlink } from "fs/promises";
 import { createInterface } from "readline";
-import type Client from "../client.js";
-import database from "../database.js";
+import createCommand from "../command.js";
 import { SQUID_SHUFFLE_EMOJI } from "../emojis.js";
-import { reportError } from "../errorhandler.js";
-import createEvent from "../event.js";
-import { embeds } from "../utils/discord/embeds.js";
-import { canReplaceMessage, replaceMessage } from "../utils/discord/messages.js";
-import { awaitEvent } from "../utils/eventEmitter.js";
 import logger from "../utils/Logger.js";
-import { parallelSettled } from "../utils/promise.js";
-import { pawait } from "../utils/result.js";
-import { messageHiddenText } from "../utils/string.js";
+import { embeds } from "../utils/discord/embeds.js";
+import { awaitEvent } from "../utils/eventEmitter.js";
 
 function extractFFmpegRatio(ffmpegOutput: string, totalDurationInSeconds: number) {
 	const timeString = ffmpegOutput.match(/(?<=time=)([^ ]+)/g)?.[0];
@@ -24,9 +17,10 @@ function extractFFmpegRatio(ffmpegOutput: string, totalDurationInSeconds: number
 	if (hours === undefined || minutes === undefined || seconds === undefined) return;
 	const totalTimeInSeconds = hours * 3600 + minutes * 60 + seconds;
 	// +1 to account for decimals, ytdlp doesn't provide decimal duration only whole seconds.
-	// also doesn't really matter since even if it finishes at 91%. It sets the user's expectation lower :D
+	// also doesn't really matter since even if it finishes before 100%. It sets the user's expectation lower :D
 	return totalTimeInSeconds / (totalDurationInSeconds + 1);
 }
+
 function extractYtdlpInfo(ytdlpOutput: string) {
 	const data = ytdlpOutput.match(/^(\d+),(\d+),(\d+)$/gm)?.[0];
 	if (!data) return;
@@ -34,16 +28,12 @@ function extractYtdlpInfo(ytdlpOutput: string) {
 	return [parseFloat(downloadedBytes) / parseFloat(totalBytes), parseFloat(durationSeconds)] as const;
 }
 
-const tiktokUrlRegex = /https?:\/\/(www\.)?(vm\.tiktok\.com|(m\.)?tiktok\.com)\/(((@[^/]+\/video|v)\/([^/]+))|\S+)/g;
-export async function downloadTiktokVideos(client: Client<true>, message: Message) {
-	const tiktokLink = message.content.match(tiktokUrlRegex)?.[0]?.replace(/\?.*/g, "");
+const TIKTOK_REGEX = /https?:\/\/(www\.)?(vm\.tiktok\.com|(m\.)?tiktok\.com)\/(((@[^/]+\/video|v)\/([^/]+))|\S+)/g;
+export async function downloadTiktokVideo(interaction: ChatInputCommandInteraction) {
+	const tiktokLink = interaction.options.getString("url", true).match(TIKTOK_REGEX)?.[0]?.replace(/\?.*/g, "");
 
-	if (!tiktokLink || !message.member || !canReplaceMessage(message)) return;
-	const content = message.content.replace(tiktokUrlRegex, "<$&>");
-	const [resultMessage, webhook] = await replaceMessage(client, message, {
-		...(await embeds((b) => b.setTitle(`${SQUID_SHUFFLE_EMOJI} Downloading tiktok video`))),
-		content,
-	});
+	if (!tiktokLink) return await interaction.reply({ content: "Invalid link!", ephemeral: true });
+	await interaction.deferReply();
 	let ytDlpRatio: number | undefined = undefined;
 	let ffmpegRatio: number | undefined = undefined;
 	let totalDurationInSeconds: number | undefined = undefined;
@@ -85,7 +75,7 @@ export async function downloadTiktokVideos(client: Client<true>, message: Messag
 	const progressInterval = setInterval(() => {
 		// update progress
 		void (async () => {
-			await webhook.editMessage(resultMessage, {
+			await interaction.editReply({
 				...(await embeds((b) =>
 					b.setTitle(`${SQUID_SHUFFLE_EMOJI} Downloading tiktok video`).addFields(
 						(
@@ -110,56 +100,24 @@ export async function downloadTiktokVideos(client: Client<true>, message: Messag
 	// so I'm manually overriding it to be a string
 	await awaitEvent<ChildProcessWithoutNullStreams, string>(ffmpegProcess, "exit"); // wait for re-encode to finish
 	clearInterval(progressInterval);
-	// get cdn link
-	void webhook.editMessage(resultMessage, {
-		...(await embeds((b) =>
-			b.setTitle(`${SQUID_SHUFFLE_EMOJI} Downloading tiktok video...`).setDescription("Uploading to discord..."),
-		)),
-		content,
-	});
-	const altMessageResult = await pawait(
-		client.alt.send({
-			files: [`./temp/${id}.mp4`],
-		}),
-	);
-	if (altMessageResult.isErr()) {
-		reportError({
-			title: "Tiktok video discord upload failed",
-			affectedUser: message.member,
-			error: altMessageResult.error,
-		});
-		await webhook.editMessage(resultMessage, {
-			...(await embeds((b) => b.setTitle(`Tiktok video download failed :(`).setColor("Red"))),
-			content,
-		});
-		return;
-	}
-	const discordLink = altMessageResult.value.attachments.first()?.url;
-	if (!discordLink) {
-		logger.error("no discord link");
-		return;
-	}
 
 	// clean up and finalize
-	await parallelSettled([
-		message.delete(),
-		unlink(`./temp/${id}.mp4`),
-		webhook.editMessage(resultMessage, {
-			content: `${message.content.replace(tiktokUrlRegex, "<$&>")}${messageHiddenText(discordLink)}`,
+	try {
+		await interaction.editReply({
 			embeds: [],
-		}),
-	]);
+			files: [new AttachmentBuilder(createReadStream(`./temp/${id}.mp4`))],
+		});
+	} finally {
+		await unlink(`./temp/${id}.mp4`);
+	}
 }
 
-export default createEvent({
-	event: "messageCreate",
-	async on({ client }, message) {
-		if (
-			message.guild !== client.guild ||
-			!(await database.getBooleanFlag("message.tiktokDownloader.enabled")) ||
-			message.author.bot
-		)
-			return;
-		await downloadTiktokVideos(client, message);
+export default createCommand({
+	data: (b) =>
+		b
+			.setDescription("Downloads a tiktok video.")
+			.addStringOption((b) => b.setName("url").setDescription("The url to the video").setRequired(true)),
+	async execute({ interaction }) {
+		await downloadTiktokVideo(interaction);
 	},
 });

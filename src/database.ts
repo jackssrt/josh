@@ -22,8 +22,8 @@ export const DEFAULT_FLAGS = {
 	"log.contextMenuItems": "true",
 	"log.discord.warn": "false",
 	"log.discord.debug": "false",
-	"message.fxtwitter.enabled": "true",
-	"message.tiktokDownloader.enabled": "true",
+	"message.twitterEmbed.enabled": "true",
+	"message.tiktokEmbed.enabled": "true",
 	"message.awesomeTroll.target": "",
 } satisfies Record<string, string>;
 export type Flag = keyof typeof DEFAULT_FLAGS;

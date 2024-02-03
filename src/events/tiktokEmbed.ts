@@ -1,6 +1,6 @@
 import database from "../database.js";
 import { canReplaceMessage, replaceMessage } from "../utils/discord/messages.js";
-import { TWEET_LINK_REGEX } from "../utils/regex.js";
+import { TIKTOK_VIDEO_LINK_REGEX } from "../utils/regex.js";
 import createEvent from "./../event.js";
 
 export default createEvent({
@@ -10,11 +10,11 @@ export default createEvent({
 			!canReplaceMessage(message) ||
 			message.guild !== client.guild ||
 			message.author.bot ||
-			!(await database.getBooleanFlag("message.twitterEmbed.enabled"))
+			!(await database.getBooleanFlag("message.tiktokEmbed.enabled"))
 		)
 			return;
-		const newContent = message.content.replace(TWEET_LINK_REGEX, (match, url: string) =>
-			match.replace(url, "fxtwitter"),
+		const newContent = message.content.replace(TIKTOK_VIDEO_LINK_REGEX, (match, domain: string) =>
+			match.replace(domain, "vxtiktok.com"),
 		);
 		if (newContent === message.content) return;
 
