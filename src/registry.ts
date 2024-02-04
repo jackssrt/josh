@@ -11,20 +11,19 @@ export default class Registry<I> extends Collection<string, I> {
 			if (!filename.endsWith("ts") && !filename.endsWith("js")) continue;
 
 			const importName = path.basename(filename, path.extname(filename));
+			const transformedName = nameTransformer?.(importName) ?? importName;
 			const { default: thing } = (await import(`./${path.basename(directory)}/${importName}.js`)) as {
 				default: I | I[] | undefined;
 			};
 			if (thing === undefined)
 				logger.warn(
-					`Failed to import registry item ${nameTransformer?.(importName) ?? importName}${
+					`Failed to import registry item ${transformedName}${
 						nameTransformer ? ` (${importName})` : ""
 					}, no default export`,
 				);
 			else if (Array.isArray(thing))
-				thing.forEach((thingItem, i) =>
-					this.set(`${nameTransformer?.(importName) ?? importName}${i}`, thingItem),
-				);
-			else this.set(nameTransformer?.(importName) ?? importName, thing);
+				thing.forEach((thingItem, i) => this.set(`${transformedName}${i}`, thingItem));
+			else this.set(transformedName, thing);
 		}
 	}
 }
