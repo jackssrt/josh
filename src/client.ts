@@ -351,7 +351,10 @@ export default class Client<Ready extends boolean = false, Loaded extends boolea
 				ephemeral: true,
 			}));
 		if (command.guildOnly && !interaction.inGuild())
-			return void (await interaction.reply("Sorry, this command can only be used in a server..."));
+			return void (await interaction.reply({
+				content: "Sorry, this command can only be used in a server...",
+				ephemeral: true,
+			}));
 		if (command.defer) await interaction.deferReply({ ephemeral: command.defer === "ephemeral" });
 		try {
 			await command.execute({ client: this, interaction });
