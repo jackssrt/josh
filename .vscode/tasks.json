@@ -4,7 +4,9 @@
 		{
 			"type": "npm",
 			"script": "deploy",
-			"problemMatcher": ["$tsc"],
+			"problemMatcher": [
+				"$tsc"
+			],
 			"label": "npm: deploy",
 			"detail": "esno src/deploy.ts",
 			"group": {
@@ -13,9 +15,11 @@
 			}
 		},
 		{
-			"type": "typescript",
-			"tsconfig": "tsconfig.json",
-			"problemMatcher": ["$tsc"],
+			"type": "npm",
+			"script": "build",
+			"problemMatcher": [
+				"$tsc"
+			],
 			"group": "build",
 			"label": "tsc: debug build - tsconfig.json"
 		},
