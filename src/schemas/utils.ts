@@ -1,3 +1,4 @@
+import type { AnyFunction, AnyFunctionReturning } from "@/utils/types.js";
 import type { ZodTuple, ZodTypeAny } from "zod";
 import { z } from "zod";
 import { fillArray } from "../utils/array.js";
@@ -27,9 +28,3 @@ export const nodes = <T extends ZodTypeAny>(value: T) =>
 	z.object({
 		nodes: z.array(value),
 	});
-export type Call<F extends AnyFunction, P extends Parameters<F>> = F extends (...params: P) => infer R ? R : never;
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type AnyFunction = (...args: any[]) => any;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type AnyFunctionReturning<T> = (...args: any[]) => T;

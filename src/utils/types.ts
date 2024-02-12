@@ -1,5 +1,3 @@
-import type { AnyFunction } from "../schemas/utils.js";
-
 export type Maybe<T> = T | false | undefined;
 
 export type If<C extends boolean | null | undefined, V, NV = V | undefined> = C extends true ? V : NV;
@@ -38,13 +36,30 @@ export type TupleOf<T, N extends number, A extends unknown[] = []> = A["length"]
 	: TupleOf<T, N, [T, ...A]>;
 
 /**
- * Returns a union of all the keys of T whose values extend from U
+ * Returns a union of all the keys of T whose values extend from U.
  * @link https://roblox-ts.com/docs/api/utility-types#extractkeyst-u
  */
 export type ExtractKeys<T, U> = { [K in keyof T]: T[K] extends U ? K : never }[keyof T];
 
 /**
- * Returns a new object type of all the keys of T whose values extend from U
+ * Returns a new object type of all the keys of T whose values extend from U.
  * @link https://roblox-ts.com/docs/api/utility-types#extractmemberst-u
  */
 export type ExtractMembers<T, U> = Pick<T, ExtractKeys<T, U>>;
+
+/**
+ * Call the function F in type form with P parameters.
+ */
+export type Call<F extends AnyFunction, P extends Parameters<F>> = F extends (...params: P) => infer R ? R : never;
+
+/**
+ * Any function.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type AnyFunction = (...args: any[]) => any;
+
+/**
+ * Any function that returns T.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type AnyFunctionReturning<T> = (...args: any[]) => T;

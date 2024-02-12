@@ -1,6 +1,6 @@
+import type { Call } from "@/utils/types.js";
 import { z } from "zod";
 import { baseNodeSchema } from "./common.js";
-import type { Call } from "./utils.js";
 import { nodes, repeatedZodTuple } from "./utils.js";
 
 const festStates = ["FIRST_HALF", "SECOND_HALF", "CLOSED", "SCHEDULED"] as const;

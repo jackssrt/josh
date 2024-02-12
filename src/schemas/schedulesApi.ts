@@ -1,7 +1,7 @@
 /* eslint-disable camelcase */
+import type { Call } from "@/utils/types.js";
 import { z } from "zod";
 import { baseNodeSchema } from "./common.js";
-import type { Call } from "./utils.js";
 import { nodes, repeatedZodTuple } from "./utils.js";
 
 // functions that return a schema are "generic" schemas.
