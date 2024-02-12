@@ -1,5 +1,5 @@
 import { parallel } from "../utils/promise.js";
-import createCommand from "./../command.js";
+import createCommand from "./../commandHandler/command.js";
 
 export default createCommand({
 	data: (b) =>

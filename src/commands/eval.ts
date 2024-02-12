@@ -4,7 +4,7 @@ import { inspect } from "node:util";
 import type Client from "../client.js";
 import { embeds } from "../utils/discord/embeds.js";
 import { impersonate } from "../utils/discord/messages.js";
-import createCommand from "./../command.js";
+import createCommand from "./../commandHandler/command.js";
 
 // This function cleans up and prepares the
 // result of our eval command input for sending

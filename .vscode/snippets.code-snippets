@@ -2,7 +2,7 @@
 	"Event": {
 		"prefix": "event",
 		"body": [
-			"import createEvent from \"./../event.js\";",
+			"import createEvent from \"@/commandHandler/event.js\";",
 			"",
 			"export default createEvent({",
 			"\tevent: \"${1:event}\",",
@@ -17,7 +17,7 @@
 	"Command": {
 		"prefix": "command",
 		"body": [
-			"import createCommand from \"../command.js\";",
+			"import createCommand from \"@/commandHandler/command.js\";",
 			"",
 			"export default createCommand({",
 			"\tdata: (b) => b.setDescription(\"${1}\"),",
@@ -29,10 +29,35 @@
 		],
 		"description": "Command"
 	},
+	"Subcommand": {
+		"prefix": "subcommand",
+		"body": [
+			"import createSubcommand from \"@/commandHandler/subcommand.js\";",
+			"",
+			"export default createSubcommand({",
+			"\tdata: (b) => b.setDescription(\"${1}\"),",
+			"\tasync execute({ client, interaction }) {",
+			"\t\t${0}",
+			"\t},",
+			"});",
+			""
+		],
+		"description": "Command"
+	},
+	"SubcommandGroup": {
+		"prefix": "subcommandGroup",
+		"body": [
+			"import createSubcommandGroup from \"@/commandHandler/subcommandGroup.js\";",
+			"",
+			"export default createSubcommandGroup((b) => b.setDescription(\"${1}\"));",
+			""
+		],
+		"description": "Command"
+	},
 	"ContextMenuItem": {
 		"prefix": "contextMenuItem",
 		"body": [
-			"import createContextMenuItem from \"../contextMenuItem.js\";",
+			"import createContextMenuItem from \"@/commandHandler/contextMenuItem.js\";",
 			"",
 			"export default createContextMenuItem({",
 			"\ttype: \"${1|Message,User|}\",",

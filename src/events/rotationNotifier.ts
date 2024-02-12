@@ -7,7 +7,7 @@ import { embeds } from "../utils/discord/embeds.js";
 import { parallel } from "../utils/promise.js";
 import type { Maybe } from "../utils/types.js";
 import type Client from "./../client.js";
-import createEvent from "./../event.js";
+import createEvent from "./../commandHandler/event.js";
 
 const FUTURE_ROTATIONS_COUNT = 3;
 

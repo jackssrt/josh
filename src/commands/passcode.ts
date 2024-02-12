@@ -1,5 +1,5 @@
 import { randomInt } from "crypto";
-import createCommand from "./../command.js";
+import createCommand from "./../commandHandler/command.js";
 
 export default createCommand({
 	data: (b) =>

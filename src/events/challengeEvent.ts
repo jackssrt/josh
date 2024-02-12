@@ -4,7 +4,7 @@ import database from "../database.js";
 import { EMPTY_EMOJI, SUB_EMOJI } from "../emojis.js";
 import rotations from "../rotations/index.js";
 import { dedent, truncate } from "../utils/string.js";
-import createEvent from "./../event.js";
+import createEvent from "./../commandHandler/event.js";
 
 export async function makeChallengeEvents(guild: Guild, overrideDatabase = false) {
 	await Promise.all(

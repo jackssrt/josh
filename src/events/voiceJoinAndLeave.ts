@@ -1,6 +1,6 @@
 import database from "../database.js";
 import { cleanForSpeaking, queueSound, textToSpeech } from "../voice.js";
-import createEvent from "./../event.js";
+import createEvent from "./../commandHandler/event.js";
 
 export default createEvent({
 	event: "voiceStateUpdate",

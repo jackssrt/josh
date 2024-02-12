@@ -6,7 +6,7 @@ import database from "../database.js";
 import { parallel } from "../utils/promise.js";
 import { pawait } from "../utils/result.js";
 import { cleanForSpeaking, cleanName, queueSound, textToSpeech } from "../voice.js";
-import createEvent from "./../event.js";
+import createEvent from "./../commandHandler/event.js";
 const lastNames = new Collection<Snowflake, string>();
 
 async function queueTextToSpeechInChannel(client: Client<true>, channel: VoiceBasedChannel, message: Message<true>) {
@@ -45,7 +45,7 @@ export default createEvent({
 		const result = await pawait(
 			parallel(
 				async () => {
-					const memberVoiceChannel = message.member?.voice.channel;
+					const memberVoiceChannel = message.member!.voice.channel;
 
 					if (memberVoiceChannel) {
 						await queueTextToSpeechInChannel(client, memberVoiceChannel, message);
@@ -76,3 +76,8 @@ export default createEvent({
 		if (result.isErr()) await message.react("❌");
 	},
 });
+
+const x = {
+	a: undefined as { b: { c: string } } | undefined,
+};
+x.a?.b.c;

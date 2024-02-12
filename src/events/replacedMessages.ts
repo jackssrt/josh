@@ -1,5 +1,5 @@
 import database from "../database.js";
-import createEvent from "./../event.js";
+import createEvent from "./../commandHandler/event.js";
 
 export default createEvent({
 	event: "messageDelete",

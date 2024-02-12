@@ -1,5 +1,5 @@
 import { randomInt } from "node:crypto";
-import createCommand from "./../command.js";
+import createCommand from "./../commandHandler/command.js";
 import Game from "./hideandseek/Game.js";
 
 export default createCommand({

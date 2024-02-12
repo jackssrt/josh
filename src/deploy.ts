@@ -5,6 +5,7 @@ import {
 	REST,
 	Routes,
 	SlashCommandBuilder,
+	type SlashCommandSubcommandBuilder,
 } from "discord.js";
 import * as dotenv from "dotenv";
 import { startCase } from "lodash-es";
@@ -15,16 +16,49 @@ dotenv.config();
 export async function deploy(guildId: string) {
 	const client = (await Client.new()) as Client<boolean, boolean>;
 	await (client as Client).load();
-	const commands = client.commandRegistry.map((command, key) =>
-		command
-			.data(
-				new SlashCommandBuilder()
-					.setName(key)
-					.setDescription("This command does something...")
-					.setDefaultMemberPermissions(command.ownerOnly ? PermissionFlagsBits.Administrator : undefined),
-			)
-			.toJSON(),
-	);
+	const commands = client.commandRegistry.map((command, key) => {
+		// Register command
+		const b = new SlashCommandBuilder()
+			.setName(key)
+			.setDescription("This command does something...")
+			.setDMPermission(command.guildOnly)
+			.setDefaultMemberPermissions(command.ownerOnly ? PermissionFlagsBits.Administrator : undefined);
+
+		// Register subcommands
+		command.subcommands.forEach((subcommand, subcommandName) =>
+			b.addSubcommand(
+				(subcommandBuilder) =>
+					subcommand.data(
+						subcommandBuilder.setName(subcommandName).setDescription("This subcommand does something..."),
+					) as SlashCommandSubcommandBuilder,
+			),
+		);
+
+		// Register subcommandGroups
+		command.subcommandGroups.forEach((subcommandGroup, subcommandGroupName) =>
+			b.addSubcommandGroup((subcommandGroupBuilder) => {
+				subcommandGroupBuilder = subcommandGroup.data(
+					subcommandGroupBuilder
+						.setName(subcommandGroupName)
+						.setDescription("This subcommand group does something..."),
+				);
+
+				// Register subcommands in subcommandGroups
+				subcommandGroup.subcommands.forEach((subcommandGroupSubcommand, subcommandGroupSubcommandName) =>
+					subcommandGroupBuilder.addSubcommand(
+						(subcommandGroupSubcommandBuilder) =>
+							subcommandGroupSubcommand.data(
+								subcommandGroupSubcommandBuilder
+									.setName(subcommandGroupSubcommandName)
+									.setDescription("This subcommand does something..."),
+							) as SlashCommandSubcommandBuilder,
+					),
+				);
+				return subcommandGroupBuilder;
+			}),
+		);
+		return command.data(b).toJSON();
+	});
 	const contextMenuItems = client.contextMenuItemsRegistry.map((item, key) =>
 		item
 			.data(

@@ -1,18 +1,18 @@
 import { userMention } from "discord.js";
 import { fillArray, getRandomValues } from "../utils/array.js";
-import createCommand from "./../command.js";
+import createCommand from "./../commandHandler/command.js";
 
 export default createCommand({
-	data(b) {
+	data: (b) => {
 		b.setDescription("Picks a random user for you");
-		fillArray(25, (i) =>
+		for (let i = 0; i < 25; i++) {
 			b.addUserOption((b) =>
 				b
 					.setName(`user${i + 1 === 1 ? "" : i + 1}`)
 					.setRequired(i < 2)
 					.setDescription(`User number ${i + 1}`),
-			),
-		);
+			);
+		}
 		return b;
 	},
 	async execute({ interaction }) {

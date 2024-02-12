@@ -5,7 +5,7 @@ import ffmpegPath from "ffmpeg-static";
 import { createReadStream } from "fs";
 import { unlink } from "fs/promises";
 import { createInterface } from "readline";
-import createCommand from "../command.js";
+import createCommand from "../commandHandler/command.js";
 import { SQUID_SHUFFLE_EMOJI } from "../emojis.js";
 import logger from "../utils/Logger.js";
 import { embeds } from "../utils/discord/embeds.js";

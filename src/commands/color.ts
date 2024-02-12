@@ -6,7 +6,7 @@ import { parseHex } from "../utils/color.js";
 import { getLowerRolesInSameCategory } from "../utils/discord/roles.js";
 import { flattenOptionArray } from "../utils/option.js";
 import { parallel } from "../utils/promise.js";
-import createCommand from "./../command.js";
+import createCommand from "./../commandHandler/command.js";
 
 export const COLOR_DATA = [
 	{ name: "Blue Raspberry", value: "1FE2F3" },

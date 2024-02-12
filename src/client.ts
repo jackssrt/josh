@@ -25,12 +25,14 @@ import { startCase } from "lodash-es";
 import { spawn } from "node:child_process";
 import path from "node:path";
 import { platform } from "node:process";
-import type { Command, DeferType } from "./command.js";
-import type { ContextMenuItem } from "./contextMenuItem.js";
+import type { Command } from "./commandHandler/command.js";
+import type { ContextMenuItem } from "./commandHandler/contextMenuItem.js";
+import type { Event } from "./commandHandler/event.js";
+import type { Subcommand } from "./commandHandler/subcommand.js";
+import CommandRegistry, { type CommandRegistryItem } from "./commandRegistry.js";
 import database from "./database.js";
 import { IS_BUILT, IS_DEV } from "./env.js";
 import { reportError } from "./errorhandler.js";
-import type { Event } from "./event.js";
 import Registry from "./registry.js";
 import logger from "./utils/Logger.js";
 import SyncSignal from "./utils/SyncSignal.js";
@@ -42,7 +44,7 @@ export const USER_AGENT = "Josh (source code: https://github.com/jackssrt/josh ,
 
 export default class Client<Ready extends boolean = false, Loaded extends boolean = true> extends DiscordClient<Ready> {
 	public static instance: Client<true> | undefined = undefined;
-	public commandRegistry = new Registry<Command<DeferType>>();
+	public commandRegistry = new CommandRegistry();
 	public eventRegistry = new Registry<Event<keyof ClientEvents>>();
 	public contextMenuItemsRegistry = new Registry<ContextMenuItem<"User" | "Message">>();
 	public guild = undefined as Loaded extends true ? Guild : undefined;
@@ -115,7 +117,7 @@ export default class Client<Ready extends boolean = false, Loaded extends boolea
 		const start = new Date();
 
 		await parallel(
-			this.commandRegistry.loadFromDirectory(`./${dirName}/commands`),
+			this.commandRegistry.loadFromDirectory(),
 			this.eventRegistry.loadFromDirectory(`./${dirName}/events`),
 			this.contextMenuItemsRegistry.loadFromDirectory(`./${dirName}/contextMenuItems`, startCase),
 		);
@@ -126,31 +128,60 @@ export default class Client<Ready extends boolean = false, Loaded extends boolea
 			});
 		});
 
-		// sanity checks
+		//#region Sanity checks
 		/* eslint-disable @typescript-eslint/no-unnecessary-condition */
+		function sanityCheckFail(item: string, key: string, reason: string) {
+			logger.error(`${key} ${item} failed sanity check, ${reason} not defined`);
+		}
+		// sanity check commands
 		this.commandRegistry.forEach((v, k) => {
-			function fail(reason: string) {
-				logger.error(`${k} command failed sanity check, ${reason} not defined`);
-			}
-			if (!v.data) fail("data");
-			if (!v.execute) fail("execute");
+			const fail = sanityCheckFail.bind(this, "command", k);
+
+			if (!v.data) fail("data()");
+			// no execute function and no subcommands or subcommandGroups
+			if (!v.execute && !v.subcommandGroups.size && !v.subcommands.size) fail("execute()");
+
+			// sanity check subcommands
+			v.subcommands.forEach((v2, k2) => {
+				const fail = sanityCheckFail.bind(this, "subcommand", `${k} ${k2}`);
+
+				if (!v2.data) fail("data()");
+				if (!v2.execute) fail("execute()");
+			});
+
+			// sanity check subcommandGroups
+			v.subcommandGroups.forEach((v2, k2) => {
+				const fail = sanityCheckFail.bind(this, "subcommandGroup", `${k} ${k2}`);
+
+				if (!v2.data) fail("data()");
+				v2.subcommands.forEach((v3, k3) => {
+					const fail = sanityCheckFail.bind(this, "subcommand in subcommandGroup", `${k} ${k2} ${k3}`);
+
+					if (!v3.data) fail("data()");
+					if (!v3.execute) fail("execute()");
+				});
+			});
 		});
+
+		// sanity check events
 		this.eventRegistry.forEach((v, k) => {
-			function fail(reason: string) {
-				logger.error(`${k} event failed sanity check, ${reason} not defined`);
-			}
+			const fail = sanityCheckFail.bind(this, "event", k);
+
 			if (!v.event) fail("event");
 			if (!v.on) fail("on()");
 		});
+
+		// sanity check contextMenuItems
 		this.contextMenuItemsRegistry.forEach((v, k) => {
-			function fail(reason: string) {
-				logger.error(`${k} contextMenuItem failed sanity check, ${reason} not defined`);
-			}
-			if (!v.data) fail("data");
+			const fail = sanityCheckFail.bind(this, "contextMenuItem", k);
+
+			if (!v.data) fail("data()");
 			if (!v.execute) fail("execute()");
 			if (!v.type) fail("type");
 		});
 		/* eslint-enable @typescript-eslint/no-unnecessary-condition */
+		//#endregion Sanity checks
+
 		const end = new Date();
 		logger.info(`Loaded ${this.eventRegistry.size} ${pluralize("event", this.eventRegistry.size)}`);
 		logger.info(
@@ -305,9 +336,11 @@ export default class Client<Ready extends boolean = false, Loaded extends boolea
 	private async autocompleteCommand(
 		this: Client<true>,
 		interaction: AutocompleteInteraction,
-		command: Command<DeferType>,
+		command: CommandRegistryItem,
 	) {
-		await command.autocomplete?.({ client: this, interaction });
+		const subcommandName = interaction.options.getSubcommand(false);
+		const executable = subcommandName ? this.getSubcommand(interaction, subcommandName, command) : command;
+		await executable.autocomplete?.({ client: this, interaction });
 	}
 
 	private logCommand(interaction: ChatInputCommandInteraction) {
@@ -336,36 +369,86 @@ export default class Client<Ready extends boolean = false, Loaded extends boolea
 		logger.debug(parts.join(" "));
 	}
 
-	private async runCommand(
+	private async restrictCommand(
 		this: Client<true>,
 		interaction: ChatInputCommandInteraction,
-		command: Command<DeferType>,
+		command: Command | Subcommand,
 	) {
 		if (
 			(command.ownerOnly && interaction.user !== this.owner.user) ||
 			(command.userAllowList &&
 				!(command.userAllowList.includes(interaction.user.id) || interaction.user === this.owner.user))
-		)
-			return void (await interaction.reply({
+		) {
+			await interaction.reply({
 				content: "Sorry, you aren't allowed to use this command...",
 				ephemeral: true,
-			}));
-		if (command.guildOnly && !interaction.inGuild())
-			return void (await interaction.reply({
+			});
+			return false;
+		}
+		if (command.guildOnly && !interaction.inCachedGuild()) {
+			await interaction.reply({
 				content: "Sorry, this command can only be used in a server...",
 				ephemeral: true,
-			}));
-		if (command.defer) await interaction.deferReply({ ephemeral: command.defer === "ephemeral" });
-		try {
-			await command.execute({ client: this, interaction });
-		} catch (e) {
-			reportError({
-				title: `Command error: /${interaction.commandName}`,
-				description: "An error was thrown while running a command.",
-				error: e as Error,
-				affectedUser: interaction.member instanceof GuildMember ? interaction.member : interaction.user,
-				interaction,
 			});
+			return false;
+		}
+		return true;
+	}
+
+	private getSubcommand(
+		interaction: ChatInputCommandInteraction | AutocompleteInteraction,
+		subcommandName: string,
+		command: CommandRegistryItem,
+	) {
+		const subcommandGroup = interaction.options.getSubcommandGroup();
+		const subcommands = subcommandGroup
+			? command.subcommandGroups.get(subcommandGroup)?.subcommands
+			: command.subcommands;
+		if (!subcommands) throw new Error(`SubcommandGroup ${subcommandGroup} in /${interaction.commandName}`);
+		const subcommand = subcommands.get(subcommandName);
+		if (!subcommand)
+			throw new Error(
+				`Subcommand ${subcommandName} in ${subcommandGroup ? `${subcommandGroup} of ` : ""}${interaction.commandName}`,
+			);
+		return subcommand;
+	}
+
+	private async runCommand(
+		this: Client<true>,
+		interaction: ChatInputCommandInteraction,
+		command: CommandRegistryItem,
+	) {
+		if (!(await this.restrictCommand(interaction, command))) return;
+		const subcommandName = interaction.options.getSubcommand(false);
+		if (!subcommandName) {
+			if (command.defer) await interaction.deferReply({ ephemeral: command.defer === "ephemeral" });
+			try {
+				// already reported by sanity checks
+				await command.execute!({ client: this, interaction });
+			} catch (e) {
+				reportError({
+					title: `Command error: /${interaction.commandName}`,
+					description: "An error was thrown while running a command.",
+					error: e as Error,
+					affectedUser: interaction.member instanceof GuildMember ? interaction.member : interaction.user,
+					interaction,
+				});
+			}
+		} else {
+			const subcommand = this.getSubcommand(interaction, subcommandName, command);
+			if (!(await this.restrictCommand(interaction, subcommand))) return;
+			if (subcommand.defer) await interaction.deferReply({ ephemeral: subcommand.defer === "ephemeral" });
+			try {
+				await subcommand.execute({ client: this, interaction });
+			} catch (e) {
+				reportError({
+					title: `Command error: /${interaction.commandName}`,
+					description: "An error was thrown while running a command.",
+					error: e as Error,
+					affectedUser: interaction.member instanceof GuildMember ? interaction.member : interaction.user,
+					interaction,
+				});
+			}
 		}
 	}
 }

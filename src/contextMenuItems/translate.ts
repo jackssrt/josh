@@ -1,6 +1,6 @@
 import { GuildMember } from "discord.js";
 import { z } from "zod";
-import createContextMenuItem from "../contextMenuItem.js";
+import createContextMenuItem from "../commandHandler/contextMenuItem.js";
 import { reportError } from "../errorhandler.js";
 import { request } from "../utils/http.js";
 import { pawait } from "../utils/result.js";

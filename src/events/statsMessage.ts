@@ -13,7 +13,7 @@ import { scaleNumber } from "../utils/math.js";
 import { parallel } from "../utils/promise.js";
 import { dedent, escapeXml, pluralize } from "../utils/string.js";
 import type Client from "./../client.js";
-import createEvent from "./../event.js";
+import createEvent from "./../commandHandler/event.js";
 
 const INVITE_GRAPH_NAME_REGEX = /[^ \p{L}]/gu;
 

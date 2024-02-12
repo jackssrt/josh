@@ -1,8 +1,8 @@
 import type { Collection, PartialGuildMember } from "discord.js";
 import { Colors, GuildMember, userMention } from "discord.js";
 import type Client from "../client.js";
+import createEvent from "../commandHandler/event.js";
 import database from "../database.js";
-import createEvent from "../event.js";
 import { embeds } from "../utils/discord/embeds.js";
 import { impersonate } from "../utils/discord/messages.js";
 import { membersWithRoles } from "../utils/discord/roles.js";

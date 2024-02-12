@@ -1,6 +1,6 @@
 import { AttachmentBuilder } from "discord.js";
 import { inspect } from "node:util";
-import createContextMenuItem from "./../contextMenuItem.js";
+import createContextMenuItem from "./../commandHandler/contextMenuItem.js";
 
 export default createContextMenuItem({
 	type: "Message",

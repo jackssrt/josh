@@ -2,7 +2,7 @@ import { match } from "ts-pattern";
 import type { AnnouncementData } from "../announcements.js";
 import { updateUserAnnouncement } from "../announcements.js";
 import database from "../database.js";
-import createEvent from "./../event.js";
+import createEvent from "./../commandHandler/event.js";
 
 export default createEvent({
 	event: "messageUpdate",

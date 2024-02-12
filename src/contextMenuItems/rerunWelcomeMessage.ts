@@ -1,6 +1,6 @@
 import { MessageType } from "discord.js";
 import { sendWelcomeMessage } from "../events/welcomeMessage.js";
-import createContextMenuItem from "./../contextMenuItem.js";
+import createContextMenuItem from "./../commandHandler/contextMenuItem.js";
 
 export default createContextMenuItem({
 	type: "Message",

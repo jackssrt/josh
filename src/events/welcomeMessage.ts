@@ -4,7 +4,7 @@ import database from "../database.js";
 import { BOOYAH_EMOJI } from "../emojis.js";
 import { embeds } from "../utils/discord/embeds.js";
 import { dedent, ordinal } from "../utils/string.js";
-import createEvent from "./../event.js";
+import createEvent from "./../commandHandler/event.js";
 
 export async function sendWelcomeMessage(message: Message<true>) {
 	const { member } = message;

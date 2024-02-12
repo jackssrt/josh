@@ -1,4 +1,4 @@
-import createContextMenuItem from "../contextMenuItem.js";
+import createContextMenuItem from "../commandHandler/contextMenuItem.js";
 import database from "../database.js";
 
 export default createContextMenuItem({

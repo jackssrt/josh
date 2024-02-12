@@ -1,6 +1,6 @@
 import type { VoiceBasedChannel } from "discord.js";
 import { ChannelType, type CategoryChannel, type CategoryChildChannel, type VoiceChannel } from "discord.js";
-import createEvent from "../event.js";
+import createEvent from "../commandHandler/event.js";
 import logger from "../utils/Logger.js";
 import { parallel } from "../utils/promise.js";
 
