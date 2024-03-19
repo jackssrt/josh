@@ -219,8 +219,8 @@ export class Database {
 	}
 
 	// Announcements
-	public async getAnnouncement<T extends string>(id: T): Promise<AnnouncementDataForKey<T>> {
-		return (await this.backend.get("announcements", {}))[id];
+	public async getAnnouncement<T extends string>(id: T) {
+		return (await this.backend.get("announcements", {}))[id] as AnnouncementDataForKey<T>;
 	}
 	public async setAnnouncement(id: string, data: AnnouncementData) {
 		await this.backend.setRecordKey("announcements", id, data);
