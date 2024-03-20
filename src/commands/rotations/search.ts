@@ -33,7 +33,7 @@ export default createSubcommand({
 		if (matched.every((v) => v.length === 0)) throw new Error("Couldn't find gamemode, try again later...");
 
 		const rule = RULE_MAP[gamemode];
-		await interaction.editReply(
+		await interaction.reply(
 			await embeds((b) =>
 				b
 					.setTitle(`${rule.name} rotations`)

@@ -43,7 +43,7 @@ export default createSubcommand({
 			.exhaustive();
 		const displayNode = (nodes as PoppingTimePeriodCollection<BaseNode | undefined>).periods.find((v) => !!v);
 		if (!displayNode) throw new Error("Couldn't find rotation type, try again later...");
-		await interaction.editReply(
+		await interaction.reply(
 			await embeds((b) =>
 				b
 					.setTitle(`${displayNode.emoji} ${displayNode.name} rotations`)
