@@ -149,6 +149,7 @@ export const coopStageSchema = (bigRun = false) =>
 					"Gone Fission Hydroplant",
 					"Jammin' Salmon Junction",
 					"Salmonid Smokeyard",
+					"Bonerattle Arena",
 					"",
 				])
 			: z.string(),

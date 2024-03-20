@@ -31,6 +31,7 @@ export const MAROONERS_BAY_EMOJI = "<:maroonersBay:1152240518672158762>";
 export const SOCKEYE_STATION_EMOJI = "<:sockeyeStation:1152240519926251621>";
 export const JAMMIN_SALMON_JUNCTION_EMOJI = "<:jamminSalmonJunction:1160235437420449832>";
 export const SALMONID_SMOKEYARD_EMOJI = "<:salmonidSmokeyard:1160235434568323204>";
+export const BONERATTLE_ARENA_EMOJI = "<:bonerattleArena:1220054888378142760>";
 
 // ## King salmonids
 export const COHOZUNA_EMOJI = "<:cohozuna:1152240510585552916>";

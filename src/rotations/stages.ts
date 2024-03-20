@@ -1,5 +1,6 @@
 import { match } from "ts-pattern";
 import {
+	BONERATTLE_ARENA_EMOJI,
 	BULLET_EMOJI,
 	GONE_FISSION_HYDROPLANT_EMOJI,
 	JAMMIN_SALMON_JUNCTION_EMOJI,
@@ -54,6 +55,7 @@ export class CoopStage extends BaseCoopStage {
 		| "Gone Fission Hydroplant"
 		| "Jammin' Salmon Junction"
 		| "Salmonid Smokeyard"
+		| "Bonerattle Arena"
 		| "???";
 
 	constructor(data: SchedulesAPI.CoopStage) {
@@ -65,6 +67,7 @@ export class CoopStage extends BaseCoopStage {
 			.with("Sockeye Station", () => SOCKEYE_STATION_EMOJI)
 			.with("Jammin' Salmon Junction", () => JAMMIN_SALMON_JUNCTION_EMOJI)
 			.with("Salmonid Smokeyard", () => SALMONID_SMOKEYARD_EMOJI)
+			.with("Bonerattle Arena", () => BONERATTLE_ARENA_EMOJI)
 			.otherwise(() => BULLET_EMOJI);
 	}
 }
