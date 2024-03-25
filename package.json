@@ -25,7 +25,7 @@
 		"lodash-es": "^4.17.21",
 		"ngraph.forcelayout": "^3.3.1",
 		"ngraph.graph": "^20.0.1",
-		"sharp": "^0.33.2",
+		"sharp": "^0.33.3",
 		"sodium-native": "^4.0.10",
 		"ts-pattern": "^5.0.8",
 		"ts-results-es": "4.1.0",
