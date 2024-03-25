@@ -26,7 +26,7 @@
 		"ngraph.forcelayout": "^3.3.1",
 		"ngraph.graph": "^20.0.1",
 		"sharp": "^0.33.2",
-		"sodium-native": "^4.0.10",
+		"sodium-native": "^4.1.1",
 		"ts-pattern": "^5.0.8",
 		"ts-results-es": "4.1.0",
 		"undici": "^6.9.0",
