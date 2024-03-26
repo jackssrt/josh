@@ -354,13 +354,14 @@ export default class Client<Ready extends boolean = false, Loaded extends boolea
 						v.type === ApplicationCommandOptionType.SubcommandGroup
 							? v.name
 							: `${v.name}: ${
-									(v.user && `@${v.user.username}`) ??
-									(v.role && `@${v.role.name}`) ??
-									(v.channel && `#${v.channel.name}`) ??
-									(v.message &&
+									// prettier-ignore
+									v.user ?`@${v.user.username}` :
+									v.role ? `@${v.role.name}` :
+									v.channel ? `#${v.channel.name}` :
+									v.message ?
 										`"${v.message.content.replaceAll("\n", "\\n")}" from @${
 											v.message.author.username
-										}`) ??
+										}` :
 									v.value
 								}`,
 						...(v.options ? v.options.flatMap((v) => recursive.call(undefined, v)) : []),
