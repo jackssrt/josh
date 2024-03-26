@@ -9,7 +9,7 @@ eval set -- "$ARGS"
 while true; do
     case "$1" in
         --install)
-            pnpm install --config.os=linux --config.cpu=arm64
+            pnpm install --config.os=linux --config.cpu=arm64 --config.platform=linux --config.arch=arm64
             echo "Installed!"
             shift
             ;;
