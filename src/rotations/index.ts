@@ -88,19 +88,16 @@ export class Rotations {
 			fetched.salmonRunChanged,
 		);
 		logger.info("rotations instantiated, cached:", fetched.wasCached);
-		logger.info(
-			"Time until next rotation fetch",
-			formatTime((rotations.endTime.getTime() - new Date().getTime()) / 1000),
-		);
+		logger.info("Time until next rotation fetch", formatTime((rotations.endTime.getTime() - Date.now()) / 1000));
 		setTimeout(function timeout() {
 			void (async () => {
 				const fetched = await Rotations.fetch();
 				logger.info("rotations fetched, cached:", fetched.wasCached);
 				rotations.applyRotations(fetched);
 				await parallel(rotations.notifyChanged(), fetched.salmonRunChanged && rotations.notifySalmonChanged());
-				setTimeout(timeout, rotations.endTime.getTime() - new Date().getTime());
+				setTimeout(timeout, rotations.endTime.getTime() - Date.now());
 			})();
-		}, fetched.endTime.getTime() - new Date().getTime());
+		}, fetched.endTime.getTime() - Date.now());
 		return rotations;
 	}
 	public async notifyChanged() {
@@ -176,7 +173,7 @@ export class Rotations {
 				wasCached: true,
 				salmonRunChanged: false,
 			};
-		const cached = !ignoreCache ? await database.getCachedMapRotation() : undefined;
+		const cached = ignoreCache ? undefined : await database.getCachedMapRotation();
 		// send api request
 		const response =
 			cached ??
@@ -287,18 +284,14 @@ export class Rotations {
 		} as const;
 	}
 	private applyRotations(this: Rotations, rotations: FetchedRotations) {
-		Object.entries(rotations).forEach((<T extends keyof FetchedRotations & keyof Rotations>([k, v]: [
-			T,
-			FetchedRotations[T],
-		]) => {
+		for (const [k, v] of Object.entries(rotations)) {
 			if (
-				!new Set<string>(["wasCached", "salmonRunChanged"] as Exclude<
-					keyof FetchedRotations,
-					keyof Rotations
-				>[]).has(k)
+				!(
+					["wasCached", "salmonRunChanged"] satisfies Exclude<keyof FetchedRotations, keyof Rotations>[]
+				).includes(k)
 			)
-				this[k] = v as Rotations[T];
-		}) as (param: [string, unknown]) => void);
+				this[k as keyof Rotations] = v as never;
+		}
 		this.catchingUp = false;
 		this.catchingUpSalmonRun = false;
 	}
