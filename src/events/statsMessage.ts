@@ -1,5 +1,13 @@
-import type { Guild, Snowflake } from "discord.js";
-import { AttachmentBuilder, TimestampStyles, inlineCode, roleMention, time, userMention } from "discord.js";
+import type { Snowflake } from "discord.js";
+import {
+	AttachmentBuilder,
+	GuildMember,
+	TimestampStyles,
+	inlineCode,
+	roleMention,
+	time,
+	userMention,
+} from "discord.js";
 import type { Vector } from "ngraph.forcelayout";
 import createLayout from "ngraph.forcelayout";
 import createGraph from "ngraph.graph";
@@ -17,22 +25,26 @@ import createEvent from "./../commandHandler/event.js";
 
 const INVITE_GRAPH_NAME_REGEX = /[^ \p{L}]/gu;
 
-async function makeInviteGraph(guild: Guild, invites: Record<Snowflake, Snowflake>): Promise<Buffer> {
+async function makeInviteGraph(client: Client<true>, invites: Record<Snowflake, Snowflake>): Promise<Buffer> {
 	// Create the graph
-	const graph = createGraph<string>();
+	const graph = createGraph<[string, boolean]>();
 	await parallel(
 		Object.entries(invites).map(async ([invitee, inviter]) => {
 			const [inviterMember, inviteeMember] = await parallel(
-				guild.members.fetch(inviter).catch(() => {
-					// pass
-				}),
-				guild.members.fetch(invitee).catch(() => {
-					// pass
-				}),
+				client.guild.members.fetch(inviter).catch(() =>
+					client.users.fetch(inviter).catch(() => {
+						// pass
+					}),
+				),
+				client.guild.members.fetch(invitee).catch(() =>
+					client.users.fetch(invitee).catch(() => {
+						// pass
+					}),
+				),
 			);
 			if (!inviterMember || !inviteeMember) return;
-			graph.addNode(inviter, inviterMember.displayName);
-			graph.addNode(invitee, inviteeMember.displayName);
+			graph.addNode(inviter, [inviterMember.displayName, inviterMember instanceof GuildMember]);
+			graph.addNode(invitee, [inviteeMember.displayName, inviteeMember instanceof GuildMember]);
 			graph.addLink(inviter, invitee);
 		}),
 	);
@@ -88,10 +100,11 @@ async function makeInviteGraph(guild: Guild, invites: Record<Snowflake, Snowflak
 		const pos = layout.getNodePosition(v.id);
 		const scaledPos = scaleVector(pos);
 		// Draw a node as a circle
-		svg += dedent`<circle cx="${scaledPos.x}" cy="${scaledPos.y}" r="30" fill="#17a80d"/>`;
+		// darken the circle if the member left the server :(
+		svg += dedent`<circle cx="${scaledPos.x}" cy="${scaledPos.y}" r="30" fill="${v.data[1] ? "#17a80d" : "#0e6508"}"/>`;
 		text += `<text x="${scaledPos.x}" y="${
 			scaledPos.y + 5
-		}" text-anchor="middle" dominant-baseline="middle" fill="white" font-family="splatoon2" font-size="30px">${escapeXml(v.data.replaceAll(INVITE_GRAPH_NAME_REGEX, "").replaceAll(/  +/g, " ").trim())}</text>`;
+		}" text-anchor="middle" dominant-baseline="middle" fill="white" font-family="splatoon2" font-size="30px">${escapeXml(v.data[0].replaceAll(INVITE_GRAPH_NAME_REGEX, "").replaceAll(/  +/g, " ").trim())}</text>`;
 	});
 
 	// Finish drawing
@@ -148,7 +161,7 @@ export async function updateStatsMessage(client: Client<true>) {
 					)
 					.setImage("attachment://invites.png"),
 		)),
-		files: [new AttachmentBuilder(await makeInviteGraph(client.guild, invites)).setName("invites.png")],
+		files: [new AttachmentBuilder(await makeInviteGraph(client, invites)).setName("invites.png")],
 	});
 }
 
