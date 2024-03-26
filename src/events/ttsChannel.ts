@@ -14,7 +14,7 @@ async function queueTextToSpeechInChannel(client: Client<true>, channel: VoiceBa
 	const content = cleanForSpeaking(message.cleanContent);
 	if (content === "") return;
 
-	const text = `${lastNames.get(channel.id) !== memberName ? `${memberName} says ` : ""}${content}`.toLowerCase();
+	const text = `${lastNames.get(channel.id) === memberName ? "" : `${memberName} says `}${content}`.toLowerCase();
 
 	lastNames.set(channel.id, memberName);
 
@@ -47,16 +47,14 @@ export default createEvent({
 				async () => {
 					const memberVoiceChannel = message.member!.voice.channel;
 
-					if (memberVoiceChannel) {
-						await queueTextToSpeechInChannel(client, memberVoiceChannel, message);
-					} else {
-						await parallel(
-							...channels.map(async (v) => {
-								if (v.isVoiceBased() && v.members.filter((v) => !v.user.bot).size > 0)
-									await queueTextToSpeechInChannel(client, v, message);
-							}),
-						);
-					}
+					await (memberVoiceChannel
+						? queueTextToSpeechInChannel(client, memberVoiceChannel, message)
+						: parallel(
+								...channels.map(async (v) => {
+									if (v.isVoiceBased() && v.members.filter((v) => !v.user.bot).size > 0)
+										await queueTextToSpeechInChannel(client, v, message);
+								}),
+							));
 				},
 				...(filesToPlay.size > 0 && (await database.getBooleanFlag("tts.playFiles"))
 					? filesToPlay.map(async (v) => {
@@ -64,10 +62,10 @@ export default createEvent({
 							if (memberVoiceChannel) {
 								queueSound(client, memberVoiceChannel, audio);
 							} else {
-								channels.forEach((v) => {
+								for (const v of channels.values()) {
 									if (v.isVoiceBased() && v.members.filter((v) => !v.user.bot).size > 0)
 										queueSound(client, v, audio);
-								});
+								}
 							}
 						})
 					: []),

@@ -78,7 +78,7 @@ export async function generatePublishedAnnouncementContent(
 export async function updatePublishedAnnouncement(client: Client<true>, id: string, silent = false): Promise<boolean> {
 	const announcement = await database.getAnnouncement(id);
 	if (!announcement) {
-		if (!silent) logger.warn("attempt to update non existant published announcement with id", id);
+		if (!silent) logger.warn("attempt to update non-existent published announcement with id", id);
 		return false;
 	}
 
@@ -154,8 +154,9 @@ export async function generatePreviewAnnouncementContent(
 	const published = await generatePublishedAnnouncementContent(client, data);
 	return {
 		...published,
-		embeds: published.embeds.concat(
-			(
+		embeds: [
+			...published.embeds,
+			...(
 				await embeds((b) =>
 					b.setTitle("New announcement...").setDescription(
 						dedent`Send a message in this channel to fill in these fields:
@@ -171,7 +172,7 @@ export async function generatePreviewAnnouncementContent(
 					),
 				)
 			).embeds,
-		),
+		],
 	} as const satisfies MessageCreateOptions;
 }
 
@@ -191,9 +192,9 @@ export async function updateUserAnnouncement(
 	const existingData = await database.getAnnouncement(id);
 	if (!existingData) {
 		reportError({
-			title: "Attempt to update non existant announcement",
+			title: "Attempt to update non-existent announcement",
 			description: `With id ${id}`,
-			error: new Error(),
+			error: new Error("attempt to update non-existent announcement"),
 		});
 		return;
 	}

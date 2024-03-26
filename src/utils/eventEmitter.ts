@@ -28,13 +28,13 @@ export async function awaitEvent<T extends EventEmitter, E extends string | symb
 	const events = Array.isArray(event) ? event : [event];
 	return new Promise((resolve) => {
 		function listener(...args: unknown[]) {
-			events.forEach((e) => ee.removeListener(e, listener));
+			for (const e of events) ee.removeListener(e, listener);
 			resolve(args as EventParams<T>);
 		}
-		events.forEach((e) => ee.on(e, listener));
+		for (const e of events) ee.on(e, listener);
 
 		function onTimeout() {
-			events.forEach((e) => ee.removeListener(e, listener));
+			for (const e of events) ee.removeListener(e, listener);
 			resolve([]);
 		}
 		if (timeoutSeconds) wait(timeoutSeconds).then(onTimeout).catch(onTimeout);

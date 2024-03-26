@@ -23,8 +23,12 @@ async function makeInviteGraph(guild: Guild, invites: Record<Snowflake, Snowflak
 	await parallel(
 		Object.entries(invites).map(async ([invitee, inviter]) => {
 			const [inviterMember, inviteeMember] = await parallel(
-				guild.members.fetch(inviter).catch(() => undefined),
-				guild.members.fetch(invitee).catch(() => undefined),
+				guild.members.fetch(inviter).catch(() => {
+					// pass
+				}),
+				guild.members.fetch(invitee).catch(() => {
+					// pass
+				}),
 			);
 			if (!inviterMember || !inviteeMember) return;
 			graph.addNode(inviter, inviterMember.displayName);
@@ -35,14 +39,16 @@ async function makeInviteGraph(guild: Guild, invites: Record<Snowflake, Snowflak
 
 	// Calculate the layout
 	const layout = createLayout(graph);
-	for (let i = 0; i < 10_000 && !layout.step(); i++) {
+	for (let index = 0; index < 10_000 && !layout.step(); index++) {
 		// pass
 	}
 	if (!layout.step())
 		reportError({
 			title: "Member graph simulation uncompleted",
-			description: dedent`${inlineCode("for (let i = 0; i < INCREMENT_THIS && !layout.step(); i++) {")}
-				Increment the number to increase the cap.`,
+			description: dedent`
+				${inlineCode("for (let i = 0; i < INCREMENT_THIS && !layout.step(); i++) {")}
+								Increment the number to increase the cap.
+			`,
 		});
 	const nodes: Vector[] = [];
 	graph.forEachNode((v) => {
@@ -85,7 +91,7 @@ async function makeInviteGraph(guild: Guild, invites: Record<Snowflake, Snowflak
 		svg += dedent`<circle cx="${scaledPos.x}" cy="${scaledPos.y}" r="30" fill="#17a80d"/>`;
 		text += `<text x="${scaledPos.x}" y="${
 			scaledPos.y + 5
-		}" text-anchor="middle" dominant-baseline="middle" fill="white" font-family="splatoon2" font-size="30px">${escapeXml(v.data.replace(INVITE_GRAPH_NAME_REGEX, "").replace(/  +/g, " ").trim())}</text>`;
+		}" text-anchor="middle" dominant-baseline="middle" fill="white" font-family="splatoon2" font-size="30px">${escapeXml(v.data.replaceAll(INVITE_GRAPH_NAME_REGEX, "").replaceAll(/  +/g, " ").trim())}</text>`;
 	});
 
 	// Finish drawing
@@ -106,7 +112,7 @@ export async function updateStatsMessage(client: Client<true>) {
 			(b) =>
 				b.setTitle("Server information").addFields({
 					name: "Released",
-					value: time(new Date(1675696320000), TimestampStyles.RelativeTime),
+					value: time(new Date(1_675_696_320_000), TimestampStyles.RelativeTime),
 					inline: true,
 				}),
 			async (b) =>
@@ -131,7 +137,7 @@ export async function updateStatsMessage(client: Client<true>) {
 							value: `${members.size} ${pluralize("member", members.size)}`,
 						},
 
-						...(toBeAdded.length
+						...(toBeAdded.length > 0
 							? [
 									{
 										name: "To be added",

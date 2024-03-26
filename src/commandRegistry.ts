@@ -1,7 +1,7 @@
 import { Collection } from "discord.js";
-import { existsSync } from "fs";
-import { readdir } from "fs/promises";
-import path from "path";
+import { existsSync } from "node:fs";
+import { readdir } from "node:fs/promises";
+import path from "node:path";
 import type { Command } from "./commandHandler/command.js";
 import type { Subcommand } from "./commandHandler/subcommand.js";
 import type { SubcommandGroup } from "./commandHandler/subcommandGroup.js";

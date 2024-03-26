@@ -1,3 +1,4 @@
+import OnceSignal from "@/utils/OnceSignal.js";
 import type {
 	APIEmbedField,
 	ButtonInteraction,
@@ -17,13 +18,11 @@ import {
 	StringSelectMenuOptionBuilder,
 	userMention,
 } from "discord.js";
-import EventEmitter from "node:events";
 import { BOOYAH_EMOJI, SQUID_SHUFFLE_EMOJI, VEEMO_PEEK_EMOJI } from "../../emojis.js";
 import { IS_PROD } from "../../env.js";
 import { fillArray, getRandomValues } from "../../utils/array.js";
 import { constructEmbedsWrapper, embeds } from "../../utils/discord/embeds.js";
-import { awaitEvent } from "../../utils/eventEmitter.js";
-import { parallel } from "../../utils/promise.js";
+import { parallel, parallelRace } from "../../utils/promise.js";
 import { dedent, messageHiddenText } from "../../utils/string.js";
 import { SMALLEST_DATE, futureTimestamp, wait } from "../../utils/time.js";
 import Player from "./Player.js";
@@ -71,6 +70,7 @@ export default class Game<State extends GameState = GameState.WaitingForPlayers>
 	private readonly seekTimeSeconds: number;
 	private aborted = false;
 
+	// eslint-disable-next-line unicorn/consistent-function-scoping
 	private readonly hostConfigEmbeds = constructEmbedsWrapper((b) =>
 		b.setFooter({
 			text: `Room type: ${this.mode === "turfwar" ? "Turf War" : "Ranked"}・Room code: ${
@@ -100,7 +100,16 @@ export default class Game<State extends GameState = GameState.WaitingForPlayers>
 
 	public playerListField(): APIEmbedField {
 		const name = `👥 Player list (\`${this.players.size}/${this.maxPlayers}\`)`;
-		if (this.players.first()?.role !== undefined) {
+		if (this.players.first()?.role === undefined) {
+			return {
+				name,
+				value:
+					this.players
+						.toJSON()
+						.map((v) => v.playerListItem())
+						.join("\n") || "no players",
+			};
+		} else {
 			const [seekers, hiders] = this.players.partition((v) => v.role === PlayerRole.Seeker);
 
 			return {
@@ -110,15 +119,6 @@ export default class Game<State extends GameState = GameState.WaitingForPlayers>
 
 									**🟦 Bravo Team (\`${seekers.size}/4\`)**
 									${seekers.map((v) => v.playerListItem()).join("\n")}`,
-			};
-		} else {
-			return {
-				name,
-				value:
-					this.players
-						.toJSON()
-						.map((v) => v.playerListItem())
-						.join("\n") || "no players",
 			};
 		}
 	}
@@ -142,11 +142,11 @@ export default class Game<State extends GameState = GameState.WaitingForPlayers>
 			: await this.host.interaction.reply(data);
 
 		this.createdTime = new Date();
-		this.players.forEach((v) => {
+		for (const v of this.players.values()) {
 			v.role = undefined;
-		});
+		}
 		await this.updateMainMessage();
-		const startedEe = new EventEmitter();
+		const startedOnceSignal = new OnceSignal();
 
 		const hostConfigMessage = await this.host.interaction.followUp({
 			embeds: [
@@ -184,7 +184,7 @@ export default class Game<State extends GameState = GameState.WaitingForPlayers>
 			this.hostConfigInteraction = hostActionInteraction;
 			if (hostActionInteraction.customId === "start") {
 				joinCollector.stop("started");
-				startedEe.emit("started");
+				startedOnceSignal.fire();
 			} else {
 				await this.abort();
 				return;
@@ -194,13 +194,13 @@ export default class Game<State extends GameState = GameState.WaitingForPlayers>
 			componentType: ComponentType.Button,
 			time: SECONDS_TO_JOIN * 1000,
 			filter: async (x) =>
-				!x.inCachedGuild()
-					? false
-					: this.players.size >= this.maxPlayers && !this.players.has(x.member)
+				x.inCachedGuild()
+					? this.players.size >= this.maxPlayers && !this.players.has(x.member)
 						? !!void (await x.reply({ content: "Sorry, this game is full!", ephemeral: true }))
 						: x.user.id === this.host.member.id
 							? !!void (await x.reply({ content: "You're the host!", ephemeral: true }))
-							: true,
+							: true
+					: false,
 		});
 		joinCollector.on("collect", async (interaction: ButtonInteraction<"cached">) => {
 			if (this.players.has(interaction.member)) {
@@ -242,7 +242,7 @@ export default class Game<State extends GameState = GameState.WaitingForPlayers>
 				this.players.delete(interaction.member);
 				await parallel(
 					interaction.deleteReply(),
-					!this.playedAgain ? player.interaction.deleteReply() : undefined,
+					this.playedAgain ? undefined : player.interaction.deleteReply(),
 					this.updateMainMessage(),
 				);
 				return;
@@ -262,9 +262,9 @@ export default class Game<State extends GameState = GameState.WaitingForPlayers>
 		joinCollector.once("end", async (_, reason) => {
 			if (reason !== "started") await this.abort();
 			hostConfigCollector.stop("started");
-			startedEe.emit("started");
+			startedOnceSignal.fire();
 		});
-		await awaitEvent(startedEe, "started", SECONDS_TO_JOIN);
+		await parallelRace(startedOnceSignal.promise, wait(SECONDS_TO_JOIN));
 		if (this.aborted) return false;
 	}
 
@@ -300,7 +300,7 @@ export default class Game<State extends GameState = GameState.WaitingForPlayers>
 										fillArray(maxNumSeekers, (i) =>
 											new StringSelectMenuOptionBuilder()
 												.setLabel(
-													`Rotate players and pick ${i + 1} seeker${i + 1 !== 1 ? "s" : ""}${
+													`Rotate players and pick ${i + 1} seeker${i + 1 === 1 ? "" : "s"}${
 														i + 1 === fairestNumSeekers ? " [FAIREST]" : ""
 													}`,
 												)
@@ -318,7 +318,7 @@ export default class Game<State extends GameState = GameState.WaitingForPlayers>
 							fillArray(maxNumSeekers, (i) =>
 								new StringSelectMenuOptionBuilder()
 									.setLabel(
-										`Pick ${i + 1} random seeker${i + 1 !== 1 ? "s" : ""} for me${
+										`Pick ${i + 1} random seeker${i + 1 === 1 ? "" : "s"} for me${
 											i + 1 === fairestNumSeekers ? " [FAIREST]" : ""
 										}`,
 									)
@@ -359,21 +359,21 @@ export default class Game<State extends GameState = GameState.WaitingForPlayers>
 			this.players.set(head.member, head);
 
 			const count = pickTeamsInteraction.isStringSelectMenu()
-				? parseInt(pickTeamsInteraction.values[0] ?? "-1")
+				? Number.parseInt(pickTeamsInteraction.values[0] ?? "-1")
 				: fairestNumSeekers;
 			let i = 0;
 			// sets the first X players in the rotated players collection as seekers
-			this.players.forEach((v) => {
+			for (const v of this.players.values()) {
 				v.role = i++ < count ? PlayerRole.Seeker : PlayerRole.Hider;
-			});
+			}
 		} else if (pickTeamsInteraction.customId === "random" && pickTeamsInteraction.isStringSelectMenu()) {
-			const count = parseInt(pickTeamsInteraction.values[0] ?? "-1");
+			const count = Number.parseInt(pickTeamsInteraction.values[0] ?? "-1");
 
 			if (count === -1) {
 				await this.abort();
 				return false;
 			}
-			const seekerKeys = getRandomValues(Array.from(this.players.keys()), count);
+			const seekerKeys = getRandomValues([...this.players.keys()], count);
 			this.players.map((v, k) => {
 				v.role = seekerKeys.includes(k) ? PlayerRole.Seeker : PlayerRole.Hider;
 				this.players.set(k, v);
@@ -390,8 +390,11 @@ export default class Game<State extends GameState = GameState.WaitingForPlayers>
 		await parallel(
 			this.players.map(async (v) => {
 				if (v.isNotHost()) {
-					if (!this.playedAgain) await v.interaction.editReply(await v.roleEmbed());
-					else v.roleMessage = await v.interaction.followUp({ ...(await v.roleEmbed()), ephemeral: true });
+					if (this.playedAgain) {
+						v.roleMessage = await v.interaction.followUp({ ...(await v.roleEmbed()), ephemeral: true });
+					} else {
+						await v.interaction.editReply(await v.roleEmbed());
+					}
 				}
 			}),
 		);
@@ -466,7 +469,7 @@ export default class Game<State extends GameState = GameState.WaitingForPlayers>
 	private async hideTime(this: Game<GameState.HideTime>): Promise<void> {
 		this.state = GameState.HideTime;
 		await this.updateMainMessage();
-		await wait(this.startedTime.getTime() / 1000 + this.hideTimeSeconds - new Date().getTime() / 1000);
+		await wait(this.startedTime.getTime() / 1000 + this.hideTimeSeconds - Date.now() / 1000);
 		if (this.startedMessage.deletable) await this.startedMessage.delete();
 		this.hidingTimeUpMsg = await this.mainMessage.reply({
 			content: `**⏰ Hiding time is up! The seekers will now go look for the hiders!** Match ends ${futureTimestamp(
@@ -479,12 +482,7 @@ export default class Game<State extends GameState = GameState.WaitingForPlayers>
 		this.state = GameState.SeekTime;
 		await this.updateMainMessage();
 
-		await wait(
-			this.startedTime.getTime() / 1000 +
-				this.hideTimeSeconds +
-				this.seekTimeSeconds -
-				new Date().getTime() / 1000,
-		);
+		await wait(this.startedTime.getTime() / 1000 + this.hideTimeSeconds + this.seekTimeSeconds - Date.now() / 1000);
 		if (this.hidingTimeUpMsg.deletable) await this.hidingTimeUpMsg.delete();
 	}
 	public async playAgain(this: Game<GameState.PlayAgain>): Promise<boolean> {
@@ -518,7 +516,7 @@ export default class Game<State extends GameState = GameState.WaitingForPlayers>
 				componentType: ComponentType.Button,
 				time: SECONDS_TO_PLAY_AGAIN * 1000,
 			});
-			if (i.customId === "no") throw new Error();
+			if (i.customId === "no") throw new Error("intermediate error");
 			await i.deferUpdate();
 			this.playedAgain = true;
 			playAgain = true;
@@ -602,7 +600,7 @@ export default class Game<State extends GameState = GameState.WaitingForPlayers>
 					.setDescription(parts.join("\n"))
 					.addFields(this.playerListField()),
 			)),
-			...(this.state !== GameState.WaitingForPlayers ? { components: [] } : {}),
+			...(this.state === GameState.WaitingForPlayers ? {} : { components: [] }),
 		});
 	}
 }

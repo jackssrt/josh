@@ -9,7 +9,7 @@ import { COLORS_REGEX } from "./regex.js";
  * Logs to both the terminal and a file.
  */
 export class Logger {
-	private static readonly LOG_FILE = `./logs/${new Date().toISOString().replace(/[:.]/g, " ")}.log` as const;
+	private static readonly LOG_FILE = `./logs/${new Date().toISOString().replaceAll(/[.:]/g, " ")}.log` as const;
 
 	private log(color: string | undefined, tag: string | undefined, first: unknown, rest: unknown[]) {
 		rest.unshift(first);

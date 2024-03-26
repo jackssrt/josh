@@ -2,10 +2,10 @@ export default abstract class TimePeriod {
 	public startTime: Date;
 	public endTime: Date;
 	public get started() {
-		return this.startTime.getTime() < new Date().getTime();
+		return this.startTime.getTime() < Date.now();
 	}
 	public get ended() {
-		return this.endTime.getTime() < new Date().getTime();
+		return this.endTime.getTime() < Date.now();
 	}
 	public get active() {
 		return this.started && !this.ended;

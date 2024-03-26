@@ -11,7 +11,8 @@
 		"plugin:@typescript-eslint/strict",
 		"plugin:@typescript-eslint/strict-type-checked",
 		"plugin:@typescript-eslint/stylistic",
-		"plugin:@typescript-eslint/stylistic-type-checked"
+		"plugin:@typescript-eslint/stylistic-type-checked",
+		"plugin:unicorn/recommended"
 	],
 	"parser": "@typescript-eslint/parser",
 	"parserOptions": {
@@ -21,7 +22,8 @@
 	},
 	"plugins": [
 		"@typescript-eslint",
-		"prettier"
+		"prettier",
+		"unicorn"
 	],
 	"reportUnusedDisableDirectives": true,
 	"rules": {
@@ -92,6 +94,17 @@
 				"allowNumber": true
 			}
 		],
+		"unicorn/no-null": "off",
+		"unicorn/prevent-abbreviations": "off",
+		"unicorn/template-indent": "off",
+		"unicorn/no-await-expression-member": "off",
+		"unicorn/filename-case": "off",
+		"unicorn/prefer-switch": "off",
+		"unicorn/switch-case-braces": "off",
+		"unicorn/catch-error-name": "off",
+		"unicorn/no-nested-ternary": "off",
+		"unicorn/no-array-reduce": "off",
+		"unicorn/no-array-callback-reference": "off",
 		"no-constant-condition": [
 			"error",
 			{

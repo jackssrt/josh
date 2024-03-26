@@ -11,7 +11,7 @@ export async function makeChallengeEvents(guild: Guild, overrideDatabase = false
 		rotations.challenges.periods.map(async (challenge) => {
 			if (challenge === undefined) return;
 			// ~~ is a faster version of Math.floor()
-			const id = `${challenge.id}-${~~(challenge.startTime.getTime() / 1000)}`;
+			const id = `${challenge.id}-${Math.trunc(challenge.startTime.getTime() / 1000)}`;
 			if (!(await database.shouldMakeChallengeEvent(id)) && !overrideDatabase) return;
 			await guild.scheduledEvents.create({
 				entityType: GuildScheduledEventEntityType.External,
@@ -23,7 +23,7 @@ export async function makeChallengeEvents(guild: Guild, overrideDatabase = false
 					: `${challenge.challengeName} (Challenge)`,
 				privacyLevel: GuildScheduledEventPrivacyLevel.GuildOnly,
 				scheduledStartTime:
-					challenge.startTime > new Date() ? challenge.startTime : new Date(new Date().getTime() + 60 * 1000),
+					challenge.startTime > new Date() ? challenge.startTime : new Date(Date.now() + 60 * 1000),
 				scheduledEndTime: challenge.endTime,
 				image: await (await challenge.images(600, 180, "challengesEvent"))[0].toBuffer(),
 				description: truncate(

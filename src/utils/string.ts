@@ -24,7 +24,7 @@ export function pluralize(noun: string, amount: number): string {
  * @link https://stackoverflow.com/a/27979933
  */
 export function escapeXml(unsafe: string) {
-	return unsafe.replace(/[<>&'"]/g, function (c) {
+	return unsafe.replaceAll(/["&'<>]/g, function (c) {
 		switch (c) {
 			case "<":
 				return "&lt;";
@@ -52,7 +52,7 @@ export function dedent(strings: TemplateStringsArray, ...values: unknown[]): str
 			// eslint-disable-next-line @typescript-eslint/restrict-template-expressions, @typescript-eslint/no-base-to-string
 			return `${acc}${values[i - 1] ?? ""}${cur}`;
 		}, "")
-		.replace(/^(\t| {4})+/gm, "");
+		.replaceAll(/^(\t| {4})+/gm, "");
 }
 
 /**

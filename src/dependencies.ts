@@ -1,5 +1,5 @@
-import { execFile as _execFile } from "child_process";
-import { promisify } from "util";
+import { execFile as _execFile } from "node:child_process";
+import { promisify } from "node:util";
 import { IS_PROD } from "./env.js";
 import { parallel } from "./utils/promise.js";
 

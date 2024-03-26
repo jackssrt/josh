@@ -21,9 +21,9 @@ async function clean(client: Client<true>, text: unknown): Promise<string> {
 
 	// Replace symbols with character code alternatives
 	text = (text as string)
-		.replace(new RegExp(client.token.replace(/\./g, "\\."), "gi"), "[REDACTED]")
-		.replace(/`/g, "`" + String.fromCharCode(8203))
-		.replace(/@/g, "@" + String.fromCharCode(8203));
+		.replaceAll(new RegExp(client.token.replaceAll(".", "\\."), "gi"), "[REDACTED]")
+		.replaceAll("`", "`" + String.fromCodePoint(8203))
+		.replaceAll("@", "@" + String.fromCodePoint(8203));
 
 	// Send off the cleaned up result
 	return text as string;

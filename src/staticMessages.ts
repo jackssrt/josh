@@ -7,7 +7,11 @@ export async function updateStaticMessage(
 	content: string | (MessageEditOptions & MessageCreateOptions),
 ): Promise<Message<true>> {
 	const messageId = await database.getStaticMessageId(id);
-	const message = messageId && (await channel.messages.fetch(messageId).catch(() => undefined));
+	const message =
+		messageId &&
+		(await channel.messages.fetch(messageId).catch(() => {
+			// pass
+		}));
 	if (message) {
 		return await message.edit(content);
 	} else {

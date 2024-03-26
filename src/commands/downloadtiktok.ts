@@ -1,10 +1,10 @@
-import { spawn, type ChildProcessWithoutNullStreams } from "child_process";
-import { randomUUID } from "crypto";
+import { spawn, type ChildProcessWithoutNullStreams } from "node:child_process";
+import { randomUUID } from "node:crypto";
 import { AttachmentBuilder, inlineCode, type ChatInputCommandInteraction } from "discord.js";
 import ffmpegPath from "ffmpeg-static";
-import { createReadStream } from "fs";
-import { unlink } from "fs/promises";
-import { createInterface } from "readline";
+import { createReadStream } from "node:fs";
+import { unlink } from "node:fs/promises";
+import { createInterface } from "node:readline";
 import createCommand from "../commandHandler/command.js";
 import { SQUID_SHUFFLE_EMOJI } from "../emojis.js";
 import logger from "../utils/Logger.js";
@@ -13,7 +13,7 @@ import { awaitEvent } from "../utils/eventEmitter.js";
 
 function extractFFmpegRatio(ffmpegOutput: string, totalDurationInSeconds: number) {
 	const timeString = ffmpegOutput.match(/(?<=time=)([^ ]+)/g)?.[0];
-	const [hours, minutes, seconds] = (timeString ?? "0").split(":").map(parseFloat);
+	const [hours, minutes, seconds] = (timeString ?? "0").split(":").map(Number.parseFloat);
 	if (hours === undefined || minutes === undefined || seconds === undefined) return;
 	const totalTimeInSeconds = hours * 3600 + minutes * 60 + seconds;
 	// +1 to account for decimals, ytdlp doesn't provide decimal duration only whole seconds.
@@ -25,7 +25,10 @@ function extractYtdlpInfo(ytdlpOutput: string) {
 	const data = ytdlpOutput.match(/^(\d+),(\d+),(\d+)$/gm)?.[0];
 	if (!data) return;
 	const [downloadedBytes, totalBytes, durationSeconds] = data.split(",") as [string, string, string];
-	return [parseFloat(downloadedBytes) / parseFloat(totalBytes), parseFloat(durationSeconds)] as const;
+	return [
+		Number.parseFloat(downloadedBytes) / Number.parseFloat(totalBytes),
+		Number.parseFloat(durationSeconds),
+	] as const;
 }
 
 const TIKTOK_REGEX = /https?:\/\/(www\.)?(vm\.tiktok\.com|(m\.)?tiktok\.com)\/(((@[^/]+\/video|v)\/([^/]+))|\S+)/g;
@@ -34,9 +37,9 @@ export async function downloadTiktokVideo(interaction: ChatInputCommandInteracti
 
 	if (!tiktokLink) return await interaction.reply({ content: "Invalid link!", ephemeral: true });
 	await interaction.deferReply();
-	let ytDlpRatio: number | undefined = undefined;
-	let ffmpegRatio: number | undefined = undefined;
-	let totalDurationInSeconds: number | undefined = undefined;
+	let ytDlpRatio: number | undefined;
+	let ffmpegRatio: number | undefined;
+	let totalDurationInSeconds: number | undefined;
 
 	// download using yt-dlp
 	const ytDlpProcess = spawn("yt-dlp", [
@@ -93,7 +96,7 @@ export async function downloadTiktokVideo(interaction: ChatInputCommandInteracti
 				)),
 			});
 		})();
-	}, 1_500);
+	}, 1500);
 
 	// due to how ChildProcessWithoutNullStreams's on function is defined (function overloads)
 	// the EventNames<T extends EventEmitter> doesn't work

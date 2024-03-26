@@ -2,10 +2,10 @@ import * as dotenv from "dotenv";
 import path from "node:path";
 import { z } from "zod";
 dotenv.config();
-const snowflakeSchema = z.string().refine((value) => !isNaN(Number(value)), "Invalid Discord Snowflake");
+const snowflakeSchema = z.string().refine((value) => !Number.isNaN(Number(value)), "Invalid Discord Snowflake");
 const snowflakeListSchema = z.string().refine((value) => {
 	const snowflakes = String(value).split(",");
-	return snowflakes.every((snowflake) => !isNaN(Number(snowflake)));
+	return snowflakes.every((snowflake) => !Number.isNaN(Number(snowflake)));
 }, "Invalid Discord Snowflake List");
 
 export const processEnvSchema = z.object({

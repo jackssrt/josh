@@ -1,7 +1,7 @@
 import { Collection } from "discord.js";
-import { readdir } from "fs/promises";
+import { readdir } from "node:fs/promises";
 import { existsSync } from "node:fs";
-import path from "path";
+import path from "node:path";
 import logger from "./utils/Logger.js";
 
 export default class Registry<I> extends Collection<string, I> {
@@ -22,7 +22,7 @@ export default class Registry<I> extends Collection<string, I> {
 					}, no default export`,
 				);
 			else if (Array.isArray(thing))
-				thing.forEach((thingItem, i) => this.set(`${transformedName}${i}`, thingItem));
+				for (const [i, thingItem] of thing.entries()) this.set(`${transformedName}${i}`, thingItem);
 			else this.set(transformedName, thing);
 		}
 	}

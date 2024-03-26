@@ -1,6 +1,6 @@
 import type { Awaitable, GuildMember, PartialGuildMember, PresenceData, Snowflake } from "discord.js";
-import { existsSync } from "fs";
-import { readFile, writeFile } from "fs/promises";
+import { existsSync } from "node:fs";
+import { readFile, writeFile } from "node:fs/promises";
 import type { AnnouncementData, AnnouncementDataForKey, EditableAnnouncementMessageIdType } from "./announcements.js";
 import type { DatabaseOccurenceData } from "./occurrences.js";
 import type * as SalmonRunAPI from "./schemas/salmonRunApi.js";
@@ -53,9 +53,9 @@ class DatabaseBackend<T extends Record<string, unknown>> {
 	private data: T | undefined = undefined;
 	private static readonly PATH = "./database.json";
 	private async load() {
-		if (existsSync(DatabaseBackend.PATH))
-			this.data = JSON.parse(await readFile(DatabaseBackend.PATH, { encoding: "utf-8" })) as T;
-		else this.data = {} as T;
+		this.data = existsSync(DatabaseBackend.PATH)
+			? (JSON.parse(await readFile(DatabaseBackend.PATH, { encoding: "utf8" })) as T)
+			: ({} as T);
 	}
 	public async get<K extends keyof T>(key: K): Promise<T[K] | undefined>;
 	public async get<K extends keyof T>(key: K, defaultValue: T[K]): Promise<T[K]>;
@@ -66,7 +66,7 @@ class DatabaseBackend<T extends Record<string, unknown>> {
 	public async set<K extends keyof T>(key: K, value: T[K]): Promise<void> {
 		if (this.data === undefined) await this.load();
 		this.data![key] = value;
-		await writeFile(DatabaseBackend.PATH, JSON.stringify(this.data), { encoding: "utf-8" });
+		await writeFile(DatabaseBackend.PATH, JSON.stringify(this.data), { encoding: "utf8" });
 	}
 	public async update<K extends keyof T>(
 		key: K,
@@ -140,7 +140,7 @@ export class Database {
 	}
 	public async getCachedMapRotation(): Promise<SchedulesAPI.Response | undefined> {
 		const expiry = await this.backend.get("cachedMapRotationExpiry", 0);
-		return expiry > new Date().getTime() ? await this.backend.get("cachedMapRotation") : undefined;
+		return expiry > Date.now() ? await this.backend.get("cachedMapRotation") : undefined;
 	}
 	public async setSalmonRunEndTime(endTime: Date) {
 		await this.backend.set("nextSalmonRunRotation", endTime.getTime());

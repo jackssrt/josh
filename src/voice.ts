@@ -7,12 +7,12 @@ import {
 	joinVoiceChannel,
 } from "@discordjs/voice";
 import { inlineCode, type VoiceBasedChannel } from "discord.js";
-import { EventEmitter } from "events";
 import { getAllAudioBase64 } from "google-tts-api";
-import { Readable } from "stream";
+import { Readable } from "node:stream";
 import type Client from "./client.js";
 import { reportError } from "./errorhandler.js";
 import { Queue } from "./utils/Queue.js";
+import Signal from "./utils/Signal.js";
 import { awaitEvent } from "./utils/eventEmitter.js";
 import { request } from "./utils/http.js";
 import { parallel } from "./utils/promise.js";
@@ -21,11 +21,11 @@ import { LINK_REGEX } from "./utils/regex.js";
 const SPEAK_REGEX = /<a?:|:\d+>|<id:\w+>|^--.*/g;
 
 export function cleanForSpeaking(text: string): string {
-	return text.replace(SPEAK_REGEX, "").replace(LINK_REGEX, "").replace(/_/g, " ");
+	return text.replaceAll(SPEAK_REGEX, "").replace(LINK_REGEX, "").replaceAll("_", " ");
 }
-const NAME_REGEX = /[^a-zA-Z ']/g;
+const NAME_REGEX = /[^ 'A-Za-z]/g;
 export function cleanName(name: string): string {
-	return name.replace(NAME_REGEX, "").trim();
+	return name.replaceAll(NAME_REGEX, "").trim();
 }
 
 // No zod schema because we need performance here
@@ -84,13 +84,13 @@ type SoundData = {
 };
 
 export const queue = new Queue<SoundData>();
-const queuePushedToEventEmitter = new EventEmitter();
+const queuePushedToSignal = new Signal();
 const player = createAudioPlayer();
 function addToQueue(channel: VoiceBasedChannel, data: Buffer) {
 	const resource = createAudioResource(Readable.from(data), { inlineVolume: true });
 	resource.volume?.setVolume(0.2);
 	queue.enqueue({ channel, resource });
-	queuePushedToEventEmitter.emit("event");
+	queuePushedToSignal.fire();
 }
 
 let workerSpawned = false;
@@ -102,7 +102,7 @@ function spawnWorker(client: Client<true>) {
 			const currentSound = queue.dequeue();
 			if (!currentSound) {
 				// wait for new sound to be available to play
-				await awaitEvent(queuePushedToEventEmitter, "event");
+				await queuePushedToSignal;
 				continue;
 			}
 			try {

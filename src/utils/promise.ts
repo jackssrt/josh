@@ -53,6 +53,6 @@ export async function parallelRace<T extends OneOrMore<Maybe<(() => Promise<unkn
 export function sequential<T extends Maybe<() => Promise<unknown>>[]>(...funcs: T | [T]) {
 	return normalizeArray(funcs).reduce(
 		(acc, c) => (c ? acc.then(c) : acc),
-		Promise.resolve<unknown>(undefined),
+		Promise.resolve<unknown>(),
 	) as LastArrayElement<T>;
 }

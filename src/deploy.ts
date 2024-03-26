@@ -25,17 +25,16 @@ export async function deploy(guildId: string) {
 			.setDefaultMemberPermissions(command.ownerOnly ? PermissionFlagsBits.Administrator : undefined);
 
 		// Register subcommands
-		command.subcommands.forEach((subcommand, subcommandName) =>
+		for (const [subcommandName, subcommand] of command.subcommands.entries())
 			b.addSubcommand(
 				(subcommandBuilder) =>
 					subcommand.data(
 						subcommandBuilder.setName(subcommandName).setDescription("This subcommand does something..."),
 					) as SlashCommandSubcommandBuilder,
-			),
-		);
+			);
 
 		// Register subcommandGroups
-		command.subcommandGroups.forEach((subcommandGroup, subcommandGroupName) =>
+		for (const [subcommandGroupName, subcommandGroup] of command.subcommandGroups.entries())
 			b.addSubcommandGroup((subcommandGroupBuilder) => {
 				subcommandGroupBuilder = subcommandGroup.data(
 					subcommandGroupBuilder
@@ -44,7 +43,10 @@ export async function deploy(guildId: string) {
 				);
 
 				// Register subcommands in subcommandGroups
-				subcommandGroup.subcommands.forEach((subcommandGroupSubcommand, subcommandGroupSubcommandName) =>
+				for (const [
+					subcommandGroupSubcommandName,
+					subcommandGroupSubcommand,
+				] of subcommandGroup.subcommands.entries())
 					subcommandGroupBuilder.addSubcommand(
 						(subcommandGroupSubcommandBuilder) =>
 							subcommandGroupSubcommand.data(
@@ -52,11 +54,9 @@ export async function deploy(guildId: string) {
 									.setName(subcommandGroupSubcommandName)
 									.setDescription("This subcommand does something..."),
 							) as SlashCommandSubcommandBuilder,
-					),
-				);
+					);
 				return subcommandGroupBuilder;
-			}),
-		);
+			});
 		return command.data(b).toJSON();
 	});
 	const contextMenuItems = client.contextMenuItemsRegistry.map((item, key) =>
@@ -80,6 +80,7 @@ export async function deploy(guildId: string) {
 				logger.info(`Successfully registered ${data.length} ${pluralize("application command", data.length)}.`);
 		})
 		.catch((...params: unknown[]) => logger.error(params));
+	// eslint-disable-next-line unicorn/no-process-exit
 	process.exit();
 }
 await deploy(process.env.GUILD_ID);

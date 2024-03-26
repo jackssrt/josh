@@ -11,7 +11,7 @@ import type { Uncallable } from "./types.js";
  * @returns The created array
  */
 export function fillArray<T, N extends number>(count: N, value: Uncallable<T> | ((i: number) => T)) {
-	const array = new Array<T>(count);
+	const array = Array.from({ length: count });
 	// checked early for performance, value doesn't change value between each item
 	// prettier-ignore
 	if (typeof value === "function")
@@ -49,7 +49,7 @@ export async function fillArrayAsync<T, N extends number>(count: N, creator: (i:
 export function search<T extends string[]>(source: T, rawTerm: string): T[number][] {
 	const term = rawTerm.trim().toLowerCase();
 	// early return for empty search term
-	if (!term.length) return source;
+	if (term.length === 0) return source;
 	return source
 		.map((v) => v.trim().toLowerCase())
 		.sort((a, b) => {

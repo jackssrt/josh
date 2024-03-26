@@ -15,12 +15,12 @@ export function colorLuminance(r: number, g: number, b: number): number {
 export function hexToRGB(hex: `#${string}`) {
 	return hex
 		.replace(
-			/^#?([a-f\d])([a-f\d])([a-f\d])$/i,
+			/^#?([\da-f])([\da-f])([\da-f])$/i,
 			(_, r: string, g: string, b: string) => "#" + r + r + g + g + b + b,
 		)
-		.substring(1)
+		.slice(1)
 		.match(/.{2}/g)
-		?.map((x) => parseInt(x, 16)) as [number, number, number];
+		?.map((x) => Number.parseInt(x, 16)) as [number, number, number];
 }
 /**
  * Parses a string for a hex color
@@ -32,10 +32,10 @@ export function parseHex(color: string): Option<`${string}${string}${string}${st
 	if (color.startsWith("#")) color = color.slice(1);
 
 	// Check if the hexColor string is valid
-	if (!/^[0-9A-Fa-f]{3}$|^[0-9A-Fa-f]{6}$/.test(color)) return None;
+	if (!/^[\dA-Fa-f]{3}$|^[\dA-Fa-f]{6}$/.test(color)) return None;
 
 	// Expand the short-hand color notation (e.g., #abc to #aabbcc)
-	if (color.length === 3) color = color.replace(/(.)/g, "$1$1");
+	if (color.length === 3) color = color.replaceAll(/(.)/g, "$1$1");
 
 	return Some(color);
 }

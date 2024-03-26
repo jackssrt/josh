@@ -46,7 +46,9 @@ export default async function updateOccurrence(client: Client<true>, data: Occur
 	let event = oldData && (await client.guild.scheduledEvents.fetch(oldData.discordEventId));
 
 	// update event
-	if (!event)
+	if (event) {
+		await event.edit({ name: title, description });
+	} else {
 		event = await client.guild.scheduledEvents.create({
 			entityType: GuildScheduledEventEntityType.External,
 			name: title,
@@ -56,7 +58,7 @@ export default async function updateOccurrence(client: Client<true>, data: Occur
 			privacyLevel: GuildScheduledEventPrivacyLevel.GuildOnly,
 			reason: "Occurrences managed",
 		});
-	else await event.edit({ name: title, description });
+	}
 
 	// save
 	await database.saveOccurrence(id, {

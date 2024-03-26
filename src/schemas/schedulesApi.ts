@@ -141,8 +141,9 @@ export type CoopWeapon = z.infer<typeof coopWeaponSchema>;
 
 export const coopStageSchema = (bigRun = false) =>
 	z.object({
-		name: !bigRun
-			? z.enum([
+		name: bigRun
+			? z.string()
+			: z.enum([
 					"Spawning Grounds",
 					"Sockeye Station",
 					"Marooner's Bay",
@@ -151,8 +152,7 @@ export const coopStageSchema = (bigRun = false) =>
 					"Salmonid Smokeyard",
 					"Bonerattle Arena",
 					"",
-				])
-			: z.string(),
+				]),
 		thumbnailImage: z.object({
 			url: z.string(),
 		}),

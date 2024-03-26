@@ -13,24 +13,18 @@ type ChannelData = {
 const channels: (ChannelData | undefined)[] = [];
 
 function numberToSuperscript(x: number): string {
-	return x !== 1
-		? x
-				.toString()
-				.split("")
-				.reduce((acc, v) => acc + SUPERSCRIPT_NUMBERS[+v]!, "")
-		: "";
+	return x === 1 ? "" : [...`${x}`].reduce((acc, v) => acc + SUPERSCRIPT_NUMBERS[+v]!, "");
 }
 function superscriptToNumber(x: string): number | undefined {
-	const num = parseInt(
-		x
-			.split("")
+	const num = Number.parseInt(
+		[...x]
 			.flatMap((v) => {
-				const idx = (SUPERSCRIPT_NUMBERS as readonly string[]).findIndex((x) => x === v);
-				return idx !== -1 ? idx : [];
+				const idx = (SUPERSCRIPT_NUMBERS as readonly string[]).indexOf(v);
+				return idx === -1 ? [] : idx;
 			})
 			.join(""),
 	);
-	return !Number.isNaN(num) ? num : undefined;
+	return Number.isNaN(num) ? undefined : num;
 }
 
 async function addChannel(category: CategoryChannel) {
@@ -62,8 +56,11 @@ export async function updateChannels(category: CategoryChannel, unusedCategory: 
 		if (v.channel.members.size > 0) {
 			willRemove = [];
 			savedChannel = false;
-		} else if (!savedChannel) savedChannel = true;
-		else willRemove.push(v);
+		} else if (savedChannel) {
+			willRemove.push(v);
+		} else {
+			savedChannel = true;
+		}
 	}
 
 	// there are no extra empty channels at the end in the category
@@ -73,6 +70,13 @@ export async function updateChannels(category: CategoryChannel, unusedCategory: 
 	// move channels
 	await parallel(willRemove.map(async (v) => removeChannel(v, unusedCategory)));
 }
+
+function populateChannelsArray(v: CategoryChildChannel, used: boolean) {
+	if (v.type !== ChannelType.GuildVoice) return;
+	const i = superscriptToNumber(v.name.slice("🔊・general".length));
+	channels[(i ?? 1) - 1] = { channel: v, used };
+}
+
 export default [
 	createEvent({
 		event: "voiceStateUpdate",
@@ -87,13 +91,8 @@ export default [
 	createEvent({
 		event: "ready",
 		async on({ client }) {
-			function addChannels(v: CategoryChildChannel, used: boolean) {
-				if (v.type !== ChannelType.GuildVoice) return;
-				const i = superscriptToNumber(v.name.slice("🔊・general".length));
-				channels[(i ?? 1) - 1] = { channel: v, used };
-			}
-			client.voiceCategory.children.cache.forEach((v) => addChannels(v, true));
-			client.unusedVoiceCategory.children.cache.forEach((v) => addChannels(v, false));
+			for (const v of client.voiceCategory.children.cache.values()) populateChannelsArray(v, true);
+			for (const v of client.unusedVoiceCategory.children.cache.values()) populateChannelsArray(v, false);
 			await updateChannels(client.voiceCategory, client.unusedVoiceCategory);
 		},
 	}),

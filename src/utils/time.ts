@@ -3,11 +3,11 @@ import { TimestampStyles, time } from "discord.js";
 /**
  * The earliest possible date
  */
-export const SMALLEST_DATE = new Date(-8640000000000000);
+export const SMALLEST_DATE = new Date(-8_640_000_000_000_000);
 /**
  * The latest possible date
  */
-export const LARGEST_DATE = new Date(8640000000000000);
+export const LARGEST_DATE = new Date(8_640_000_000_000_000);
 
 /**
  * Pauses the program for the specified amount of time.

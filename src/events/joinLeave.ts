@@ -23,7 +23,7 @@ export async function onMemberJoin(client: Client<true>, member: GuildMember) {
 				.setColor(Colors.Green)
 				.setDescription(`**${userMention(member.user.id)} joined**`)
 				.addFields(
-					{ name: "Member #", value: `${memberIndex !== undefined ? memberIndex + 1 : "???"}`, inline: true },
+					{ name: "Member #", value: `${memberIndex === undefined ? "???" : memberIndex + 1}`, inline: true },
 					{ name: "New member count", value: `${allMembers.size}`, inline: true },
 				),
 		),
@@ -45,7 +45,7 @@ export async function onMemberLeave(client: Client<true>, member: GuildMember | 
 				.setColor(Colors.Red)
 				.setDescription(`**${userMention(member.user.id)} left**`)
 				.addFields(
-					{ name: "Member #", value: `${memberIndex !== undefined ? memberIndex + 1 : "???"}`, inline: true },
+					{ name: "Member #", value: `${memberIndex === undefined ? "???" : memberIndex + 1}`, inline: true },
 					{ name: "New member count", value: `${allMembers.size}`, inline: true },
 				),
 		),

@@ -3,7 +3,7 @@ import type Client from "@/client.js";
 import type { GuildOnlyChatCommandInteraction } from "@/commandHandler/command.js";
 import createSubcommand from "@/commandHandler/subcommand.js";
 import { parallel, parallelRace } from "@/utils/promise.js";
-import { randomUUID } from "crypto";
+import { randomUUID } from "node:crypto";
 import {
 	ActionRowBuilder,
 	ButtonBuilder,

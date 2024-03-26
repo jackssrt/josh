@@ -12,7 +12,7 @@ export default createEvent({
 		)
 			return;
 		await replaceMessage(client, message, {
-			content: `${message.content.replace(
+			content: `${message.content.replaceAll(
 				/(<a?:.+?:\d{18}>)|(\p{Extended_Pictographic})/gu,
 				"<:awesomeFace:1133082514928443492>",
 			)} <:awesomeFace:1133082514928443492>`,

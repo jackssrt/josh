@@ -30,9 +30,9 @@ export type ErrorData = {
 function formatIssues(issues: ZodIssue[], indentLevel = 0): string[] {
 	return issues
 		.map((v) => [
-			`${"\xa0".repeat(indentLevel * 4)}${v.path.join(".")}: ${v.code}, ${v.message}`,
+			`${"\u00A0".repeat(indentLevel * 4)}${v.path.join(".")}: ${v.code}, ${v.message}`,
 			v.code === "invalid_union"
-				? v.unionErrors.map((v, i) => [i !== 0 ? "----" : [], formatIssues(v.errors, indentLevel + 1)])
+				? v.unionErrors.map((v, i) => [i === 0 ? [] : "----", formatIssues(v.errors, indentLevel + 1)])
 				: [],
 		])
 		.flat(4);
@@ -105,7 +105,7 @@ async function reportErrorInner(
 export function reportError(data: ErrorData) {
 	// wait for client to be ready
 	void (async () => {
-		await Client.loadedSyncSignal;
+		await Client.loadedOnceSignal;
 		await reportErrorInner(Client.instance!, data);
 	})();
 }

@@ -1,5 +1,6 @@
 // due to inheritance I have to use async functions without awaiting anything in them
 /* eslint-disable @typescript-eslint/require-await */
+import { dedent } from "@/utils/string.js";
 import type { EmbedBuilder, HexColorString } from "discord.js";
 import { AttachmentBuilder, TimestampStyles, time } from "discord.js";
 import type { Sharp } from "sharp";
@@ -23,7 +24,6 @@ import type * as SchedulesAPI from "../schemas/schedulesApi.js";
 import { fillArrayAsync } from "../utils/array.js";
 import { textImage } from "../utils/image.js";
 import { parallel } from "../utils/promise.js";
-import { dedent } from "../utils/string.js";
 import TimePeriod from "./TimePeriod.js";
 import TimePeriodCollection from "./TimePeriodCollection.js";
 import { Rotations } from "./index.js";
@@ -44,7 +44,7 @@ export abstract class BaseNode extends TimePeriod implements Shortable {
 	public abstract emoji: string;
 	public abstract name: string;
 	public get imageName() {
-		return this.name.toLowerCase().replace(/&/g, "and").replace(/ /g, "_");
+		return this.name.toLowerCase().replaceAll("&", "and").replaceAll(" ", "_");
 	}
 
 	constructor(data: CommonAPI.BaseNode) {
@@ -71,7 +71,7 @@ export abstract class DisplayableMatchNode extends BaseNode {
 		return [
 			[
 				`${this.started ? "**" : ""}${
-					!(this.rule.rule === "TURF_WAR") ? `${this.rule.emoji} ` : ""
+					this.rule.rule === "TURF_WAR" ? "" : `${this.rule.emoji} `
 				}${this.stages.map((v) => v.short()).join(", ")}${this.started ? "**" : ""} ${super
 					.short(options)
 					.map((v) => v.join(" "))
@@ -87,8 +87,7 @@ export abstract class DisplayableMatchNode extends BaseNode {
 		if (this.rule.rule === "TURF_WAR") parts.push(this.stages.map((v) => v.short()).join(", "));
 		else parts.push(this.rule.emoji, this.rule.name);
 		if (future && future.rule.rule !== "TURF_WAR") {
-			parts.push("➔");
-			parts.push(future.rule.emoji);
+			parts.push("➔", future.rule.emoji);
 		}
 		return parts.join(" ");
 	}
@@ -153,8 +152,8 @@ export abstract class DisplayableMatchNode extends BaseNode {
 					channels: 4,
 				},
 			})
-				.composite([
-					...(
+				.composite(
+					(
 						await parallel(
 							images.map<Promise<sharp.OverlayOptions[]>>(async (v, i) => {
 								const [text, shadowText] = await parallel(
@@ -167,8 +166,9 @@ export abstract class DisplayableMatchNode extends BaseNode {
 										left: stageWidth * i,
 										top: 0,
 									},
-									...(context !== "challengesEvent"
-										? [
+									...(context === "challengesEvent"
+										? []
+										: [
 												{
 													top: 0,
 													left: stageWidth * i,
@@ -194,8 +194,7 @@ export abstract class DisplayableMatchNode extends BaseNode {
 													top: 16,
 													input: await text.toBuffer(),
 												},
-											]
-										: []),
+											]),
 									...(context === "challengesEvent"
 										? [
 												{
@@ -212,7 +211,7 @@ export abstract class DisplayableMatchNode extends BaseNode {
 							}),
 						)
 					).flat(),
-				])
+				)
 				.png({ force: true }),
 		];
 	}
@@ -325,7 +324,7 @@ export class ChallengeNode extends BaseMatchNode<
 		this.leagueId = leagueMatchEventId;
 		this.challengeName = name;
 		this.shortDescription = desc;
-		this.longDescription = regulation.replace(/<br \/>/g, "\n");
+		this.longDescription = regulation.replaceAll("<br />", "\n");
 		this.id = id;
 	}
 	public override embedDescription(): string {
@@ -415,7 +414,7 @@ export type GenericMatchNode =
 	| RankedSeriesNode
 	| XBattleNode;
 
-const TEXT_BLUR_SIGMA = 1.00005;
+const TEXT_BLUR_SIGMA = 1.000_05;
 export abstract class BaseCoopNode<
 	NodeType extends CommonAPI.BaseNode,
 	SettingType extends SchedulesAPI.BaseCoopRegularSetting,
@@ -451,8 +450,10 @@ export abstract class BaseCoopNode<
 		if (this.notificationSpecial)
 			parts.push(`** ${this.name} ${"*".repeat(Math.max(40 - 4 - this.name.length, 0))}`);
 
-		parts.push(`${this.notificationSpecial ? "* " : ""}${this.stage.name}:`);
-		parts.push(`${this.notificationSpecial ? "* " : ""}${this.weapons.map((v) => v.name).join(", ")}`);
+		parts.push(
+			`${this.notificationSpecial ? "* " : ""}${this.stage.name}:`,
+			`${this.notificationSpecial ? "* " : ""}${this.weapons.map((v) => v.name).join(", ")}`,
+		);
 		return parts.join("\n");
 	}
 

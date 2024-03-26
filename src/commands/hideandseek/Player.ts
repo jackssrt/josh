@@ -38,7 +38,7 @@ export default class Player<Host extends boolean = boolean> {
 	}
 
 	public playerListItem() {
-		return `${this.role !== undefined ? ROLE_ICON_MAP[this.role] : this.host ? "👑" : "👤"} - ${userMention(
+		return `${this.role === undefined ? (this.host ? "👑" : "👤") : ROLE_ICON_MAP[this.role]} - ${userMention(
 			this.member.id,
 		)}`;
 	}
@@ -47,12 +47,12 @@ export default class Player<Host extends boolean = boolean> {
 		return await embeds((b) =>
 			b
 				.setAuthor(
-					!this.host
-						? {
+					this.host
+						? null
+						: {
 								name: `Host: ${this.gameHost.member.displayName}・Room code: ${this.gameCode}`,
 								...(hostIcon ? { iconURL: hostIcon } : {}),
-							}
-						: null,
+							},
 				)
 				.setTitle(
 					this.role === undefined
@@ -62,11 +62,11 @@ export default class Player<Host extends boolean = boolean> {
 							}`,
 				)
 				.setDescription(
-					this.role !== undefined
-						? this.role === PlayerRole.Seeker
+					this.role === undefined
+						? null
+						: this.role === PlayerRole.Seeker
 							? SEEKER_EXPLANATION
-							: HIDER_EXPLANATION
-						: null,
+							: HIDER_EXPLANATION,
 				)
 				.setFooter(
 					this.role === undefined && !this.host

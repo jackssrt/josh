@@ -8,8 +8,8 @@ export default createSubcommand({
 	autocomplete: idAutocomplete,
 	async execute({ client, interaction }) {
 		const id = interaction.options.getString("id", true);
-		if (await updatePublishedAnnouncement(client, id))
-			await interaction.reply(`successfully published announcement with id ${inlineCode(id)}`);
-		else await interaction.reply(`there is no announcement with id ${inlineCode(id)}`);
+		await ((await updatePublishedAnnouncement(client, id))
+			? interaction.reply(`successfully published announcement with id ${inlineCode(id)}`)
+			: interaction.reply(`there is no announcement with id ${inlineCode(id)}`));
 	},
 });
