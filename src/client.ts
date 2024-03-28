@@ -62,6 +62,7 @@ export default class Client<Ready extends boolean = false, Loaded extends boolea
 	public statsChannel = undefined as Loaded extends true ? TextChannel : undefined;
 	public splatfestTeamRoleCategory = undefined as Loaded extends true ? Role : undefined;
 	public announcementsChannel = undefined as Loaded extends true ? NewsChannel : undefined;
+	public voiceLogChannel = undefined as Loaded extends true ? TextChannel : undefined;
 
 	// this is static because of the errorhandler
 	public static loadedOnceSignal? = new OnceSignal();
@@ -216,6 +217,7 @@ export default class Client<Ready extends boolean = false, Loaded extends boolea
 				this.statsChannel,
 				this.splatfestTeamRoleCategory,
 				this.announcementsChannel,
+				this.voiceLogChannel,
 			] = await parallel(
 				this.guild.members.fetchMe(),
 				this.guild.members.fetch(process.env.OWNER_ID),
@@ -230,6 +232,7 @@ export default class Client<Ready extends boolean = false, Loaded extends boolea
 				this.guild.channels.fetch(process.env.STATS_CHANNEL_ID) as Promise<TextChannel>,
 				this.guild.roles.fetch(process.env.SPLATFEST_TEAM_CATEGORY_ROLE_ID) as Promise<Role>,
 				this.guild.channels.fetch(process.env.ANNOUNCEMENTS_CHANNEL_ID) as Promise<NewsChannel>,
+				this.guild.channels.fetch(process.env.VOICE_LOG_CHANNEL_ID) as Promise<TextChannel>,
 			);
 			logger.info(`Fetching discord objects took ${formatTime((Date.now() - start.getTime()) / 1000)}`);
 			Client.instance = this;
