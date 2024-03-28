@@ -1,5 +1,8 @@
 {
-	"watch": "src/**/*",
+	"watch": [
+		"src",
+		".env"
+	],
 	"ext": "ts,tsx,env",
 	"exec": "esno src/index.ts"
 }
