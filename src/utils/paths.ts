@@ -26,9 +26,11 @@ const codeRootDir = IS_BUILT ? "build" : "src";
 export const root = middleware();
 export const codeRoot = middleware(codeRootDir);
 export const commands = middleware(codeRootDir, "commands");
+export const assets = middleware("assets");
 
 // Files //
 export const database = root`database.json`;
+export const startupSound = assets`startup.wav`;
 
 // Functions //
 export function fileURI<T extends string>(path: T) {

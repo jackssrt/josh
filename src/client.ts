@@ -23,7 +23,6 @@ import {
 } from "discord.js";
 import { startCase } from "lodash-es";
 import { spawn } from "node:child_process";
-import path from "node:path";
 import { platform } from "node:process";
 import type { Command } from "./commandHandler/command.js";
 import type { ContextMenuItem } from "./commandHandler/contextMenuItem.js";
@@ -36,6 +35,7 @@ import { reportError } from "./errorhandler.js";
 import Registry from "./registry.js";
 import logger from "./utils/Logger.js";
 import OnceSignal from "./utils/OnceSignal.js";
+import { startupSound } from "./utils/paths.js";
 import { parallel } from "./utils/promise.js";
 import { pluralize } from "./utils/string.js";
 import { formatTime } from "./utils/time.js";
@@ -235,13 +235,13 @@ export default class Client<Ready extends boolean = false, Loaded extends boolea
 			Client.instance = this;
 			Client.loadedOnceSignal?.fire();
 			delete Client.loadedOnceSignal;
-			if (IS_DEV && platform === "win32")
-				spawn(`powershell.exe`, [
-					"-c",
-					`$player = New-Object System.Media.SoundPlayer;$player.SoundLocation = '${path.resolve(
-						"./assets/startup.wav",
-					)}';$player.playsync();`,
-				]);
+			if (IS_DEV)
+				if (platform === "win32")
+					spawn(`powershell.exe`, [
+						"-c",
+						`$player = New-Object System.Media.SoundPlayer;$player.SoundLocation = '${startupSound}';$player.playsync();`,
+					]);
+				else if (platform === "linux") spawn("aplay", [startupSound]);
 			logger.info("Ready!");
 		});
 
