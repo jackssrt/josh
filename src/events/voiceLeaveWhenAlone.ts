@@ -1,5 +1,5 @@
+import createEvent from "../commandHandler/event.js";
 import { queue } from "../voice.js";
-import createEvent from "./../commandHandler/event.js";
 
 export default createEvent({
 	event: "voiceStateUpdate",
