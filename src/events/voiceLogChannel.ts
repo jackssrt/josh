@@ -21,12 +21,12 @@ export default createEvent({
 		const webhook = await getImpersonationWebhook(client, client.voiceLogChannel);
 		if (newState.channel && oldState.channel) {
 			// moved
-
 			const message = await sendImpersonationMessage(webhook, member, {
 				content: `↪️ @${member.displayName} moved from #${oldState.channel.name} to #${newState.channel.name}`,
 
 				allowedMentions: { parse: [] },
 			});
+
 			await webhook.editMessage(message, {
 				content: "",
 				...(await embeds((b) =>
@@ -42,10 +42,12 @@ export default createEvent({
 		} else if (newState.channel) {
 			// joined
 			sessions.set(member.id, Date.now());
+
 			const [message, webhook] = await impersonate(client, member, client.voiceLogChannel, {
 				content: `🟩 @${member.displayName} joined #${newState.channel.name}`,
 				allowedMentions: { parse: [] },
 			});
+
 			await webhook.editMessage(message, {
 				content: "",
 				...(await embeds((b) =>
@@ -59,15 +61,18 @@ export default createEvent({
 		} else if (oldState.channel) {
 			// left
 			const joinedTimestamp = sessions.get(member.id);
+
 			sessions.delete(member.id);
+
 			const sessionLength = joinedTimestamp
 				? `, their session lasted ${formatTime((Date.now() - joinedTimestamp) / 1000)}`
 				: "";
+
 			const [message, webhook] = await impersonate(client, member, client.voiceLogChannel, {
 				content: `🟥 @${member.displayName} left #${oldState.channel.name}${sessionLength}`,
 				allowedMentions: { parse: [] },
 			});
-			/*${joinedTimestamp ? `, their session lasted ${formatTime(joinedTimestamp?.getTime() - )}`, allowedMentions: { parse: [] } });*/
+
 			await webhook.editMessage(message, {
 				content: "",
 				...(await embeds((b) =>
