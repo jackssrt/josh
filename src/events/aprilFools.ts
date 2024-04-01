@@ -7,6 +7,7 @@ export default createEvent({
 	event: "messageCreate",
 	async on({ client }, message) {
 		if (
+			message.guild !== client.guild ||
 			!message.member ||
 			message.channel.type !== ChannelType.GuildText ||
 			message.attachments.size > 0 ||
