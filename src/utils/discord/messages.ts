@@ -7,6 +7,44 @@ import { parallel } from "../promise.js";
 
 //#region impersonate
 const IMPERSONATION_WEBHOOK_NAME = "josh impersonation webhook";
+
+/**
+ * Gets or creates the impersonation webhook for a specific channel.
+ * @param client A ready client to use
+ * @param channel The channel to impersonate in
+ * @returns The webhook
+ */
+export async function getImpersonationWebhook(client: Client<true>, channel: WebhookableChannel) {
+	return (
+		(await channel.fetchWebhooks()).find((v) => v.token !== null && v.name === IMPERSONATION_WEBHOOK_NAME) ??
+		(await channel.createWebhook({
+			name: IMPERSONATION_WEBHOOK_NAME,
+			reason: "impersonation webhook",
+			avatar: client.user.displayAvatarURL({ size: 128 }),
+		}))
+	);
+}
+
+/**
+ * Sends an impersonation message with a webhook. Use with {@link getImpersonationWebhook}.
+ * @param webhook The impersonation webhook
+ * @param user The user to impersonate
+ * @param message The impersonation message
+ * @returns The message
+ */
+export async function sendImpersonationMessage(
+	webhook: Webhook,
+	user: GuildMember | User,
+	message: string | WebhookMessageCreateOptions,
+) {
+	return await webhook.send({
+		avatarURL: user.displayAvatarURL({ size: 128 }),
+		username: user instanceof GuildMember ? user.displayName : user.username,
+		allowedMentions: { parse: [] },
+		...(typeof message === "string" ? { content: message } : message),
+	} satisfies WebhookMessageCreateOptions);
+}
+
 /**
  * Impersonate someone, making a webhook send a message that looks like that person sent it.\
  * This function protects against pinging by default, override this by passing `{allowedMentions: {}}` as the message parameter
@@ -22,22 +60,9 @@ export async function impersonate(
 	channel: WebhookableChannel,
 	message: string | WebhookMessageCreateOptions,
 ): Promise<[Message, Webhook]> {
-	const webhook =
-		(await channel.fetchWebhooks()).find((v) => v.token !== null && v.name === IMPERSONATION_WEBHOOK_NAME) ??
-		(await channel.createWebhook({
-			name: IMPERSONATION_WEBHOOK_NAME,
-			reason: "impersonation webhook",
-			avatar: client.user.displayAvatarURL({ size: 128 }),
-		}));
-	return [
-		await webhook.send({
-			avatarURL: user.displayAvatarURL({ size: 128 }),
-			username: user instanceof GuildMember ? user.displayName : user.username,
-			allowedMentions: { parse: [] },
-			...(typeof message === "string" ? { content: message } : message),
-		} satisfies WebhookMessageCreateOptions),
-		webhook,
-	];
+	const webhook = await getImpersonationWebhook(client, channel);
+
+	return [await sendImpersonationMessage(webhook, user, message), webhook];
 }
 //#endregion
 

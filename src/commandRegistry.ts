@@ -27,7 +27,9 @@ export default class CommandRegistry extends Registry<CommandRegistryItem> {
 	 * @returns The default export of the imported file
 	 */
 	public async importFile<T>(...parts: string[]): Promise<T | undefined> {
-		const { default: thing } = (await import(fileURI(commands`${parts.join(path.sep)}.js`))) as {
+		const { default: thing } = (await import(
+			fileURI(commands`${parts.join(path.sep)}.${IS_BUILT ? "js" : "ts"}`)
+		)) as {
 			default: T | undefined;
 		};
 		if (thing === undefined) {

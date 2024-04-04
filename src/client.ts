@@ -23,7 +23,6 @@ import {
 } from "discord.js";
 import { startCase } from "lodash-es";
 import { spawn } from "node:child_process";
-import path from "node:path";
 import { platform } from "node:process";
 import type { Command } from "./commandHandler/command.js";
 import type { ContextMenuItem } from "./commandHandler/contextMenuItem.js";
@@ -36,6 +35,7 @@ import { reportError } from "./errorhandler.js";
 import Registry from "./registry.js";
 import logger from "./utils/Logger.js";
 import OnceSignal from "./utils/OnceSignal.js";
+import { startupSound } from "./utils/paths.js";
 import { parallel } from "./utils/promise.js";
 import { pluralize } from "./utils/string.js";
 import { formatTime } from "./utils/time.js";
@@ -62,6 +62,7 @@ export default class Client<Ready extends boolean = false, Loaded extends boolea
 	public statsChannel = undefined as Loaded extends true ? TextChannel : undefined;
 	public splatfestTeamRoleCategory = undefined as Loaded extends true ? Role : undefined;
 	public announcementsChannel = undefined as Loaded extends true ? NewsChannel : undefined;
+	public voiceLogChannel = undefined as Loaded extends true ? TextChannel : undefined;
 
 	// this is static because of the errorhandler
 	public static loadedOnceSignal? = new OnceSignal();
@@ -216,6 +217,7 @@ export default class Client<Ready extends boolean = false, Loaded extends boolea
 				this.statsChannel,
 				this.splatfestTeamRoleCategory,
 				this.announcementsChannel,
+				this.voiceLogChannel,
 			] = await parallel(
 				this.guild.members.fetchMe(),
 				this.guild.members.fetch(process.env.OWNER_ID),
@@ -230,18 +232,19 @@ export default class Client<Ready extends boolean = false, Loaded extends boolea
 				this.guild.channels.fetch(process.env.STATS_CHANNEL_ID) as Promise<TextChannel>,
 				this.guild.roles.fetch(process.env.SPLATFEST_TEAM_CATEGORY_ROLE_ID) as Promise<Role>,
 				this.guild.channels.fetch(process.env.ANNOUNCEMENTS_CHANNEL_ID) as Promise<NewsChannel>,
+				this.guild.channels.fetch(process.env.VOICE_LOG_CHANNEL_ID) as Promise<TextChannel>,
 			);
 			logger.info(`Fetching discord objects took ${formatTime((Date.now() - start.getTime()) / 1000)}`);
 			Client.instance = this;
 			Client.loadedOnceSignal?.fire();
 			delete Client.loadedOnceSignal;
-			if (IS_DEV && platform === "win32")
-				spawn(`powershell.exe`, [
-					"-c",
-					`$player = New-Object System.Media.SoundPlayer;$player.SoundLocation = '${path.resolve(
-						"./assets/startup.wav",
-					)}';$player.playsync();`,
-				]);
+			if (IS_DEV)
+				if (platform === "win32")
+					spawn(`powershell.exe`, [
+						"-c",
+						`$player = New-Object System.Media.SoundPlayer;$player.SoundLocation = '${startupSound}';$player.playsync();`,
+					]);
+				else if (platform === "linux") spawn("aplay", [startupSound]);
 			logger.info("Ready!");
 		});
 
