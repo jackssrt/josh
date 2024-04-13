@@ -65,7 +65,7 @@ export default createEvent({
 			sessions.delete(member.id);
 
 			const sessionLength = joinedTimestamp
-				? `, their session lasted ${formatTime((Date.now() - joinedTimestamp) / 1000)}`
+				? ` after being in vc for ${formatTime((Date.now() - joinedTimestamp) / 1000)}`
 				: "";
 
 			const [message, webhook] = await impersonate(client, member, client.voiceLogChannel, {
