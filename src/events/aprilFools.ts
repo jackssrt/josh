@@ -16,6 +16,7 @@ export default createEvent({
 		)
 			return;
 
+		// 1 in 10 chance
 		if (randomInt(0, 11) === 0) return await replaceMessage(client, message, `${message.content} AMONG US!!`);
 	},
 });

@@ -1,7 +1,7 @@
+import database from "@/database.js";
 import type { Channel, Message, User, Webhook, WebhookMessageCreateOptions } from "discord.js";
-import { GuildMember, MessageFlags } from "discord.js";
+import { GuildMember, MessageFlags, hideLinkEmbed, hyperlink, messageLink, quote, userMention } from "discord.js";
 import type Client from "../../client.js";
-import database from "../../database.js";
 import type { WebhookableChannel } from "../discord/channels.js";
 import { parallel } from "../promise.js";
 
@@ -94,6 +94,29 @@ export async function replaceMessage(
 	message: ReplaceableMessage,
 	newData: string | WebhookMessageCreateOptions,
 ): Promise<[Message, Webhook]> {
+	const referenceMessage = message.reference && (await message.fetchReference());
+
+	// mentioning here is fine because allowedMentions is passed with parse: []
+	// so it will therefor be a silent mention.
+	const replyText =
+		referenceMessage &&
+		`${userMention(referenceMessage.author.id)}\n${referenceMessage.content
+			.split("\n")
+			.map((v) =>
+				quote(
+					hyperlink(
+						v,
+						hideLinkEmbed(
+							messageLink(referenceMessage.channelId, referenceMessage.id, referenceMessage.guildId),
+						),
+					),
+				),
+			)
+			.join("\n")}\n`;
+
+	const newDataContent = typeof newData === "string" ? newData : newData.content;
+	const content = (replyText || newDataContent) && `${replyText ? replyText + "\n" : ""}${newDataContent ?? ""}`;
+
 	const impersonateReturn = (
 		await parallel(
 			impersonate(client, message.member ?? message.author, message.channel, {
@@ -101,7 +124,7 @@ export async function replaceMessage(
 				allowedMentions: {
 					parse: [],
 				},
-				...(typeof newData === "string" ? { content: newData } : newData),
+				...(content ? { content } : {}),
 			}),
 			message.deletable && message.delete(),
 		)
