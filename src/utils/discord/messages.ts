@@ -76,7 +76,11 @@ export type ReplaceableMessage = Message<true> & { channel: WebhookableChannel }
  * Custom typeguard for {@link ReplaceableMessage}
  */
 export function canReplaceMessage(message: Message): message is ReplaceableMessage {
-	return message.inGuild() && !!(message.channel as Channel & WebhookableChannel).fetchWebhooks;
+	return (
+		message.inGuild() &&
+		!message.flags.has("Ephemeral") &&
+		!!(message.channel as Channel & WebhookableChannel).fetchWebhooks
+	);
 }
 
 /**
