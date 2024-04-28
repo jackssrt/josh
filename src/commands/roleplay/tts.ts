@@ -16,7 +16,8 @@ export default createSubcommand({
 				b.setName("attachment").setDescription("The attachment to say").setRequired(false),
 			)
 			.addChannelOption((b) => b.setName("channel").setDescription("The channel to say it in").setRequired(false))
-			.addStringOption((b) => b.setName("voice").setDescription("The voice to use").setRequired(false)),
+			.addStringOption((b) => b.setName("voice").setDescription("The voice to use").setRequired(false))
+			.addStringOption((b) => b.setName("provider").setDescription("The tts provider to use").setRequired(false)),
 	defer: "ephemeral",
 	async execute({ client, interaction }) {
 		const channel =
@@ -32,8 +33,13 @@ export default createSubcommand({
 			const text = interaction.options.getString("text", false);
 			if (!text) return await interaction.editReply("You didn't provide text to say or an attachment!");
 			const voice = interaction.options.getString("voice", false);
+			const provider = interaction.options.getString("provider", false);
 
-			const sound = await textToSpeech(text, voice ?? (await database.getFlag("tts.voice")));
+			const sound = await textToSpeech(
+				text,
+				voice ?? (await database.getFlag("tts.voice")),
+				provider ?? (await database.getFlag("tts.provider")),
+			);
 			queueSound(client, channel, sound);
 		}
 		await interaction.editReply("✅");

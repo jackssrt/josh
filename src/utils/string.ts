@@ -10,6 +10,18 @@ export function truncate(text: string, maxLength: number) {
 }
 
 /**
+ * Splits a string into specified length chunks.
+ * @param text The string to split
+ * @param chunkSize The size of the chunks
+ */
+export function chunkify(text: string, chunkSize: number): string[] {
+	const size = Math.ceil(text.length / chunkSize);
+	const result: string[] = Array.from({ length: size });
+	for (let i = 0; i < size; i++) result[i] = text.slice(i * chunkSize, (i + 1) * chunkSize);
+	return result;
+}
+
+/**
  * Possibly pluralizes a noun.
  * @param noun The noun to pluralize
  * @param amount The amount of the noun

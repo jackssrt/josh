@@ -18,7 +18,7 @@ async function queueTextToSpeechInChannel(client: Client<true>, channel: VoiceBa
 
 	lastNames.set(channel.id, memberName);
 
-	const sound = await textToSpeech(text, await database.getFlag("tts.voice"));
+	const sound = await textToSpeech(text, await database.getFlag("tts.voice"), await database.getFlag("tts.provider"));
 	queueSound(client, channel, sound);
 }
 

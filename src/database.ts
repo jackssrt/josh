@@ -11,7 +11,8 @@ import { SMALLEST_DATE } from "./utils/time.js";
 import type { ExtractKeys } from "./utils/types.js";
 
 export const DEFAULT_FLAGS = {
-	"tts.voice": "gtts",
+	"tts.voice": "",
+	"tts.provider": "countik",
 	"tts.enabled": "true",
 	"tts.mutedOnly": "false",
 	"tts.playFiles": "true",

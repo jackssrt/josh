@@ -27,13 +27,18 @@ export default createEvent({
 				await textToSpeech(
 					cleanForSpeaking(`${member.displayName} joined`),
 					await database.getFlag("tts.voice"),
+					await database.getFlag("tts.provider"),
 				),
 			);
 		if (oldState.channel && oldState.channel.members.filter((v) => !v.user.bot).size > 0)
 			queueSound(
 				client,
 				oldState.channel,
-				await textToSpeech(cleanForSpeaking(`${member.displayName} left`), await database.getFlag("tts.voice")),
+				await textToSpeech(
+					cleanForSpeaking(`${member.displayName} left`),
+					await database.getFlag("tts.voice"),
+					await database.getFlag("tts.provider"),
+				),
 			);
 	},
 });
