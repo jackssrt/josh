@@ -26,6 +26,7 @@ export const DEFAULT_FLAGS = {
 	"message.twitterEmbed.enabled": "true",
 	"message.tiktokEmbed.enabled": "true",
 	"message.awesomeTroll.target": "",
+	"message.amongUs.enabled": "false",
 } satisfies Record<string, string>;
 export type Flag = keyof typeof DEFAULT_FLAGS;
 

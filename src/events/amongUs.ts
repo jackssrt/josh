@@ -1,4 +1,5 @@
 import createEvent from "@/commandHandler/event.js";
+import database from "@/database.js";
 import { canReplaceMessage, replaceMessage } from "@/utils/discord/messages.js";
 import { ChannelType } from "discord.js";
 import { randomInt } from "node:crypto";
@@ -12,7 +13,8 @@ export default createEvent({
 			message.channel.type !== ChannelType.GuildText ||
 			message.attachments.size > 0 ||
 			message.embeds.length > 0 ||
-			!canReplaceMessage(message)
+			!canReplaceMessage(message) ||
+			!(await database.getBooleanFlag("message.amongUs.enabled"))
 		)
 			return;
 
