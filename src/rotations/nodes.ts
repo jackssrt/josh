@@ -586,6 +586,7 @@ export class SalmonRunNode extends BaseCoopNode<
 			.with("Horrorboros", () => HORRORBOROS_EMOJI)
 			.with("Cohozuna", () => COHOZUNA_EMOJI)
 			.with("Megalodontia", () => MEGALODONTIA_EMOJI)
+			.with("Triumvirate", () => "⚠")
 			.with("Random", () => "🎲")
 			.exhaustive();
 	}

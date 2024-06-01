@@ -236,7 +236,7 @@ export const challengeNodeSchema = z.object({
 export type ChallengeNode = z.infer<typeof challengeNodeSchema>;
 
 export const kingSalmoidGuessSchema = z.object({
-	__splatoon3ink_king_salmonid_guess: z.enum(["Horrorboros", "Cohozuna", "Megalodontia", "Random"]),
+	__splatoon3ink_king_salmonid_guess: z.enum(["Horrorboros", "Cohozuna", "Megalodontia", "Triumvirate", "Random"]),
 });
 
 export const coopGroupingRegularNodeSchema = baseNodeSchema.extend(kingSalmoidGuessSchema.shape).extend({
