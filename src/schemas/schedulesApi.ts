@@ -198,7 +198,8 @@ export const currentFestSchema = (state: "FIRST_HALF" | "SECOND_HALF" | "SCHEDUL
 		midtermTime: z.string(),
 		state: z.literal(state),
 		teams: repeatedZodTuple(currentFestTeamSchema, 3),
-		tricolorStage: tricolorStageSchema,
+		tricolorStages: z.array(tricolorStageSchema).optional(),
+		tricolorStage: tricolorStageSchema.optional(),
 	});
 export type CurrentFest<State extends "FIRST_HALF" | "SECOND_HALF" | "SCHEDULED"> = z.infer<
 	Call<typeof currentFestSchema, [State]>

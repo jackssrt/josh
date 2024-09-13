@@ -385,13 +385,12 @@ export class CurrentFest<State extends "FIRST_HALF" | "SECOND_HALF"> extends Dis
 	public midtermTime: Date;
 	public state: State;
 	public teams: [SchedulesAPI.CurrentFestTeam, SchedulesAPI.CurrentFestTeam, SchedulesAPI.CurrentFestTeam];
-	public tricolorStage: TricolorStage;
 	public rule = turfWarRule;
 	public color = "#0033FF" as const;
 	public emoji = SPLATFEST_EMOJI;
 	public name = "Tricolor" as const;
 	public override channelTopicLabel = "Tricolor";
-	public stages: [TricolorStage];
+	public stages: TricolorStage[];
 	constructor(data: SchedulesAPI.CurrentFest<State>) {
 		super(data);
 		this.id = data.id;
@@ -399,8 +398,10 @@ export class CurrentFest<State extends "FIRST_HALF" | "SECOND_HALF"> extends Dis
 		this.midtermTime = new Date(Date.parse(data.midtermTime));
 		this.state = data.state as State;
 		this.teams = data.teams;
-		this.tricolorStage = new TricolorStage(data.tricolorStage);
-		this.stages = [this.tricolorStage];
+		this.stages =
+			Object.hasOwn(data, "tricolorStage") && data.tricolorStage
+				? [new TricolorStage(data.tricolorStage)]
+				: data.tricolorStages!.map((v) => new TricolorStage(v));
 	}
 }
 
